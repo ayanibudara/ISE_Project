@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
 
 // Load environment variables
 dotenv.config();
@@ -24,6 +25,7 @@ mongoose.connect(MONGO_URI, {
 
 
 // Routes
+app.use('/api/appointments', appointmentRoutes);
 app.get('/', (req, res) => {
   res.send('Hello from Express backend!');
 });
