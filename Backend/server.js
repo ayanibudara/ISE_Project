@@ -2,6 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
+const guideRoutes = require('./Routes/Appoinment/guideRoutes.js');
+
 
 // Load environment variables
 dotenv.config();
