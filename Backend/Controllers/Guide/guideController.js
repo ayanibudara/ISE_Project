@@ -1,4 +1,4 @@
-const Guide = require('../Models/Appoinment/guideModel.js');
+const Guide = require('../../Models/Guide/guideModel.js');
 
 // Create new guide
 exports.createGuide = async (req, res) => {
