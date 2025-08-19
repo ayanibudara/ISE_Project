@@ -11,6 +11,8 @@ dotenv.config();
 // Import routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
+const guideRoutes = require('./Routes/Guide/guideRoute.js');
 
 // Initialize express app
 const app = express();
@@ -52,6 +54,8 @@ mongoose.connect(MONGODB_URI)
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/guides', guideRoutes);
 
 // Root route
 app.get('/', (req, res) => {
