@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const guideController = require('../Controllers/Appoinment/appointmentController');
+const guideController = require('../../Controllers/Guide/guideController.js');
 
 router.post('/guides', guideController.createGuide);
 router.get('/guides', guideController.getAllGuides);
