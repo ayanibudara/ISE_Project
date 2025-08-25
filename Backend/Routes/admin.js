@@ -57,7 +57,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
     const userStats = {
       guides: 0,
       tourists: 0,
-      serviceProviders: 0,
+      packageProviders: 0,
       admins: 0,
       total: 0
     };
@@ -285,7 +285,7 @@ router.get('/users/report', requireAdmin, async (req, res) => {
     doc.fontSize(24).fillColor('#f59e0b').text(userStats.tourists.toString(), 90 + cardSpacing * 2, yPos + 15);
     doc.fontSize(12).fillColor(secondaryColor).text('Tourists', 75 + cardSpacing * 2, yPos + 50);
     
-    // Service Providers Card
+    // Package providers Card
     doc.rect(50 + cardSpacing * 3, yPos, cardWidth, cardHeight).fill('#fce7f3').stroke('#ec4899');
     doc.fontSize(24).fillColor('#ec4899').text(userStats.serviceProviders.toString(), 90 + cardSpacing * 3, yPos + 15);
     doc.fontSize(12).fillColor(secondaryColor).text('Providers', 70 + cardSpacing * 3, yPos + 50);

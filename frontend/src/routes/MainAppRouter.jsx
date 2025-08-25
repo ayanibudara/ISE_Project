@@ -6,7 +6,7 @@ import Register from '../pages/auth/Register';
 import TouristDashboard from '../pages/dashboard/TouristDashboard';
 import GuideDashboard from '../pages/dashboard/GuideDashboard';
 import GuideProfile from '../pages/dashboard/GuideProfile';
-import ServiceProviderDashboard from '../pages/dashboard/ServiceProviderDashboard';
+import PackageProviderDashboard from '../pages/dashboard/PackageProviderDashboard';
 import AdminDashboard from '../pages/dashboard/AdminDashboard';
 import NotFound from '../pages/NotFound';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -49,8 +49,8 @@ const MainAppRouter = () => {
         return <Navigate to="/dashboard/tourist" replace />;
       case 'Guide':
         return <Navigate to="/dashboard/guide" replace />;
-      case 'ServiceProvider':
-        return <Navigate to="/dashboard/service-provider" replace />;
+      case 'PackageProvider':
+        return <Navigate to="/dashboard/package-provider" replace />;
       case 'Admin':
         return <Navigate to="/dashboard/admin" replace />;
       default:
@@ -110,20 +110,20 @@ const MainAppRouter = () => {
       />
       
       <Route
-        path="/dashboard/service-provider"
+        path="/dashboard/package-provider"
         element={
-          <ProtectedRoute allowedRoles={['ServiceProvider']}>
+          <ProtectedRoute allowedRoles={['PackageProvider']}>
             <DashboardLayout>
-              <ServiceProviderDashboard />
+              <PackageProviderDashboard />
             </DashboardLayout>
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/dashboard/service-provider/profile"
+        path="/dashboard/package-provider/profile"
         element={
-          <ProtectedRoute allowedRoles={['ServiceProvider']}>
+          <ProtectedRoute allowedRoles={['PackageProvider']}>
             <DashboardLayout>
               <ProfileEdit />
             </DashboardLayout>
@@ -135,7 +135,7 @@ const MainAppRouter = () => {
       <Route
         path="/profile"
         element={
-          <ProtectedRoute allowedRoles={['Tourist', 'Guide', 'ServiceProvider', 'Admin']}>
+          <ProtectedRoute allowedRoles={['Tourist', 'Guide', 'PackageProvider', 'Admin']}>
             <DashboardLayout>
               <ProfileEdit />
             </DashboardLayout>

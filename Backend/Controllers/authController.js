@@ -33,8 +33,8 @@ exports.register = async (req, res) => {
       errors.push({ field: 'password', message: 'Password must be at least 6 characters' });
     }
     
-    if (!role || !['Guide', 'Tourist', 'ServiceProvider'].includes(role)) {
-      errors.push({ field: 'role', message: 'Valid role is required' });
+    if (!role || !['Guide', 'Tourist', 'PackageProvider'].includes(role)) {
+      errors.push({ field: 'role', message: 'Role must be Guide, Tourist, or Package Provider' });
     }
 
     if (errors.length > 0) {

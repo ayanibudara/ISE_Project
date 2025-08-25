@@ -47,8 +47,8 @@ exports.registerValidation = [
     .not()
     .isEmpty()
     .withMessage('Role is required')
-    .isIn(['Guide', 'Tourist', 'ServiceProvider'])
-    .withMessage('Role must be Guide, Tourist, or ServiceProvider')
+    .isIn(['Guide', 'Tourist', 'PackageProvider'])
+    .withMessage('Role must be Guide, Tourist, or Package Provider')
 ];
 
 exports.loginValidation = [
