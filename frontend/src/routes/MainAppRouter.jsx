@@ -49,8 +49,8 @@ const MainAppRouter = () => {
         return <Navigate to="/dashboard/tourist" replace />;
       case 'Guide':
         return <Navigate to="/dashboard/guide" replace />;
-      case 'ServiceProvider':
-        return <Navigate to="/dashboard/service-provider" replace />;
+      case 'PackageProvider':
+        return <Navigate to="/dashboard/package-provider" replace />;
       case 'Admin':
         return <Navigate to="/dashboard/admin" replace />;
       default:
@@ -110,7 +110,7 @@ const MainAppRouter = () => {
       />
       
       <Route
-        path="/dashboard/service-provider"
+        path="/dashboard/package-provider"
         element={
           <ProtectedRoute allowedRoles={['PackageProvider']}>
             <DashboardLayout>
@@ -121,7 +121,7 @@ const MainAppRouter = () => {
       />
 
       <Route
-        path="/dashboard/service-provider/profile"
+        path="/dashboard/package-provider/profile"
         element={
           <ProtectedRoute allowedRoles={['PackageProvider']}>
             <DashboardLayout>
