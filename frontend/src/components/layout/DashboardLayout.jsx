@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, Menu, Transition } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
+import tmsLogo from '../../assets/1000006181.jpg';
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -171,17 +172,14 @@ const DashboardLayout = ({ children }) => {
                   </button>
                 </div>
               </Transition.Child>
-              <div className="flex flex-shrink-0 items-center px-6">
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
-                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-white">TMS</h1>
-                    <p className="text-xs text-slate-300">Tourism Management</p>
-                  </div>
+              <div className="flex flex-shrink-0 items-center justify-center px-6 pb-2">
+                <div className="flex flex-col items-center">
+                  <img
+                    src={tmsLogo}
+                    alt="TMS Logo"
+                    className="h-12 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
+                  />
+                  <p className="text-sm font-medium text-slate-300 mt-2">Tourism Management System</p>
                 </div>
               </div>
               <div className="mt-8 h-0 flex-1 overflow-y-auto px-3">
@@ -231,18 +229,15 @@ const DashboardLayout = ({ children }) => {
       {/* Static sidebar for desktop */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex w-72 flex-col">
-          <div className="flex h-0 flex-1 flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
-            <div className="flex h-20 flex-shrink-0 items-center px-6 border-b border-slate-700/50">
-              <div className="flex items-center space-x-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-xl">
-                  <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">TMS</h1>
-                  <p className="text-sm text-slate-300">Tourism Management System</p>
-                </div>
+          <div className="flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
+            <div className="flex h-20 flex-shrink-0 items-center justify-center px-6 border-b border-slate-700/50">
+              <div className="flex flex-col items-center">
+                <img
+                  src={tmsLogo}
+                  alt="TMS Logo"
+                  className="h-12 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
+                />
+                <p className="text-sm font-medium text-slate-300 mt-2">Tourism Management</p>
               </div>
             </div>
             <div className="flex flex-1 flex-col overflow-y-auto py-6">
