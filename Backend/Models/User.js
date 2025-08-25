@@ -47,32 +47,32 @@ const userSchema = new mongoose.Schema(
     },
     // Additional fields specific to roles can be added here
     // For Guide
-    specialization: {
-      type: String,
-      default: ''
-    },
-    experience: {
-      type: Number,
-      default: 0
-    },
-    // For ServiceProvider
-    businessName: {
-      type: String,
-      default: ''
-    },
-    serviceType: {
-      type: String,
-      default: ''
-    },
-    // For Tourist
-    nationality: {
-      type: String,
-      default: ''
-    },
-    preferences: {
-      type: [String],
-      default: []
-    }
+    // specialization: {
+    //   type: String,
+    //   default: ''
+    // },
+    // experience: {
+    //   type: Number,
+    //   default: 0
+    // },
+    // // For ServiceProvider
+    // businessName: {
+    //   type: String,
+    //   default: ''
+    // },
+    // serviceType: {
+    //   type: String,
+    //   default: ''
+    // },
+    // // For Tourist
+    // nationality: {
+    //   type: String,
+    //   default: ''
+    // },
+    // preferences: {
+    //   type: [String],
+    //   default: []
+    // }
   },
   {
     timestamps: true
