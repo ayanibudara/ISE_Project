@@ -6,7 +6,7 @@ import Register from '../pages/auth/Register';
 import TouristDashboard from '../pages/dashboard/TouristDashboard';
 import GuideDashboard from '../pages/dashboard/GuideDashboard';
 import GuideProfile from '../pages/dashboard/GuideProfile';
-import ServiceProviderDashboard from '../pages/dashboard/ServiceProviderDashboard';
+import PackageProviderDashboard from '../pages/dashboard/PackageProviderDashboard';
 import AdminDashboard from '../pages/dashboard/AdminDashboard';
 import NotFound from '../pages/NotFound';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -112,9 +112,9 @@ const MainAppRouter = () => {
       <Route
         path="/dashboard/service-provider"
         element={
-          <ProtectedRoute allowedRoles={['ServiceProvider']}>
+          <ProtectedRoute allowedRoles={['PackageProvider']}>
             <DashboardLayout>
-              <ServiceProviderDashboard />
+              <PackageProviderDashboard />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -123,7 +123,7 @@ const MainAppRouter = () => {
       <Route
         path="/dashboard/service-provider/profile"
         element={
-          <ProtectedRoute allowedRoles={['ServiceProvider']}>
+          <ProtectedRoute allowedRoles={['PackageProvider']}>
             <DashboardLayout>
               <ProfileEdit />
             </DashboardLayout>
@@ -135,7 +135,7 @@ const MainAppRouter = () => {
       <Route
         path="/profile"
         element={
-          <ProtectedRoute allowedRoles={['Tourist', 'Guide', 'ServiceProvider', 'Admin']}>
+          <ProtectedRoute allowedRoles={['Tourist', 'Guide', 'PackageProvider', 'Admin']}>
             <DashboardLayout>
               <ProfileEdit />
             </DashboardLayout>

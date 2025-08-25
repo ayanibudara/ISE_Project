@@ -73,7 +73,7 @@ const DashboardLayout = ({ children }) => {
         </svg>
       ), current: false }
     );
-  } else if (user?.role === 'ServiceProvider') {
+  } else if (user?.role === 'PackageProvider') {
     navigation.push(
       { name: 'My Services', href: '/my-services', icon: (
         <svg className="mr-4 h-6 w-6 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -155,8 +155,8 @@ const DashboardLayout = ({ children }) => {
       if (path.includes('/profile')) return 'Tourist Profile';
       return 'Tourist Dashboard';
     } else if (path.includes('/service-provider')) {
-      if (path.includes('/profile')) return 'Service Provider Profile';
-      return 'Service Provider Dashboard';
+      if (path.includes('/profile')) return 'Package Provider Profile';
+      return 'Package Provider Dashboard';
     }
     
     return 'Dashboard';

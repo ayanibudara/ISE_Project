@@ -1,7 +1,7 @@
 import { useAuth } from '../../contexts/AuthContext';
 import TouristDashboard from './TouristDashboard';
 import GuideDashboard from './GuideDashboard';
-import ServiceProviderDashboard from './ServiceProviderDashboard';
+import PackageProviderDashboard from './PackageProviderDashboard';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 
 const Dashboard = () => {
@@ -26,8 +26,8 @@ const Dashboard = () => {
         return <TouristDashboard user={user} />;
       case 'Guide':
         return <GuideDashboard user={user} />;
-      case 'ServiceProvider':
-        return <ServiceProviderDashboard user={user} />;
+      case 'PackageProvider':
+        return <PackageProviderDashboard user={user} />;
       default:
         return (
           <div className="text-center">

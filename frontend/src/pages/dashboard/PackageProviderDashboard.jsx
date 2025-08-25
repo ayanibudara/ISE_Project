@@ -1,13 +1,13 @@
 import { useAuth } from '../../contexts/AuthContext';
 
-const ServiceProviderDashboard = () => {
+const PackageProviderDashboard = () => {
   const { authState } = useAuth();
   const { user } = authState;
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Service Provider Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Package Provider Dashboard</h1>
         <p className="mt-1 text-sm text-gray-600">
           Welcome back, {user?.businessName || user?.firstName}! Manage your services and bookings.
         </p>
@@ -156,4 +156,4 @@ const ServiceProviderDashboard = () => {
   );
 };
 
-export default ServiceProviderDashboard;
+export default PackageProviderDashboard;
