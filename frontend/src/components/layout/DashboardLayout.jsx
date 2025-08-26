@@ -179,7 +179,7 @@ const DashboardLayout = ({ children }) => {
                     alt="TMS Logo"
                     className="h-12 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
                   />
-                  <p className="text-sm font-medium text-slate-300 mt-2">Pearl path Way</p>
+                  <p className="text-sm font-medium text-slate-300 mt-2">Tourist Management System</p>
                 </div>
               </div>
               <div className="mt-8 h-0 flex-1 overflow-y-auto px-3">
@@ -237,7 +237,7 @@ const DashboardLayout = ({ children }) => {
                   alt="TMS Logo"
                   className="h-12 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
                 />
-                <p className="text-sm font-medium text-slate-300 mt-2">Tourism Management</p>
+                <p className="text-sm font-medium text-slate-300 mt-2">Pearl Path Ways</p>
               </div>
             </div>
             <div className="flex flex-1 flex-col overflow-y-auto py-6">
