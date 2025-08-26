@@ -354,7 +354,7 @@ const AdminDashboard = () => {
               <div>
                 <h3 className="text-2xl leading-6 font-bold text-gray-900 flex items-center">
                   <UserGroupIcon className="h-7 w-7 text-blue-600 mr-3" />
-                  User Management
+                  
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm text-gray-600">
                   Manage all users in the system with advanced filtering and controls
