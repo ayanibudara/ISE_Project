@@ -179,7 +179,7 @@ const DashboardLayout = ({ children }) => {
                     alt="TMS Logo"
                     className="h-12 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
                   />
-                  <p className="text-sm font-medium text-slate-300 mt-2">Tourism Management System</p>
+                  <p className="text-sm font-medium text-slate-300 mt-2">Pearl path Way</p>
                 </div>
               </div>
               <div className="mt-8 h-0 flex-1 overflow-y-auto px-3">
