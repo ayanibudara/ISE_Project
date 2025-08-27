@@ -9,10 +9,10 @@ const path = require('path');
 dotenv.config();
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
-const guideRoutes = require('./Routes/Guide/guideRoute.js');
+const authRoutes = require('./Routes/auth');
+const adminRoutes = require('./Routes/admin');
+const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
+const guideRoutes = require('./Routes/Guide/guideRoute');
 
 // Initialize express app
 const app = express();
@@ -35,18 +35,17 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'tourist_management_secret_key_2024',
   resave: false,
   saveUninitialized: false,
-  name: 'tourist.sid', // Custom session name
+  name: 'tourist.sid',
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    httpOnly: true, // Prevent XSS attacks
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
   }
 }));
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://projectisegroup:123@ise.1sbgmk5.mongodb.net/Travel?retryWrites=true&w=majority&appName=ISE';
-
+const MONGODB_URI = process.env.MONGODB_URI;
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch((err) => console.error('MongoDB connection error:', err));
