@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import userService from '../services/userService';
-import api from '../services/api';
+import api, { userService } from '../utils/api';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -19,7 +18,7 @@ import {
 
 const ProfileEdit = () => {
   const { authState, checkAuth, logout } = useAuth();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -90,10 +89,10 @@ const ProfileEdit = () => {
       
       setIsEditing(false);
       setProfilePicture(null);
-      showToast('Profile updated successfully!', 'success');
+      showSuccess('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      showToast(error.response?.data?.message || 'Failed to update profile', 'error');
+      showError(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +121,7 @@ const ProfileEdit = () => {
     try {
       setIsDeleting(true);
       await userService.deleteProfile();
-      showToast('Profile deleted successfully', 'success');
+      showSuccess('Profile deleted successfully');
       
       // Give time for toast to show
       setTimeout(async () => {
@@ -133,7 +132,7 @@ const ProfileEdit = () => {
       }, 1000);
     } catch (error) {
       console.error('Error deleting profile:', error);
-      showToast(error.response?.data?.message || 'Failed to delete profile', 'error');
+      showError(error.response?.data?.message || 'Failed to delete profile');
       setIsDeleting(false);
       setShowDeleteConfirm(false);
     }

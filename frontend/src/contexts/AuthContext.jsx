@@ -1,5 +1,5 @@
 import { createContext, useContext, useCallback, useState } from 'react';
-import api, { endpoints } from '../services/api';
+import api, { endpoints } from '../utils/api';
 
 // Initial auth state
 const initialState = {
@@ -95,9 +95,13 @@ export const AuthProvider = ({ children }) => {
       // Determine content type based on data type
       const config = {};
       
-      // If data is FormData (for file upload), DON'T set content-type header
+      // If data is FormData (for file upload), explicitly remove content-type header
       // The browser will set it automatically with the proper boundary
-      if (!(data instanceof FormData)) {
+      if (data instanceof FormData) {
+        config.headers = {};
+        // Remove any default content-type headers for FormData
+        delete config.headers['Content-Type'];
+      } else {
         config.headers = {
           'Content-Type': 'application/json'
         };
@@ -133,33 +137,46 @@ export const AuthProvider = ({ children }) => {
         error: null
       });
     } catch (error) {
-      setAuthState(prev => ({
-        ...prev,
-        error: error.response?.data?.message || 'Logout failed'
-      }));
+      console.error('Logout error:', error);
+      // Even if logout fails on server, clear local state
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null
+      });
     }
   };
 
-  // Clear error
+  // Clear error function
   const clearError = () => {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
+  // Context value
+  const value = {
+    authState,
+    login,
+    register,
+    logout,
+    checkAuth,
+    clearError
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        authState,
-        login,
-        register,
-        logout,
-        checkAuth,
-        clearError
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use auth context
-export const useAuth = () => useContext(AuthContext);
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export default AuthContext;
