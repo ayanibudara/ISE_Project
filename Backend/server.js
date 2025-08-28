@@ -3,17 +3,22 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
 
-const guideRoutes = require('./Routes/Appoinment/guideRoutes.js');
+const guideAssignRoutes = require('./Routes/guideAssignRoutes.js');
+//newly addedd
 
+const router = express.Router();
 
-// Load environment variables
+// Load environment variables/
 dotenv.config();
 
 const app = express();
-  
+
+//app.use("/guideassign", assignroutes);
 // Middleware (example)
 app.use(express.json());
+//newly addedd
 
+//MongoDB connect
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myDatabase';
 
 mongoose.connect(MONGO_URI, {
@@ -28,6 +33,8 @@ mongoose.connect(MONGO_URI, {
 
 
 // Routes
+app.use("/guideassign", guideAssignRoutes);
+
 app.use('/api/appointments', appointmentRoutes);
 app.get('/', (req, res) => {
   res.send('Hello from Express backend!');
