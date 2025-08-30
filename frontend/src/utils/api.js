@@ -8,9 +8,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   timeout: 10000, // 10 seconds timeout
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  // Remove default content-type header to allow proper FormData handling
 });
 
 // Request interceptor for logging and auth
@@ -19,7 +17,14 @@ api.interceptors.request.use(
     // Log request in development
     if (process.env.NODE_ENV === 'development') {
       console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('Request config:', config);
     }
+    
+    // Set default content-type for non-FormData requests
+    if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
     return config;
   },
   (error) => {
@@ -55,7 +60,6 @@ export const endpoints = {
     login: '/api/auth/login',
     logout: '/api/auth/logout',
     profile: '/api/auth/profile',
-    uploadProfile: '/api/auth/upload-profile-picture',
     deleteProfile: '/api/auth/profile'
   },
   
@@ -93,6 +97,27 @@ export const apiUtils = {
 
   // Get base URL
   getBaseUrl: () => API_BASE_URL
+};
+
+// User service functions (consolidated from userService.js)
+export const userService = {
+  // Get user profile
+  getProfile: async () => {
+    const response = await api.get(endpoints.auth.profile);
+    return response.data;
+  },
+
+  // Update user profile
+  updateProfile: async (profileData) => {
+    const response = await api.put(endpoints.auth.profile, profileData);
+    return response.data;
+  },
+
+  // Delete user profile
+  deleteProfile: async () => {
+    const response = await api.delete(endpoints.auth.deleteProfile);
+    return response.data;
+  },
 };
 
 export default api;

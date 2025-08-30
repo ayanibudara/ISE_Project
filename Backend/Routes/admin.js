@@ -5,34 +5,22 @@ const router = express.Router();
 // Middleware to check if user is authenticated and is admin
 const requireAdmin = async (req, res, next) => {
   try {
-    console.log('Admin middleware - Session ID:', req.sessionID);
-    console.log('Admin middleware - Session data:', req.session);
-    
-    // Check if user is logged in via session
     const userId = req.session.userId;
-    console.log('Admin middleware - User ID from session:', userId);
     
     if (!userId) {
-      console.log('Admin middleware - No user ID in session');
       return res.status(401).json({ message: 'Not authenticated' });
     }
     
-    // Get user from database
     const user = await User.findById(userId).select('-password');
-    console.log('Admin middleware - User found in DB:', user ? `${user.firstName} ${user.lastName} (${user.role})` : 'Not found');
     
     if (!user) {
-      console.log('Admin middleware - User not found in database');
       return res.status(401).json({ message: 'User not found' });
     }
     
     if (user.role !== 'Admin') {
-      console.log('Admin middleware - User role is not Admin:', user.role);
       return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
     }
     
-    console.log('Admin middleware - Admin access granted');
-    // Add user to request object for use in route handlers
     req.user = user;
     next();
   } catch (error) {
@@ -57,7 +45,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
     const userStats = {
       guides: 0,
       tourists: 0,
-      serviceProviders: 0,
+      packageProviders: 0,
       admins: 0,
       total: 0
     };
@@ -71,8 +59,8 @@ router.get('/stats', requireAdmin, async (req, res) => {
         case 'Tourist':
           userStats.tourists = stat.count;
           break;
-        case 'ServiceProvider':
-          userStats.serviceProviders = stat.count;
+        case 'PackageProvider':
+          userStats.packageProviders = stat.count;
           break;
         case 'Admin':
           userStats.admins = stat.count;
@@ -149,12 +137,6 @@ router.get('/users', requireAdmin, async (req, res) => {
 // Generate users report (PDF) - This route must be before the parameterized routes
 router.get('/users/report', requireAdmin, async (req, res) => {
   try {
-    // Set CORS headers explicitly for PDF download
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({
       bufferPages: true,
@@ -221,7 +203,7 @@ router.get('/users/report', requireAdmin, async (req, res) => {
     const userStats = {
       guides: 0,
       tourists: 0,
-      serviceProviders: 0,
+      packageProviders: 0,
       admins: 0,
       total: users.length
     };
@@ -234,8 +216,8 @@ router.get('/users/report', requireAdmin, async (req, res) => {
         case 'Tourist':
           userStats.tourists = stat.count;
           break;
-        case 'ServiceProvider':
-          userStats.serviceProviders = stat.count;
+        case 'PackageProvider':
+          userStats.packageProviders = stat.count;
           break;
         case 'Admin':
           userStats.admins = stat.count;
@@ -285,9 +267,9 @@ router.get('/users/report', requireAdmin, async (req, res) => {
     doc.fontSize(24).fillColor('#f59e0b').text(userStats.tourists.toString(), 90 + cardSpacing * 2, yPos + 15);
     doc.fontSize(12).fillColor(secondaryColor).text('Tourists', 75 + cardSpacing * 2, yPos + 50);
     
-    // Service Providers Card
+    // Package providers Card
     doc.rect(50 + cardSpacing * 3, yPos, cardWidth, cardHeight).fill('#fce7f3').stroke('#ec4899');
-    doc.fontSize(24).fillColor('#ec4899').text(userStats.serviceProviders.toString(), 90 + cardSpacing * 3, yPos + 15);
+    doc.fontSize(24).fillColor('#ec4899').text(userStats.packageProviders.toString(), 90 + cardSpacing * 3, yPos + 15);
     doc.fontSize(12).fillColor(secondaryColor).text('Providers', 70 + cardSpacing * 3, yPos + 50);
     
     // User Details Table
@@ -341,7 +323,7 @@ router.get('/users/report', requireAdmin, async (req, res) => {
         case 'Tourist':
           roleColor = '#f59e0b'; // Orange
           break;
-        case 'ServiceProvider':
+        case 'PackageProvider':
           roleColor = '#ec4899'; // Pink
           break;
       }
@@ -355,8 +337,6 @@ router.get('/users/report', requireAdmin, async (req, res) => {
       yPos += 18;
     });
     
-    // Footer - removed unwanted details
-    
     // Finalize PDF
     doc.end();
     
@@ -369,66 +349,21 @@ router.get('/users/report', requireAdmin, async (req, res) => {
   }
 });
 
-// Toggle user active status
-router.patch('/users/:userId/toggle-status', requireAdmin, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
-      });
-    }
-
-    // Don't allow disabling admin users
-    if (user.role === 'Admin') {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Cannot modify admin user status' 
-      });
-    }
-
-    user.isActive = !user.isActive;
-    await user.save();
-
-    res.json({
-      success: true,
-      message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
-      user: user.toJSON()
-    });
-  } catch (error) {
-    console.error('Error toggling user status:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update user status' 
-    });
-  }
-});
-
 // Delete user
 router.delete('/users/:userId', requireAdmin, async (req, res) => {
   try {
-    console.log('Delete user request - User ID to delete:', req.params.userId);
-    console.log('Delete user request - Admin user:', req.user ? `${req.user.firstName} ${req.user.lastName}` : 'Not set');
-    
     const { userId } = req.params;
     
     const user = await User.findById(userId);
     if (!user) {
-      console.log('Delete user - User not found:', userId);
       return res.status(404).json({ 
         success: false, 
         message: 'User not found' 
       });
     }
 
-    console.log('Delete user - Target user:', `${user.firstName} ${user.lastName} (${user.role})`);
-
     // Don't allow deleting admin users
     if (user.role === 'Admin') {
-      console.log('Delete user - Attempted to delete admin user');
       return res.status(403).json({ 
         success: false, 
         message: 'Cannot delete admin users' 
@@ -437,7 +372,6 @@ router.delete('/users/:userId', requireAdmin, async (req, res) => {
 
     // Don't allow deleting yourself
     if (userId === req.user._id.toString()) {
-      console.log('Delete user - Attempted to delete own account');
       return res.status(403).json({ 
         success: false, 
         message: 'Cannot delete your own account' 
@@ -445,7 +379,6 @@ router.delete('/users/:userId', requireAdmin, async (req, res) => {
     }
 
     await User.findByIdAndDelete(userId);
-    console.log('Delete user - Successfully deleted:', `${user.firstName} ${user.lastName}`);
 
     res.json({
       success: true,

@@ -52,12 +52,54 @@ const Register = () => {
     }
   };
   
+  const validateForm = () => {
+    if (!formData.firstName.trim()) {
+      setError('First name is required');
+      return false;
+    }
+    if (!formData.lastName.trim()) {
+      setError('Last name is required');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    if (!formData.mobile.trim()) {
+      setError('Mobile number is required');
+      return false;
+    }
+    const mobileRegex = /^[+]?[0-9]{10,15}$/;
+    if (!mobileRegex.test(formData.mobile)) {
+      setError('Please enter a valid mobile number (10-15 digits)');
+      return false;
+    }
+    if (!formData.password) {
+      setError('Password is required');
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError('Password should be at least 6 characters');
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+    if (!validateForm()) {
+      return;
     }
     
     try {
@@ -76,22 +118,22 @@ const Register = () => {
         submitData.append('profilePicture', profilePicture);
       }
 
-      // Debug: Log the form data being sent
-      console.log('Form data being sent:');
-      for (let [key, value] of submitData.entries()) {
-        console.log(key, value);
-      }
-
       await register(submitData);
       navigate('/dashboard');
     } catch (err) {
       console.error('Registration error:', err);
       console.error('Error response:', err.response?.data);
-      setError(
-        err.response?.data?.message || 
-        err.response?.data?.errors?.map(e => e.message).join(', ') || 
-        'Registration failed. Please try again.'
-      );
+      
+      // Handle validation errors from backend
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        const errorMessages = err.response.data.errors.map(error => error.message);
+        setError(errorMessages.join(', '));
+      } else {
+        setError(
+          err.response?.data?.message || 
+          'Registration failed. Please try again.'
+        );
+      }
     }
   };
 
@@ -101,7 +143,7 @@ const Register = () => {
         return '🗺️';
       case 'Tourist':
         return '🎒';
-      case 'ServiceProvider':
+      case 'PackageProvider':
         return '🏢';
       default:
         return '👤';
@@ -114,8 +156,8 @@ const Register = () => {
         return 'Lead tours and share local expertise';
       case 'Tourist':
         return 'Explore new destinations and experiences';
-      case 'ServiceProvider':
-        return 'Offer travel-related services';
+      case 'PackageProvider':
+        return 'Offer travel packages and services';
       default:
         return '';
     }
@@ -150,15 +192,18 @@ const Register = () => {
         {/* Main Form Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 space-y-6">
           {error && (
-            <div className="rounded-xl bg-red-50 border border-red-200 p-4 animate-shake">
-              <div className="flex">
+            <div className="rounded-xl bg-red-50 border-l-4 border-red-500 p-4 animate-shake">
+              <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                  <h3 className="text-sm font-medium text-red-800">Validation Error</h3>
+                  <div className="mt-1 text-sm text-red-700">
+                    {error}
+                  </div>
                 </div>
               </div>
             </div>
@@ -384,7 +429,7 @@ const Register = () => {
                   >
                     <option value="Tourist">🎒 Tourist</option>
                     <option value="Guide">🗺️ Guide</option>
-                    <option value="ServiceProvider">🏢 Service Provider</option>
+                    <option value="PackageProvider">🏢 Package Provider</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
-import api, { endpoints, apiUtils } from '../../services/api';
+import api, { endpoints, apiUtils } from '../../utils/api';
 import {
   UserGroupIcon,
   ChartBarIcon,
@@ -27,7 +27,7 @@ const AdminDashboard = () => {
     total: 0,
     guides: 0,
     tourists: 0,
-    serviceProviders: 0,
+    packageProviders: 0,
     admins: 0
   });
   const [loading, setLoading] = useState(true);
@@ -240,7 +240,7 @@ const AdminDashboard = () => {
         return 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-300';
       case 'Tourist':
         return 'bg-gradient-to-r from-amber-100 to-orange-200 text-orange-800 border border-orange-300';
-      case 'ServiceProvider':
+      case 'PackageProvider':
         return 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300';
       case 'Admin':
         return 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300';
@@ -335,8 +335,8 @@ const AdminDashboard = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Service Providers</dt>
-                    <dd className="text-3xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">{stats.serviceProviders}</dd>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Package Providers</dt>
+                    <dd className="text-3xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">{stats.packageProviders}</dd>
                   </dl>
                 </div>
               </div>
@@ -354,7 +354,7 @@ const AdminDashboard = () => {
               <div>
                 <h3 className="text-2xl leading-6 font-bold text-gray-900 flex items-center">
                   <UserGroupIcon className="h-7 w-7 text-blue-600 mr-3" />
-                  User Management
+                  
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm text-gray-600">
                   Manage all users in the system with advanced filtering and controls
@@ -420,9 +420,9 @@ const AdminDashboard = () => {
                   Tourists
                 </button>
                 <button
-                  onClick={() => handleRoleFilter('ServiceProvider')}
+                  onClick={() => handleRoleFilter('PackageProvider')}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    selectedRole === 'ServiceProvider' 
+                    selectedRole === 'PackageProvider' 
                       ? 'bg-purple-600 text-white shadow-lg transform scale-105' 
                       : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
@@ -728,7 +728,7 @@ const AdminDashboard = () => {
                     </div>
                   )}
 
-                  {userDetailsModal.user.role === 'ServiceProvider' && (
+                  {userDetailsModal.user.role === 'PackageProvider' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {userDetailsModal.user.businessName && (
                         <div>
