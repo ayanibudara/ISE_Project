@@ -8,11 +8,11 @@ const guideAssignRoutes = require('./Routes/guideAssignRoutes.js');
 //newly addedd
 
 const router = express.Router();
-=======
+
 const dotenv = require('dotenv');
 const session = require('express-session');
 const path = require('path');
->>>>>>> main
+ main
 
 // Load environment variables/
 dotenv.config();
@@ -26,7 +26,7 @@ const guideRoutes = require('./Routes/Guide/guideRoute');
 // Initialize express app
 const app = express();
 
-<<<<<<< HEAD
+ HEAD
 //app.use("/guideassign", assignroutes);
 // Middleware (example)
 app.use(express.json());
@@ -34,7 +34,7 @@ app.use(express.json());
 
 //MongoDB connect
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myDatabase';
-=======
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'], // Support multiple dev server ports
@@ -47,7 +47,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
->>>>>>> main
+ main
 
 // Session configuration
 app.use(session({
@@ -70,13 +70,10 @@ mongoose.connect(MONGODB_URI)
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
-<<<<<<< HEAD
-app.use("/guideassign", guideAssignRoutes);
-
-=======
+ 
+app.use("/guideassign", guideAssignRoute
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
->>>>>>> main
+app.use('/api/admin', adminRoute;
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/guides', guideRoutes);
 
