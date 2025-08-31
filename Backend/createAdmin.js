@@ -6,7 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Scooby:OgzjHRCxtXE9wHC3@tourist.z0kko6u.mongodb.net/?retryWrites=true&w=majority&appName=Tourist';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const createAdminUser = async () => {
   try {

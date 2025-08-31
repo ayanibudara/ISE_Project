@@ -5,45 +5,7 @@ const fs = require('fs');
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    console.log('Registration request body:', req.body);
-    console.log('Registration request file:', req.file);
-    
     const { firstName, lastName, email, mobile, password, role } = req.body;
-
-    // Manual validation
-    const errors = [];
-    
-    if (!firstName || firstName.trim().length < 2) {
-      errors.push({ field: 'firstName', message: 'First name is required and must be at least 2 characters' });
-    }
-    
-    if (!lastName || lastName.trim().length < 2) {
-      errors.push({ field: 'lastName', message: 'Last name is required and must be at least 2 characters' });
-    }
-    
-    if (!email || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      errors.push({ field: 'email', message: 'Valid email is required' });
-    }
-    
-    if (!mobile || mobile.length < 10) {
-      errors.push({ field: 'mobile', message: 'Valid mobile number is required (at least 10 digits)' });
-    }
-    
-    if (!password || password.length < 6) {
-      errors.push({ field: 'password', message: 'Password must be at least 6 characters' });
-    }
-    
-    if (!role || !['Guide', 'Tourist', 'ServiceProvider'].includes(role)) {
-      errors.push({ field: 'role', message: 'Valid role is required' });
-    }
-
-    if (errors.length > 0) {
-      console.log('Validation errors:', errors);
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: errors 
-      });
-    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { mobile }] });
@@ -66,9 +28,11 @@ exports.register = async (req, res) => {
     // If profile picture was uploaded, save the path
     if (req.file) {
       user.profilePicture = `/uploads/${req.file.filename}`;
+      console.log('Profile picture set:', user.profilePicture);
     }
 
     await user.save();
+    console.log('User saved successfully with profilePicture:', user.profilePicture);
 
     // Store user info in session (auto-login after registration)
     req.session.userId = user._id;
@@ -82,6 +46,8 @@ exports.register = async (req, res) => {
       role: user.role,
       profilePicture: user.profilePicture
     };
+
+    console.log('Session user data:', req.session.user);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -97,6 +63,27 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message
+      }));
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: errors
+      });
+    }
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        message: `A user with this ${field} already exists`
+      });
+    }
+    
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -152,26 +139,18 @@ exports.login = async (req, res) => {
 // Get current user profile
 exports.getProfile = async (req, res) => {
   try {
-    console.log('Profile request - Session ID:', req.sessionID);
-    console.log('Profile request - User ID from session:', req.session.userId);
-    console.log('Profile request - Session data:', req.session);
-    
-    // Check if user is logged in via session
     const userId = req.session.userId;
     
     if (!userId) {
-      console.log('No user ID in session - returning 401');
       return res.status(401).json({ message: 'Not authenticated' });
     }
     
     const user = await User.findById(userId).select('-password');
     
     if (!user) {
-      console.log('User not found in database - returning 404');
       return res.status(404).json({ message: 'User not found' });
     }
 
-    console.log('Profile found for user:', user.email);
     res.json({
       user
     });
@@ -248,60 +227,6 @@ exports.updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-// Upload profile picture
-exports.uploadProfilePicture = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    
-    if (!userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    // Get current user to delete old profile picture
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Delete old profile picture if it exists
-    if (user.profilePicture) {
-      const oldImagePath = path.join(__dirname, '../uploads', path.basename(user.profilePicture));
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-    }
-
-    // Update user with new profile picture
-    const profilePictureUrl = `/uploads/${req.file.filename}`;
-    user.profilePicture = profilePictureUrl;
-    await user.save();
-
-    // Update session data
-    req.session.user.profilePicture = profilePictureUrl;
-
-    res.json({
-      message: 'Profile picture uploaded successfully',
-      profilePicture: profilePictureUrl
-    });
-  } catch (error) {
-    console.error('Upload profile picture error:', error);
-    
-    // Clean up uploaded file if there was an error
-    if (req.file) {
-      const filePath = path.join(__dirname, '../uploads', req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-    
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

@@ -6,12 +6,28 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: [true, 'First name is required'],
-      trim: true
+      trim: true,
+      validate: {
+        validator: function(name) {
+          // Check if name has at least 2 letters (not just characters)
+          const letterCount = (name.match(/[a-zA-Z]/g) || []).length;
+          return letterCount >= 2;
+        },
+        message: 'First name must contain at least 2 letters'
+      }
     },
     lastName: {
       type: String,
       required: [true, 'Last name is required'],
-      trim: true
+      trim: true,
+      validate: {
+        validator: function(name) {
+          // Check if name has at least 2 letters (not just characters)
+          const letterCount = (name.match(/[a-zA-Z]/g) || []).length;
+          return letterCount >= 2;
+        },
+        message: 'Last name must contain at least 2 letters'
+      }
     },
     email: {
       type: String,
@@ -34,7 +50,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Guide', 'Tourist', 'ServiceProvider', 'Admin'],
+      enum: ['Guide', 'Tourist', 'PackageProvider', 'Admin'],
       required: [true, 'User role is required']
     },
     profilePicture: {
@@ -45,34 +61,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
-    // Additional fields specific to roles can be added here
-    // For Guide
-    specialization: {
-      type: String,
-      default: ''
-    },
-    experience: {
-      type: Number,
-      default: 0
-    },
-    // For ServiceProvider
-    businessName: {
-      type: String,
-      default: ''
-    },
-    serviceType: {
-      type: String,
-      default: ''
-    },
-    // For Tourist
-    nationality: {
-      type: String,
-      default: ''
-    },
-    preferences: {
-      type: [String],
-      default: []
-    }
   },
   {
     timestamps: true
@@ -97,13 +85,6 @@ userSchema.pre('save', async function(next) {
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
-};
-
-// Method to return public user data (without password)
-userSchema.methods.toJSON = function() {
-  const user = this.toObject();
-  delete user.password;
-  return user;
 };
 
 const User = mongoose.model('User', userSchema);
