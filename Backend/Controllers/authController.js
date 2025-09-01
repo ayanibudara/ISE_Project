@@ -115,7 +115,8 @@ exports.login = async (req, res) => {
       email: user.email,
       mobile: user.mobile,
       role: user.role,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
+      
     };
 
     res.json({
