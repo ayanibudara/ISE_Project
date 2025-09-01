@@ -17,7 +17,7 @@ export function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8">
           <a
-            href="#"
+            href="/"
             className="text-[#1E3A8A] font-medium hover:text-blue-900 transition-colors"
           >
             Home

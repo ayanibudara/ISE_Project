@@ -10,7 +10,7 @@ const {
 const router = express.Router();
 
 // Routes
-router.post('/', createAppointment);
+router.post('/add', createAppointment);
 router.get('/', getAppointments);
 router.get('/:id', getAppointmentById);
 router.put('/:id', updateAppointment);
