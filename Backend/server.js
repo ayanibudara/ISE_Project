@@ -13,6 +13,7 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
+const packageRoutes = require('./Routes/service/packageRoutes.js');
 
 // Initialize express app
 const app = express();
@@ -54,7 +55,8 @@ mongoose.connect(MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/guides', guideRoutes);
+app.use('/api/guides', guideRoutes);    
+app.use('/api', packageRoutes);     
 
 // Root route
 app.get('/', (req, res) => {
