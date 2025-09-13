@@ -11,7 +11,7 @@ dotenv.config();
 // Import routes
 const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
-const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
+
 const guideRoutes = require('./Routes/Guide/guideRoute');
 const packageRoutes = require('./Routes/Package/packageRoutes.js');
 const categoryRoutes = require('./Routes/Package/categoryRoutes.js');

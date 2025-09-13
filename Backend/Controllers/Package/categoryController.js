@@ -1,6 +1,6 @@
 const categoryService = require('../../Services/category.service');
-const { sendEmail } = require("../../Utils/email.util");
-const { getAdminEmails } = require("../../Utils/user.util");
+const { sendEmail } = require("../../utils/email.util");
+const { getAdminEmails } = require("../../utils/user.util");
 
 // Get all categories
 const getAllCategories = async (req, res) => {
