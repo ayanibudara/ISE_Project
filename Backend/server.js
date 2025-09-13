@@ -71,9 +71,9 @@ mongoose.connect(MONGODB_URI)
 
 // Routes
  
-app.use("/guideassign", guideAssignRoute
+app.use("/guideassign", guideAssignRoute);
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoute;
+app.use('/api/admin', adminRoute);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/guides', guideRoutes);
 
