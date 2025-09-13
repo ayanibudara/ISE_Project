@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
 
+
 // Load environment variables
 dotenv.config();
 
@@ -12,7 +13,8 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
-
+const packageRoutes = require('./Routes/Package/packageRoutes.js');
+const categoryRoutes = require('./Routes/Package/categoryRoutes.js');
 // Initialize express app
 
 const app = express();
@@ -60,7 +62,8 @@ app.use('/api/appointments', appointmentRoutes);
 app.get('/', (req, res) => {
   res.send('Hello from Express backend!');
 });
-
+app.use('/api/package', packageRoutes);
+app.use('/api/package', categoryRoutes);
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
