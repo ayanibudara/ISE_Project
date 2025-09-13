@@ -1,40 +1,34 @@
 const express = require('express');
-const dotenv = require('dotenv');
+const cors = require('cors');
 const mongoose = require('mongoose');
-const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
-
+const dotenv = require('dotenv');
+const session = require('express-session');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
 
-
 // Import routes
 const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
-
+const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
-const packageRoutes = require('./Routes/Package/packageRoutes.js');
-const categoryRoutes = require('./Routes/Package/categoryRoutes.js');
-// Initialize express app
 
+// Initialize express app
 const app = express();
 
-// Middleware (example)
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'], // Support multiple dev server ports
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myDatabase';
-
-
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
-
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Session configuration
 app.use(session({
@@ -56,18 +50,25 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-
 // Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/guides', guideRoutes);
+
+// Root route
 app.get('/', (req, res) => {
-  res.send('Hello from Express backend!');
+  res.send('Tourist Management System API is running');
 });
-app.use('/api/package', packageRoutes);
-app.use('/api/package', categoryRoutes);
-// Start the server
-const PORT = process.env.PORT || 3000;
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({ message: 'Something went wrong!', error: err.message });
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-//tttt
