@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './../contexts/AuthContext'
-import { ToastProvider } from './../contexts/ToastContext'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './../contexts/AuthContext'
 import { useState, useEffect } from 'react'
+import Home from './home'
 import Login from './auth/Login'
 import Register from './auth/Register'
+import AppointmentForm from "./appointment/appointmentform"
+import AppointmentsPage from "./appointment/AppointmentsPage"
 import TouristDashboard from './dashboard/TouristDashboard'
 import GuideDashboard from './dashboard/GuideDashboard'
 import GuideProfile from './dashboard/GuideProfile'
@@ -73,8 +75,12 @@ const AppRoutes = () => {
 
   return (
     <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={authState.isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
       <Route path="/login" element={authState.isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/register" element={authState.isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} />
+      <Route path="/apform" element={<AppointmentForm />} />
+      <Route path="/appoiments" element={<AppointmentsPage />} />
       
       <Route path="/dashboard" element={renderDashboard()} />
       
@@ -178,16 +184,4 @@ const AppRoutes = () => {
   );
 };
 
-function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <AppRoutes />
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  )
-}
-
-export default App
+export default AppRoutes;

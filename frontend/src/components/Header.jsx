@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { MenuIcon, XIcon as CloseIcon } from "lucide-react";
-import { Instagram, Twitter } from "lucide-react";//
+import { Instagram, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,18 +51,18 @@ export function Header() {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          <button
+          <Link
+            to="/login"
             className="px-4 py-2 text-[#1E3A8A] font-medium border border-[#1E3A8A] rounded-lg hover:bg-blue-50 transition-colors"
-            aria-label="Login"
           >
             Login
-          </button>
-          <button
+          </Link>
+          <Link
+            to="/register"
             className="px-4 py-2 bg-[#1E3A8A] text-white font-medium rounded-lg hover:bg-blue-900 transition-colors"
-            aria-label="Sign Up"
           >
             Sign Up
-          </button>
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -110,18 +111,18 @@ export function Header() {
               Contact
             </a>
             <div className="flex space-x-2 pt-2">
-              <button
+              <Link
+                to="/login"
                 className="flex-1 px-4 py-2 text-[#1E3A8A] font-medium border border-[#1E3A8A] rounded-lg hover:bg-blue-50 transition-colors"
-                aria-label="Login"
               >
                 Login
-              </button>
-              <button
+              </Link>
+              <Link
+                to="/register"
                 className="flex-1 px-4 py-2 bg-[#1E3A8A] text-white font-medium rounded-lg hover:bg-blue-900 transition-colors"
-                aria-label="Sign Up"
               >
                 Sign Up
-              </button>
+              </Link>
             </div>
           </nav>
         </div>
