@@ -1,9 +1,5 @@
 const Package = require('../../Models/Services/packageModel.js');
 
-// ===============================
-// Main Package CRUD
-// ===============================
-
 // Create a new package
 exports.createPackage = async (req, res) => {
   try {
@@ -41,11 +37,7 @@ exports.getPackageById = async (req, res) => {
 exports.updatePackage = async (req, res) => {
   try {
     const { packageId } = req.params;
-    const updatedPackage = await Package.findByIdAndUpdate(
-      packageId,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const updatedPackage = await Package.findByIdAndUpdate(packageId, req.body, { new: true });
     if (!updatedPackage) return res.status(404).json({ error: "Package not found" });
     res.json(updatedPackage);
   } catch (err) {
@@ -65,79 +57,15 @@ exports.deletePackage = async (req, res) => {
   }
 };
 
-// Get packages by category (and optionally province)
+// Get packages by category (optional: filter by province too)
 exports.getPackagesByCategory = async (req, res) => {
   try {
     const { category, province } = req.query;
-    const filter = {};
-    if (category) filter.category = category;
+    const filter = { category };
     if (province) filter.province = province;
 
     const packages = await Package.find(filter);
     res.json(packages);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// ===============================
-// Sub-Package CRUD (Standard / Premium / VIP inside packages[])
-// ===============================
-
-// Get a single sub-package (tier) from a package
-exports.getSubPackage = async (req, res) => {
-  try {
-    const { packageId, type } = req.params; // type = Standard | Premium | VIP
-    const pkg = await Package.findById(packageId);
-    if (!pkg) return res.status(404).json({ error: "Package not found" });
-
-    const subPkg = pkg.packages.find(p => p.packageType === type);
-    if (!subPkg) return res.status(404).json({ error: `${type} sub-package not found` });
-
-    res.json(subPkg);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Update a sub-package (tier) inside a package
-exports.updateSubPackage = async (req, res) => {
-  try {
-    const { packageId, type } = req.params;
-    const pkg = await Package.findById(packageId);
-    if (!pkg) return res.status(404).json({ error: "Package not found" });
-
-    const subPkg = pkg.packages.find(p => p.packageType === type);
-    if (!subPkg) return res.status(404).json({ error: `${type} sub-package not found` });
-
-    // Update only fields provided
-    if (req.body.price !== undefined) subPkg.price = req.body.price;
-    if (req.body.tourDays !== undefined) subPkg.tourDays = req.body.tourDays;
-    if (req.body.services !== undefined) subPkg.services = req.body.services;
-
-    await pkg.save();
-    res.json(subPkg);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Delete a sub-package (tier) from a package
-exports.deleteSubPackage = async (req, res) => {
-  try {
-    const { packageId, type } = req.params;
-    const pkg = await Package.findById(packageId);
-    if (!pkg) return res.status(404).json({ error: "Package not found" });
-
-    const initialLength = pkg.packages.length;
-    pkg.packages = pkg.packages.filter(p => p.packageType !== type);
-
-    if (pkg.packages.length === initialLength) {
-      return res.status(404).json({ error: `${type} sub-package not found` });
-    }
-
-    await pkg.save();
-    res.json({ message: `${type} sub-package deleted successfully` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
