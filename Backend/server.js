@@ -22,7 +22,7 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
-const guideAssignRoute = require('./Routes/guideAssignRoutes.js');
+
 
 // Initialize express app
 const app = express();
@@ -72,7 +72,7 @@ mongoose.connect(MONGODB_URI)
 
 // Routes
  
-app.use("/guideassign", guideAssignRoute);
+app.use('/api/guideassign', guideAssignRoutes);
 app.use('/api/auth', authRoutes);
 //app.use('/api/admin', adminRoute);
 app.use('/api/appointments', appointmentRoutes);
@@ -95,3 +95,6 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+const guideAssignRoute = require('./Routes/guideAssignRoutes.js');
+
+app.post('/api/guideassign',guideAssignRoutes);
