@@ -1,312 +1,240 @@
 import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
 import {
   Calendar,
   User,
   DollarSign,
-  ClipboardCheck,
-  Pencil,
+  Star,
 } from "lucide-react";
-import { format, differenceInDays, addDays } from "date-fns";
 
 export default function GuideAssignForm() {
   const [isEditing, setIsEditing] = useState(true);
   const [totalDays, setTotalDays] = useState(0);
   const [totalPayment, setTotalPayment] = useState(0);
+  const [selectedGuide, setSelectedGuide] = useState(null);
+  const [formData, setFormData] = useState({
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    guideId: "",
+    paymentPerDay: 150,
+  });
+  const [errors, setErrors] = useState({});
 
-  // ✅ Mock data (replace with API calls if needed)
+  // Dummy guide list (replace later with backend fetch)
   const [guides] = useState([
     {
       _id: "66e0d9e5b7f3c23b8c4b5678",
       name: "John Smith",
       expertise: "Mountain Trekking",
       availability: true,
+      rating: 4.9,
     },
     {
       _id: "66e0d9e5b7f3c23b8c4b5679",
       name: "Sarah Johnson",
-      expertise: "Historical Tours",
+      expertise: "Cultural Heritage",
       availability: true,
+      rating: 4.8,
+    },
+    {
+      _id: "66e0d9e5b7f3c23b8c4b5680",
+      name: "Mike Chen",
+      expertise: "Wildlife Safari",
+      availability: false,
+      rating: 4.7,
     },
   ]);
 
-  const [packages] = useState([
-    { _id: "66e0d9e5b7f3c23b8c4b1234", name: "Sri Lanka Adventure" },
-    { _id: "66e0d9e5b7f3c23b8c4b1235", name: "Cultural Heritage Tour" },
-  ]);
+  // Calculate days
+  const calculateDays = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = end - start;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays > 0 ? diffDays : 0;
+  };
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    watch,
-    formState: { errors },
-    reset,
-  } = useForm({
-    defaultValues: {
-      packageId: "",
-      travellerName: "",
-      startDate: format(new Date(), "yyyy-MM-dd"),
-      endDate: format(addDays(new Date(), 5), "yyyy-MM-dd"),
-      guideId: "",
-      paymentPerDay: 150,
-    },
-  });
-
-  const watchStartDate = watch("startDate");
-  const watchEndDate = watch("endDate");
-  const watchPaymentPerDay = watch("paymentPerDay");
-
-  // ✅ Calculate total days
+  // Update totals when dates or rate change
   useEffect(() => {
-    if (watchStartDate && watchEndDate) {
-      const days =
-        differenceInDays(new Date(watchEndDate), new Date(watchStartDate)) + 1;
-      setTotalDays(days > 0 ? days : 0);
+    if (formData.startDate && formData.endDate) {
+      const days = calculateDays(formData.startDate, formData.endDate);
+      setTotalDays(days);
+      setTotalPayment(days * (formData.paymentPerDay || 0));
     }
-  }, [watchStartDate, watchEndDate]);
+  }, [formData.startDate, formData.endDate, formData.paymentPerDay]);
 
-  // ✅ Calculate total payment
+  // Track selected guide
   useEffect(() => {
-    setTotalPayment(totalDays * (watchPaymentPerDay || 0));
-  }, [totalDays, watchPaymentPerDay]);
+    const guide = guides.find((g) => g._id === formData.guideId);
+    setSelectedGuide(guide || null);
+  }, [formData.guideId, guides]);
 
-  // ✅ Submit handler
-  const onSubmit = async (data) => {
+  // Input handler
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
+
+  // Validate form before submit
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    if (!formData.guideId) newErrors.guideId = "Please select a guide";
+    if (!formData.paymentPerDay || formData.paymentPerDay < 1)
+      newErrors.paymentPerDay = "Payment must be greater than 0";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Submit form to backend
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     const payload = {
-      packageId: data.packageId, // from select
-      travellerName: data.travellerName,
-      guideId: data.guideId, // from select
-      startDate: data.startDate,
-      endDate: data.endDate,
+      guideId: formData.guideId,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
       totalDays,
-      paymentPerDay: data.paymentPerDay,
+      paymentPerDay: formData.paymentPerDay,
       totalPayment,
       status: "Assigned",
     };
 
     try {
-      const res = await fetch("http://localhost:5000/api/guideassign", {
+      const response = await fetch("http://localhost:5000/api/guideassign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Failed to save booking: ${errText}`);
-      }
+      if (!response.ok) throw new Error("Failed to save booking");
 
-      const result = await res.json();
-      console.log("✅ Saved:", result);
+      const savedData = await response.json();
+      console.log("✅ Saved to MongoDB:", savedData);
+
       setIsEditing(false);
-      reset(); // clear form
     } catch (err) {
       console.error("❌ Error saving booking:", err);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="space-y-6">
-          {/* Traveller Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Traveller Name
-            </label>
-            <input
-              type="text"
-              {...register("travellerName", {
-                required: "Traveller name is required",
-              })}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-              disabled={!isEditing}
-            />
-            {errors.travellerName && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.travellerName.message}
-              </p>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 className="text-2xl font-bold mb-6 flex items-center">
+          <Calendar className="mr-2 text-blue-500" /> Guide Scheduling
+        </h1>
 
-          {/* Package Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Package
-            </label>
-            <select
-              {...register("packageId", { required: "Please select a package" })}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-              disabled={!isEditing}
-            >
-              <option value="">Select a package...</option>
-              {packages.map((pkg) => (
-                <option key={pkg._id} value={pkg._id}>
-                  {pkg.name}
-                </option>
-              ))}
-            </select>
-            {errors.packageId && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.packageId.message}
-              </p>
-            )}
-          </div>
+        {/* Dates */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <input
+            type="date"
+            value={formData.startDate}
+            onChange={(e) => handleInputChange("startDate", e.target.value)}
+            className="w-full border rounded-lg p-2"
+            disabled={!isEditing}
+          />
+          {errors.startDate && (
+            <p className="text-red-600 text-sm">{errors.startDate}</p>
+          )}
 
-          {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Start Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
-              </label>
-              <Controller
-                name="startDate"
-                control={control}
-                rules={{ required: "Start date is required" }}
-                render={({ field }) => (
-                  <input
-                    type="date"
-                    {...field}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 pl-2"
-                    disabled={!isEditing}
-                  />
-                )}
-              />
-              {errors.startDate && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.startDate.message}
-                </p>
-              )}
-            </div>
+          <label className="block text-sm font-medium mt-4 mb-1">End Date</label>
+          <input
+            type="date"
+            value={formData.endDate}
+            onChange={(e) => handleInputChange("endDate", e.target.value)}
+            className="w-full border rounded-lg p-2"
+            disabled={!isEditing}
+          />
+          {errors.endDate && (
+            <p className="text-red-600 text-sm">{errors.endDate}</p>
+          )}
 
-            {/* End Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date
-              </label>
-              <Controller
-                name="endDate"
-                control={control}
-                rules={{ required: "End date is required" }}
-                render={({ field }) => (
-                  <input
-                    type="date"
-                    {...field}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 pl-2"
-                    disabled={!isEditing}
-                  />
-                )}
-              />
-              {errors.endDate && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.endDate.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Total Days */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Total Days
-            </label>
-            <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-              <span className="text-lg font-medium">
-                {totalDays} {totalDays === 1 ? "day" : "days"}
-              </span>
-            </div>
-          </div>
-
-          {/* Guide Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Guide
-            </label>
-            <select
-              {...register("guideId", { required: "Please select a guide" })}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-              disabled={!isEditing}
-            >
-              <option value="">Select a guide...</option>
-              {guides.map((guide) => (
-                <option
-                  key={guide._id}
-                  value={guide._id}
-                  disabled={!guide.availability}
-                >
-                  {guide.name} - {guide.expertise}{" "}
-                  {!guide.availability && "(Unavailable)"}
-                </option>
-              ))}
-            </select>
-            {errors.guideId && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.guideId.message}
-              </p>
-            )}
-          </div>
-
-          {/* Payment */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Payment per day */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Per Day ($)
-              </label>
-              <input
-                type="number"
-                {...register("paymentPerDay", {
-                  required: "Payment amount is required",
-                  min: { value: 1, message: "Payment must be greater than 0" },
-                })}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 pl-2"
-                disabled={!isEditing}
-              />
-              {errors.paymentPerDay && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.paymentPerDay.message}
-                </p>
-              )}
-            </div>
-
-            {/* Total Payment */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Total Payment ($)
-              </label>
-              <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                <span className="text-lg font-medium">
-                  ${totalPayment.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-4">
-            {isEditing ? (
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <ClipboardCheck className="h-4 w-4 mr-2" />
-                Confirm Booking
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Booking
-              </button>
-            )}
-          </div>
+          <p className="mt-2 text-gray-700">
+            Duration: <strong>{totalDays}</strong> days
+          </p>
         </div>
-      </form>
+
+        {/* Guide selection */}
+        <div className="mb-6">
+          <h2 className="font-semibold mb-2 flex items-center">
+            <User className="mr-2 text-blue-500" /> Choose Guide
+          </h2>
+          <div className="space-y-2">
+            {guides.map((guide) => (
+              <div
+                key={guide._id}
+                onClick={() =>
+                  guide.availability &&
+                  isEditing &&
+                  handleInputChange("guideId", guide._id)
+                }
+                className={`p-3 border rounded-lg cursor-pointer ${
+                  formData.guideId === guide._id
+                    ? "border-blue-500 bg-blue-50"
+                    : guide.availability
+                    ? "hover:border-blue-300"
+                    : "bg-gray-100 opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <div className="flex justify-between">
+                  <span>{guide.name} – {guide.expertise}</span>
+                  <span className="flex items-center text-yellow-500">
+                    <Star className="h-4 w-4 fill-current" />
+                    {guide.rating}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {errors.guideId && (
+            <p className="text-red-600 text-sm">{errors.guideId}</p>
+          )}
+        </div>
+
+        {/* Payment */}
+        <div className="mb-6">
+          <h2 className="font-semibold mb-2 flex items-center">
+            <DollarSign className="mr-2 text-green-500" /> Payment
+          </h2>
+          <label className="block text-sm font-medium mb-1">Daily Rate ($)</label>
+          <input
+            type="number"
+            value={formData.paymentPerDay}
+            onChange={(e) =>
+              handleInputChange("paymentPerDay", Number(e.target.value))
+            }
+            className="w-full border rounded-lg p-2"
+            disabled={!isEditing}
+          />
+          {errors.paymentPerDay && (
+            <p className="text-red-600 text-sm">{errors.paymentPerDay}</p>
+          )}
+
+          <p className="mt-2 text-gray-700">
+            Total Payment: <strong>${totalPayment}</strong>
+          </p>
+        </div>
+
+        {/* Actions */}
+        {isEditing ? (
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Confirm Booking
+          </button>
+        ) : (
+          <p className="text-green-600 font-semibold">
+            ✅ Booking saved successfully!
+          </p>
+        )}
+      </div>
     </div>
   );
 }

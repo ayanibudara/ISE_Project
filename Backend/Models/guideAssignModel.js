@@ -2,14 +2,14 @@
 const mongoose = require("mongoose");
 
 const guideAssignSchema = new mongoose.Schema({
-  packageId: {
-    type: String, // later you can use mongoose.Schema.Types.ObjectId if linking to Package model
+ // packageId: {
+   // type: String, // later you can use mongoose.Schema.Types.ObjectId if linking to Package model
     
-  },
-  travellerName: {
-    type: String,
-    required: true,
-  },
+ // },
+ // travellerName: {
+   // type: String,
+   // required: true,
+ // },
   guideId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Guide",

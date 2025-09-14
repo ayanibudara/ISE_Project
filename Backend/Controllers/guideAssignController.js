@@ -7,9 +7,9 @@ exports.createGuideAssign = async (req, res) => {
     console.log("📩 Incoming:", req.body);
 
     // If no packageId/guideId sent, use dummy ObjectIds
-    if (!req.body.packageId) {
-      req.body.packageId = new mongoose.Types.ObjectId();
-    }
+   // if (!req.body.packageId) {
+     // req.body.packageId = new mongoose.Types.ObjectId();
+   // }
     if (!req.body.guideId) {
       req.body.guideId = new mongoose.Types.ObjectId();
     }
@@ -29,7 +29,7 @@ exports.createGuideAssign = async (req, res) => {
 exports.getAssignments = async (req, res) => {
   try {
     const assignments = await GuideAssign.find()
-      .populate("packageId", "packageName")
+     // .populate("packageId", "packageName")
       .populate("guideId", "name");
     res.status(200).json(assignments);
   } catch (err) {
@@ -41,7 +41,7 @@ exports.getAssignments = async (req, res) => {
 exports.getAssignmentById = async (req, res) => {
   try {
     const assignment = await GuideAssign.findById(req.params.id)
-      .populate("packageId", "packageName")
+     // .populate("packageId", "packageName")
       .populate("guideId", "name");
     if (!assignment) return res.status(404).json({ error: "Assignment not found" });
     res.status(200).json(assignment);
