@@ -1,10 +1,10 @@
+// models/guideAssignModel.js
 const mongoose = require("mongoose");
 
 const guideAssignSchema = new mongoose.Schema({
   packageId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Package",
-    required: true,
+    type: String, // later you can use mongoose.Schema.Types.ObjectId if linking to Package model
+    
   },
   travellerName: {
     type: String,

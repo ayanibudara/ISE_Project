@@ -1,33 +1,29 @@
 const GuideAssign = require("../Models/guideAssignModel");
 
-// Create assignment
-exports.createAssignment = async (req, res) => {
+
+
+exports.createGuideAssign = async (req, res) => {
   try {
-    const { packageId, travellerName, guideId, startDate, endDate, paymentPerDay } = req.body;
+    console.log("📩 Incoming:", req.body);
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    const totalPayment = totalDays * paymentPerDay;
+    // If no packageId/guideId sent, use dummy ObjectIds
+    if (!req.body.packageId) {
+      req.body.packageId = new mongoose.Types.ObjectId();
+    }
+    if (!req.body.guideId) {
+      req.body.guideId = new mongoose.Types.ObjectId();
+    }
 
-    const newAssignment = new GuideAssign({
-      packageId,
-      travellerName,
-      guideId,
-      startDate,
-      endDate,
-      totalDays,
-      paymentPerDay,
-      totalPayment,
-      status: "Assigned"
-    });
+    const newAssign = new GuideAssign(req.body);
+    const savedAssign = await newAssign.save();
 
-    await newAssignment.save();
-    res.status(201).json({ message: "Guide assigned successfully", assignment: newAssignment });
+    res.status(201).json(savedAssign);
   } catch (err) {
-    res.status(500).json({ error: "Failed to create assignment", details: err.message });
+    console.error("❌ Error saving:", err.message);
+    res.status(500).json({ message: err.message });
   }
 };
+
 
 // Get all assignments
 exports.getAssignments = async (req, res) => {
