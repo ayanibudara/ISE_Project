@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
+//const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
 
 const guideAssignRoutes = require('./Routes/guideAssignRoutes.js');
 //newly addedd
@@ -12,7 +12,7 @@ const router = express.Router();
 const dotenv = require('dotenv');
 const session = require('express-session');
 const path = require('path');
- main
+
 
 // Load environment variables/
 dotenv.config();
@@ -22,11 +22,12 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
+const guideAssignRoute = require('./Routes/guideAssignRoutes.js');
 
 // Initialize express app
 const app = express();
 
- HEAD
+
 //app.use("/guideassign", assignroutes);
 // Middleware (example)
 app.use(express.json());
@@ -47,7 +48,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
- main
+
 
 // Session configuration
 app.use(session({
@@ -73,7 +74,7 @@ mongoose.connect(MONGODB_URI)
  
 app.use("/guideassign", guideAssignRoute);
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoute);
+//app.use('/api/admin', adminRoute);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/guides', guideRoutes);
 

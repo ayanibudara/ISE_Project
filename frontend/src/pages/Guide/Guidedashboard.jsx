@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { Sidebar } from './components/Sidebar'
-import { Header } from './components/Header'
-import { ProfileSection } from './components/ProfileSection'
-import { AvailabilityCalendar } from './components/AvailabilityCalendar'
-import { UpcomingTours } from './components/UpcomingTours'
+import { Sidebar } from '../../components/ui/guideSidebar'
+import { Header } from '../../components/ui/guideHeader'
+import { ProfileSection } from '../../components/ui/guideProfileSection'
+import { AvailabilityCalendar } from '../../components/ui/AvailabilityCalendar'
+import { UpcomingTours } from '../../components/ui/guideUpcomingTours'
 
-export function App() {
+//export function App() {
+export default function Guidedashboard() {
   const [activeTab, setActiveTab] = useState('profile')
 
   return (
