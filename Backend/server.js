@@ -13,6 +13,7 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
+const review = require('./Routes/Review/reviewRoutes.js');
 
 // Initialize express app
 const app = express();
@@ -55,6 +56,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/guides', guideRoutes);
+app.use('/api/review', review);
+
 
 // Root route
 app.get('/', (req, res) => {
