@@ -81,8 +81,8 @@ const TourPackageForm = () => {
       }
 
       // Step 4: Make API call to backend
-      await axios.post('/api/packages', data) // Replace with your backend route
-//await axios.post('http://localhost:5000/api/packages', data)
+      //await axios.post('/api/packages', data) // Replace with your backend route
+await axios.post('http://localhost:5000/api/packages', data)
 
       alert('All three packages created successfully!')
 
