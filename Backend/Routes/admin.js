@@ -1,35 +1,10 @@
 const express = require("express");
 const User = require("../models/User");
+const { requireAuth, restrictTo, attachToken } = require("../middleware/authMiddleware");
 const router = express.Router();
 
-// Middleware to check if user is authenticated and is admin
-const requireAdmin = async (req, res, next) => {
-  try {
-    const userId = req.session.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const user = await User.findById(userId).select("-password");
-
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    if (user.role !== "Admin") {
-      return res
-        .status(403)
-        .json({ message: "Access denied. Admin privileges required." });
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    console.error("Admin middleware error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
+// Use JWT-based auth + attachToken and role restriction for admin routes
+const requireAdmin = [requireAuth, attachToken, restrictTo("Admin")];
 
 // Get user statistics
 router.get("/stats", requireAdmin, async (req, res) => {

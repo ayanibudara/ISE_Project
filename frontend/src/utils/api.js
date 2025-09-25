@@ -36,6 +36,7 @@ api.interceptors.request.use(
 // Response interceptor for handling common errors
 api.interceptors.response.use(
   (response) => {
+    // When using cookie-based auth (HttpOnly jwt cookie), there's nothing to capture here.
     return response;
   },
   (error) => {
