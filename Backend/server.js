@@ -9,12 +9,20 @@ const path = require("path");
 dotenv.config();
 
 // Import routes
-const authRoutes = require("./Routes/auth");
-const adminRoutes = require("./Routes/admin");
-const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
-const guideRoutes = require("./Routes/Guide/guideRoute");
-const packageRoutes = require("./Routes/service/packageRoutes.js");
+
+const authRoutes = require('./Routes/auth');
+const adminRoutes = require('./Routes/admin');
+const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
+const guideRoutes = require('./Routes/Guide/guideRoute');
+
+const review = require('./Routes/Review/reviewRoutes.js');
+
+const packageRoutes = require('./Routes/service/packageRoutes.js');
+
+
 const advertisementRoutes = require("./Routes/advertisementRoutes");
+
+
 
 // Initialize express app
 const app = express();
@@ -62,12 +70,22 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/appointments", appointmentRoutes);
-app.use("/api/guides", guideRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/appointments', appointmentRoutes);
+
+app.use('/api/guides', guideRoutes);
+app.use('/api/review', review);
+
+
+app.use('/api/guides', guideRoutes);    
+app.use('/api', packageRoutes);     
+
 app.use("/api", packageRoutes);
 app.use("/api/advertisements", advertisementRoutes);
+
+
 
 // Root route
 app.get("/", (req, res) => {
