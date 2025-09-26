@@ -23,7 +23,10 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import AdvertisementManagement from "./pages/dashboard/AdvertisementManagement";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
+import ReviewForm from "./pages/Review/ReviewForm";
+import ReviewList from "./pages/Review/ReviewList";
 import { useEffect } from "react";
+
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
@@ -93,6 +96,10 @@ const AuthenticatedRoutes = () => {
       <Route path="/appoiments" element={<AppointmentsPage />} />
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
+      <Route path="/reviewform" element={<ReviewForm />} />
+      <Route path="/reviewlist" element={<ReviewList />} />
+      
+
 
       {/* Auth Routes */}
       <Route

@@ -19,7 +19,7 @@ const review = require('./Routes/Review/reviewRoutes.js');
 
 const packageRoutes = require('./Routes/service/packageRoutes.js');
 
-const packageRoutes = require("./Routes/service/packageRoutes.js");
+
 const advertisementRoutes = require("./Routes/advertisementRoutes");
 
 
