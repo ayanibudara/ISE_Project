@@ -155,13 +155,16 @@ await axios.post('http://localhost:5000/api/packages', data)
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                     <Gem className="w-4 h-4 text-purple-600" /> Category *
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Cultural, Adventure, Beach"
+                  <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                  />
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Beach">Beach</option>
+                    <option value="Cultural">Cultural</option>
+                </select> 
                 </div>
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
