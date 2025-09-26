@@ -7,8 +7,13 @@ import AppointmentForm from "./pages/appointment/appointmentform";
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
+
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
+
+
+import PackageForm from './pages/Services/PackageForm';
+import Packages from './pages/Services/PackagePage';
 
 function App() {
   
@@ -21,8 +26,13 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/apform" element={<AppointmentForm/>}/>
           <Route path="/appoiments" element={<AppointmentsPage/>}/>
+
           <Route path="/review" element={<ReviewForm/>}/>
           <Route path="/reviewlist" element={<ReviewList/>}/>
+
+          <Route path="/addpackage" element={<PackageForm/>}/>
+          <Route path="/packages" element={<Packages/>}/>
+
         </Routes>  
          <Footer />
       </Router>

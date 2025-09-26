@@ -13,7 +13,11 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
+
 const review = require('./Routes/Review/reviewRoutes.js');
+
+const packageRoutes = require('./Routes/service/packageRoutes.js');
+
 
 // Initialize express app
 const app = express();
@@ -55,8 +59,13 @@ mongoose.connect(MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/appointments', appointmentRoutes);
+
 app.use('/api/guides', guideRoutes);
 app.use('/api/review', review);
+
+
+app.use('/api/guides', guideRoutes);    
+app.use('/api', packageRoutes);     
 
 
 // Root route
@@ -75,4 +84,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-

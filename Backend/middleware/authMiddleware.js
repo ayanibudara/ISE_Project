@@ -34,3 +34,5 @@ exports.restrictTo = (...roles) => {
     next();
   };
 };
+// Add this line to create alias
+exports.authorizeRoles = exports.restrictTo;
