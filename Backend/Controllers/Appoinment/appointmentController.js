@@ -1,21 +1,23 @@
 const Appointment = require('../../Models/Appoiment/appointmentModel.js');
 
 // @desc Create new appointment
-// @route POST /api/appointments
+// @route POST /api/appointments/add
 exports.createAppointment = async (req, res) => {
   try {
-    const { userName, membersCount, packageType, note, startDate } = req.body;
+    const { userId, userName, membersCount, packageType, note, startDate } = req.body;
 
-    if (!userName || !membersCount || !packageType || !startDate) {
+    if (!userId || !userName || !membersCount || !packageType || !startDate) {
       return res.status(400).json({ message: 'All required fields must be filled!' });
     }
 
     const appointment = await Appointment.create({
+      userId,
       userName,
       membersCount,
       packageType,
       note,
       startDate,
+      status: 'booked',
     });
 
     res.status(201).json(appointment);
@@ -24,12 +26,22 @@ exports.createAppointment = async (req, res) => {
   }
 };
 
-// @desc Get all appointments
-// @route GET /api/appointments
+// @desc Get appointments (filter by userId, return upcoming + past)
+// @route GET /api/appointments?userId=<id>
 exports.getAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find().sort({ startDate: 1 });
-    res.json(appointments);
+    const { userId } = req.query;
+    const now = new Date();
+
+    let query = {};
+    if (userId) query.userId = userId;
+
+    const appointments = await Appointment.find(query).sort({ startDate: 1 });
+
+    const upcoming = appointments.filter(appt => new Date(appt.startDate) >= now);
+    const past = appointments.filter(appt => new Date(appt.startDate) < now);
+
+    res.json({ upcoming, past });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

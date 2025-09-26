@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User', // assumes you have a User model
+      required: true,
+    },
     userName: {
       type: String,
       required: true,
@@ -15,7 +20,7 @@ const appointmentSchema = new mongoose.Schema(
     packageType: {
       type: String,
       required: true,
-      enum: ['Standard', 'Premium', 'VIP'], // customize as you want
+      enum: ['Standard', 'Premium', 'VIP'], // customize as needed
     },
     note: {
       type: String,
@@ -24,6 +29,11 @@ const appointmentSchema = new mongoose.Schema(
     startDate: {
       type: Date,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ['booked', 'completed', 'cancelled'],
+      default: 'booked',
     },
   },
   { timestamps: true }

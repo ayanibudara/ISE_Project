@@ -11,7 +11,7 @@ const router = express.Router();
 
 // Routes
 router.post('/add', createAppointment);
-router.get('/', getAppointments);
+router.get('/', getAppointments); // supports ?userId=<id>
 router.get('/:id', getAppointmentById);
 router.put('/:id', updateAppointment);
 router.delete('/:id', deleteAppointment);
