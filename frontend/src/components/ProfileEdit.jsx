@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import api, { userService } from '../utils/api';
-import { 
-  UserIcon, 
-  EnvelopeIcon, 
+import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
+import api, { userService } from "../utils/api";
+import {
+  UserIcon,
+  EnvelopeIcon,
   PhoneIcon,
   CameraIcon,
   PencilIcon,
@@ -13,8 +13,8 @@ import {
   ShieldCheckIcon,
   StarIcon,
   TrashIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline';
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 
 const ProfileEdit = () => {
   const { authState, checkAuth, logout } = useAuth();
@@ -24,11 +24,11 @@ const ProfileEdit = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [profileData, setProfileData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    mobile: '',
-    role: ''
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobile: "",
+    role: "",
   });
   const [profilePicture, setProfilePicture] = useState(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState(null);
@@ -36,24 +36,26 @@ const ProfileEdit = () => {
   useEffect(() => {
     if (authState.user) {
       setProfileData({
-        firstName: authState.user.firstName || '',
-        lastName: authState.user.lastName || '',
-        email: authState.user.email || '',
-        mobile: authState.user.mobile || '',
-        role: authState.user.role || ''
+        firstName: authState.user.firstName || "",
+        lastName: authState.user.lastName || "",
+        email: authState.user.email || "",
+        mobile: authState.user.mobile || "",
+        role: authState.user.role || "",
       });
-      
+
       if (authState.user.profilePicture) {
-        setProfilePicturePreview(`${api.defaults.baseURL}${authState.user.profilePicture}`);
+        setProfilePicturePreview(
+          `${api.defaults.baseURL}${authState.user.profilePicture}`
+        );
       }
     }
   }, [authState.user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -72,27 +74,27 @@ const ProfileEdit = () => {
   const handleSave = async () => {
     try {
       setIsLoading(true);
-      
+
       const formData = new FormData();
-      Object.keys(profileData).forEach(key => {
-        if (profileData[key] !== '' && profileData[key] !== null) {
+      Object.keys(profileData).forEach((key) => {
+        if (profileData[key] !== "" && profileData[key] !== null) {
           formData.append(key, profileData[key]);
         }
       });
-      
+
       if (profilePicture) {
-        formData.append('profilePicture', profilePicture);
+        formData.append("profilePicture", profilePicture);
       }
 
       await userService.updateProfile(formData);
       await checkAuth(); // Refresh user data
-      
+
       setIsEditing(false);
       setProfilePicture(null);
-      showSuccess('Profile updated successfully!');
+      showSuccess("Profile updated successfully!");
     } catch (error) {
-      console.error('Error updating profile:', error);
-      showError(error.response?.data?.message || 'Failed to update profile');
+      console.error("Error updating profile:", error);
+      showError(error.response?.data?.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
     }
@@ -104,15 +106,17 @@ const ProfileEdit = () => {
     // Reset form data to original values
     if (authState.user) {
       setProfileData({
-        firstName: authState.user.firstName || '',
-        lastName: authState.user.lastName || '',
-        email: authState.user.email || '',
-        mobile: authState.user.mobile || '',
-        role: authState.user.role || ''
+        firstName: authState.user.firstName || "",
+        lastName: authState.user.lastName || "",
+        email: authState.user.email || "",
+        mobile: authState.user.mobile || "",
+        role: authState.user.role || "",
       });
-      
+
       if (authState.user.profilePicture) {
-        setProfilePicturePreview(`${api.defaults.baseURL}${authState.user.profilePicture}`);
+        setProfilePicturePreview(
+          `${api.defaults.baseURL}${authState.user.profilePicture}`
+        );
       }
     }
   };
@@ -121,8 +125,8 @@ const ProfileEdit = () => {
     try {
       setIsDeleting(true);
       await userService.deleteProfile();
-      showSuccess('Profile deleted successfully');
-      
+      showSuccess("Profile deleted successfully");
+
       // Give time for toast to show
       setTimeout(async () => {
         // Logout user after successful deletion
@@ -131,8 +135,8 @@ const ProfileEdit = () => {
         window.location.reload();
       }, 1000);
     } catch (error) {
-      console.error('Error deleting profile:', error);
-      showError(error.response?.data?.message || 'Failed to delete profile');
+      console.error("Error deleting profile:", error);
+      showError(error.response?.data?.message || "Failed to delete profile");
       setIsDeleting(false);
       setShowDeleteConfirm(false);
     }
@@ -143,14 +147,16 @@ const ProfileEdit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-8 px-4">
+    <div className="bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-8 px-4">
       <div className="max-w-5xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
             Profile Settings
           </h1>
-          <p className="text-gray-600 text-lg">Manage your personal information and preferences</p>
+          <p className="text-gray-600 text-lg">
+            Manage your personal information and preferences
+          </p>
         </div>
 
         {/* Main Profile Card */}
@@ -158,7 +164,7 @@ const ProfileEdit = () => {
           {/* Profile Header with Gradient Background */}
           <div className="relative bg-gradient-to-r from-emerald-500 via-emerald-600 to-blue-600 px-8 py-12">
             <div className="absolute inset-0 bg-black/10"></div>
-            
+
             {/* Edit/Save Buttons */}
             <div className="relative flex justify-end mb-4">
               {!isEditing ? (
@@ -192,7 +198,7 @@ const ProfileEdit = () => {
                         Saving...
                       </>
                     ) : (
-                      'Save Changes'
+                      "Save Changes"
                     )}
                   </button>
                   <button
@@ -223,7 +229,7 @@ const ProfileEdit = () => {
                       <UserIcon className="w-20 h-20 text-white/70" />
                     </div>
                   )}
-                  
+
                   {/* Upload Overlay */}
                   {isEditing && (
                     <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer">
@@ -232,11 +238,13 @@ const ProfileEdit = () => {
                         className="flex flex-col items-center text-white cursor-pointer"
                       >
                         <CameraIcon className="w-8 h-8 mb-2" />
-                        <span className="text-sm font-medium">Change Photo</span>
+                        <span className="text-sm font-medium">
+                          Change Photo
+                        </span>
                       </label>
                     </div>
                   )}
-                  
+
                   {/* Camera Icon Badge */}
                   {isEditing && (
                     <label
@@ -247,7 +255,7 @@ const ProfileEdit = () => {
                     </label>
                   )}
                 </div>
-                
+
                 <input
                   id="profilePictureInput"
                   type="file"
@@ -270,7 +278,10 @@ const ProfileEdit = () => {
                 </div>
                 <div className="flex items-center justify-center md:justify-start space-x-1">
                   {[...Array(5)].map((_, i) => (
-                    <StarIcon key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <StarIcon
+                      key={i}
+                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                    />
                   ))}
                   <span className="ml-2 text-sm">Profile Complete</span>
                 </div>
@@ -287,7 +298,7 @@ const ProfileEdit = () => {
                   <UserIcon className="w-6 h-6 mr-2 text-emerald-600" />
                   Personal Information
                 </h3>
-                
+
                 {/* First Name */}
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -302,9 +313,9 @@ const ProfileEdit = () => {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-300 ${
-                        isEditing 
-                          ? 'border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300' 
-                          : 'border-gray-100 bg-gray-50/50 cursor-not-allowed'
+                        isEditing
+                          ? "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300"
+                          : "border-gray-100 bg-gray-50/50 cursor-not-allowed"
                       }`}
                       placeholder="Enter your first name"
                     />
@@ -325,9 +336,9 @@ const ProfileEdit = () => {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-300 ${
-                        isEditing 
-                          ? 'border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300' 
-                          : 'border-gray-100 bg-gray-50/50 cursor-not-allowed'
+                        isEditing
+                          ? "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300"
+                          : "border-gray-100 bg-gray-50/50 cursor-not-allowed"
                       }`}
                       placeholder="Enter your last name"
                     />
@@ -341,7 +352,7 @@ const ProfileEdit = () => {
                   <EnvelopeIcon className="w-6 h-6 mr-2 text-emerald-600" />
                   Contact Information
                 </h3>
-                
+
                 {/* Email */}
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -356,9 +367,9 @@ const ProfileEdit = () => {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-300 ${
-                        isEditing 
-                          ? 'border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300' 
-                          : 'border-gray-100 bg-gray-50/50 cursor-not-allowed'
+                        isEditing
+                          ? "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300"
+                          : "border-gray-100 bg-gray-50/50 cursor-not-allowed"
                       }`}
                       placeholder="Enter your email address"
                     />
@@ -379,9 +390,9 @@ const ProfileEdit = () => {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-300 ${
-                        isEditing 
-                          ? 'border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300' 
-                          : 'border-gray-100 bg-gray-50/50 cursor-not-allowed'
+                        isEditing
+                          ? "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 bg-white hover:border-gray-300"
+                          : "border-gray-100 bg-gray-50/50 cursor-not-allowed"
                       }`}
                       placeholder="Enter your mobile number"
                     />
@@ -411,7 +422,7 @@ const ProfileEdit = () => {
                       Saving Changes...
                     </>
                   ) : (
-                    'Save Changes'
+                    "Save Changes"
                   )}
                 </button>
               </div>
@@ -425,24 +436,34 @@ const ProfileEdit = () => {
             <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <ShieldCheckIcon className="w-6 h-6 text-emerald-600" />
             </div>
-            <h4 className="font-semibold text-gray-800 mb-2">Verified Account</h4>
-            <p className="text-sm text-gray-600">Your account is verified and secure</p>
+            <h4 className="font-semibold text-gray-800 mb-2">
+              Verified Account
+            </h4>
+            <p className="text-sm text-gray-600">
+              Your account is verified and secure
+            </p>
           </div>
-          
+
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <UserIcon className="w-6 h-6 text-blue-600" />
             </div>
-            <h4 className="font-semibold text-gray-800 mb-2">Profile Complete</h4>
+            <h4 className="font-semibold text-gray-800 mb-2">
+              Profile Complete
+            </h4>
             <p className="text-sm text-gray-600">100% profile completion</p>
           </div>
-          
+
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <StarIcon className="w-6 h-6 text-yellow-600" />
             </div>
-            <h4 className="font-semibold text-gray-800 mb-2">Premium Features</h4>
-            <p className="text-sm text-gray-600">Access to all platform features</p>
+            <h4 className="font-semibold text-gray-800 mb-2">
+              Premium Features
+            </h4>
+            <p className="text-sm text-gray-600">
+              Access to all platform features
+            </p>
           </div>
         </div>
 
@@ -457,15 +478,20 @@ const ProfileEdit = () => {
                     <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Delete Profile</h3>
-                    <p className="text-sm text-gray-500">This action cannot be undone</p>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Delete Profile
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      This action cannot be undone
+                    </p>
                   </div>
                 </div>
-                
+
                 {/* Modal Content */}
                 <div className="mb-6">
                   <p className="text-gray-700 mb-4">
-                    Are you sure you want to delete your profile? This will permanently remove:
+                    Are you sure you want to delete your profile? This will
+                    permanently remove:
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
                     <li>Your personal information</li>
@@ -477,7 +503,7 @@ const ProfileEdit = () => {
                     This action is irreversible and cannot be undone.
                   </p>
                 </div>
-                
+
                 {/* Modal Actions */}
                 <div className="flex space-x-3">
                   <button

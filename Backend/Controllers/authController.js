@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const path = require('path');
 const fs = require('fs');
+const { generateToken } = require('../utils/jwtUtils');
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -105,6 +106,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    const token = generateToken(user);
+
     // Store user info in session
     req.session.userId = user._id;
     req.session.userRole = user.role;
@@ -119,6 +122,16 @@ exports.login = async (req, res) => {
       
     };
 
+    // Set HttpOnly cookie with the token for browser clients
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    };
+    res.cookie('jwt', token, cookieOptions);
+
+    // Also send user data (token is in cookie)
     res.json({
       message: 'Login successful',
       user: {
@@ -168,6 +181,8 @@ exports.logout = (req, res) => {
     if (err) {
       return res.status(500).json({ message: 'Error logging out', error: err.message });
     }
+    // Clear jwt cookie as well
+    res.clearCookie('jwt');
     res.json({ message: 'Logged out successfully' });
   });
 };
