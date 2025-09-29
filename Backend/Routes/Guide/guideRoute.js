@@ -4,6 +4,9 @@ const guideController = require('../../Controllers/Guide/guideController.js');
 
 router.post('/add', guideController.createGuide);
 router.get('/guides', guideController.getAllGuides);
+router.get('/guides/:guideId/availability', guideController.getAvailability);
+
+
 router.post('/guides/:guideId/availability', guideController.setAvailability);
 router.post('/guides/:guideId/tours', guideController.addTour);
 router.get('/guides/:guideId/upcoming-tours', guideController.getUpcomingTours);

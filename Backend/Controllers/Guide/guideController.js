@@ -22,21 +22,62 @@ exports.getAllGuides = async (req, res) => {
 };
 
 // Set guide availability
+//exports.setAvailability = async (req, res) => {
+  //try {
+   // const { guideId } = req.params;
+   // const { date, isAvailable } = req.body;
+
+   // const guide = await Guide.findById(guideId);
+   // if (!guide) return res.status(404).json({ error: "Guide not found" });
+
+   // guide.availability.push({ date, isAvailable });
+   // await guide.save();
+   // res.json(guide);
+ // } catch (err) {
+  //  res.status(500).json({ error: err.message });
+ // }
+//};
+
+
+// ✅ Set guide availability (replace the whole availability array)
 exports.setAvailability = async (req, res) => {
   try {
     const { guideId } = req.params;
-    const { date, isAvailable } = req.body;
+    const { availability } = req.body; // expects an array of { date, isAvailable }
 
     const guide = await Guide.findById(guideId);
     if (!guide) return res.status(404).json({ error: "Guide not found" });
 
-    guide.availability.push({ date, isAvailable });
+    // Replace entire availability array
+    guide.availability = availability;
     await guide.save();
-    res.json(guide);
+
+    res.json({ message: "Availability updated successfully", availability: guide.availability });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+
+
+
+// ✅ Get guide availability
+exports.getAvailability = async (req, res) => {
+  try {
+    const { guideId } = req.params
+    const guide = await Guide.findById(guideId)
+    if (!guide) return res.status(404).json({ error: 'Guide not found' })
+
+    res.json({ availability: guide.availability })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+
+
+
 
 // Add upcoming tour
 exports.addTour = async (req, res) => {

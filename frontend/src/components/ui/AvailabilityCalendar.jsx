@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 
@@ -6,18 +6,21 @@ export function AvailabilityCalendar() {
   const [availableDates, setAvailableDates] = useState([])
   const [selectedDate, setSelectedDate] = useState(new Date())
 
+  // 👉 Replace this with your real guide ID (maybe from auth)
+  const guideId = 'YOUR_GUIDE_ID_HERE'  
+
+  // 🟢 Toggle date availability
   const toggleDateAvailability = (date) => {
     const dateStr = date.toDateString()
     const exists = availableDates.find((d) => d.toDateString() === dateStr)
     if (exists) {
-      setAvailableDates(
-        availableDates.filter((d) => d.toDateString() !== dateStr)
-      )
+      setAvailableDates(availableDates.filter((d) => d.toDateString() !== dateStr))
     } else {
       setAvailableDates([...availableDates, date])
     }
   }
 
+  // 🟡 Highlight available dates in calendar
   const tileClassName = ({ date, view }) => {
     if (view === 'month') {
       return availableDates.find(
@@ -27,6 +30,52 @@ export function AvailabilityCalendar() {
         : null
     }
   }
+
+  // ✅ Save availability to backend
+  const saveAvailability = async () => {
+    const formattedDates = availableDates.map((date) => ({
+      date: date.toISOString(),
+      isAvailable: true,
+    }))
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/guides/${guideId}/availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ availability: formattedDates }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to update availability')
+      }
+
+      const data = await res.json()
+      console.log('✅ Availability updated:', data)
+      alert('Availability updated successfully ✅')
+    } catch (err) {
+      console.error('❌ Error updating availability:', err)
+      alert('Failed to update availability ❌')
+    }
+  }
+
+  // ✅ Load existing availability on mount (optional)
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/guides/${guideId}/availability`)
+        const data = await res.json()
+        if (data.availability) {
+          setAvailableDates(data.availability.map((item) => new Date(item.date)))
+        }
+      } catch (err) {
+        console.error('Error fetching availability:', err)
+      }
+    }
+
+    fetchAvailability()
+  }, [guideId])
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -44,7 +93,7 @@ export function AvailabilityCalendar() {
               dates indicate your availability.
             </p>
           </div>
-          <div className="calendar-container">
+          <div className="calendar-container mb-4">
             <Calendar
               onChange={setSelectedDate}
               value={selectedDate}
@@ -53,7 +102,16 @@ export function AvailabilityCalendar() {
               className="border-0 shadow-none"
             />
           </div>
+
+          {/* 🟡 Save button */}
+          <button
+            onClick={saveAvailability}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            Save Availability
+          </button>
         </div>
+
         <div>
           <h3 className="text-lg font-medium text-gray-700 mb-4">
             Your Available Dates
