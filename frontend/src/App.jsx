@@ -94,9 +94,7 @@ const AuthenticatedRoutes = () => {
   };
 
   return(
-})
-    <>
-      <Router>
+      <>
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -106,7 +104,7 @@ const AuthenticatedRoutes = () => {
           <Route path="/guidedashboard" element={<Guidedashboard/>}/>
         </Routes>  
          <Footer />
-      </Router>
+      
 
     <Routes>
       {/* Public Routes */}
@@ -238,7 +236,7 @@ const AuthenticatedRoutes = () => {
       />
     </Routes>
   );
-};
+
 
 function App() {
   return (
