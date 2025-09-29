@@ -1,37 +1,39 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { 
-  EyeIcon, 
-  EyeSlashIcon, 
-  UserIcon, 
-  EnvelopeIcon, 
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  UserIcon,
+  EnvelopeIcon,
   LockClosedIcon,
   UserGroupIcon,
   SparklesIcon,
   PhoneIcon,
-  CameraIcon
-} from '@heroicons/react/24/outline';
+  CameraIcon,
+} from "@heroicons/react/24/outline";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    mobile: '',
-    password: '',
-    confirmPassword: '',
-    role: 'Tourist',
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobile: "",
+    password: "",
+    confirmPassword: "",
+    role: "Tourist",
   });
-  
-  const [error, setError] = useState('');
+
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profilePicture, setProfilePicture] = useState(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState(null);
   const { register, authState } = useAuth();
+  const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -51,44 +53,62 @@ const Register = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   const validateForm = () => {
     if (!formData.firstName.trim()) {
-      setError('First name is required');
+      const errorMsg = "First name is required";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     if (!formData.lastName.trim()) {
-      setError('Last name is required');
+      const errorMsg = "Last name is required";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     if (!formData.email.trim()) {
-      setError('Email is required');
+      const errorMsg = "Email is required";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      const errorMsg = "Please enter a valid email address";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     if (!formData.mobile.trim()) {
-      setError('Mobile number is required');
+      const errorMsg = "Mobile number is required";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     const mobileRegex = /^[+]?[0-9]{10,15}$/;
     if (!mobileRegex.test(formData.mobile)) {
-      setError('Please enter a valid mobile number (10-15 digits)');
+      const errorMsg = "Please enter a valid mobile number (10-15 digits)";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     if (!formData.password) {
-      setError('Password is required');
+      const errorMsg = "Password is required";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     if (formData.password.length < 6) {
-      setError('Password should be at least 6 characters');
+      const errorMsg = "Password should be at least 6 characters";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      const errorMsg = "Passwords do not match";
+      setError(errorMsg);
+      showError(errorMsg);
       return false;
     }
     return true;
@@ -96,73 +116,87 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       // Create FormData object for file upload
       const submitData = new FormData();
-      
+
       // Add all form fields to FormData
-      submitData.append('firstName', formData.firstName);
-      submitData.append('lastName', formData.lastName);
-      submitData.append('email', formData.email);
-      submitData.append('mobile', formData.mobile);
-      submitData.append('password', formData.password);
-      submitData.append('role', formData.role);
-      
+      submitData.append("firstName", formData.firstName);
+      submitData.append("lastName", formData.lastName);
+      submitData.append("email", formData.email);
+      submitData.append("mobile", formData.mobile);
+      submitData.append("password", formData.password);
+      submitData.append("role", formData.role);
+
       if (profilePicture) {
-        submitData.append('profilePicture', profilePicture);
+        submitData.append("profilePicture", profilePicture);
       }
 
       await register(submitData);
-      navigate('/dashboard');
+
+      // Show success toast message
+      showSuccess("Registration successful! Welcome to our platform.");
+
+      // Navigate to dashboard after a short delay to let user see the toast
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
     } catch (err) {
-      console.error('Registration error:', err);
-      console.error('Error response:', err.response?.data);
-      
+      console.error("Registration error:", err);
+      console.error("Error response:", err.response?.data);
+
       // Handle validation errors from backend
-      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
-        const errorMessages = err.response.data.errors.map(error => error.message);
-        setError(errorMessages.join(', '));
-      } else {
-        setError(
-          err.response?.data?.message || 
-          'Registration failed. Please try again.'
+      if (
+        err.response?.data?.errors &&
+        Array.isArray(err.response.data.errors)
+      ) {
+        const errorMessages = err.response.data.errors.map(
+          (error) => error.message
         );
+        showError(errorMessages.join(", "));
+        setError(errorMessages.join(", "));
+      } else {
+        const errorMessage =
+          err.response?.data?.message ||
+          "Registration failed. Please try again.";
+        showError(errorMessage);
+        setError(errorMessage);
       }
     }
   };
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case 'Guide':
-        return '🗺️';
-      case 'Tourist':
-        return '🎒';
-      case 'PackageProvider':
-        return '🏢';
+      case "Guide":
+        return "🗺️";
+      case "Tourist":
+        return "🎒";
+      case "PackageProvider":
+        return "🏢";
       default:
-        return '👤';
+        return "👤";
     }
   };
 
   const getRoleDescription = (role) => {
     switch (role) {
-      case 'Guide':
-        return 'Lead tours and share local expertise';
-      case 'Tourist':
-        return 'Explore new destinations and experiences';
-      case 'PackageProvider':
-        return 'Offer travel packages and services';
+      case "Guide":
+        return "Lead tours and share local expertise";
+      case "Tourist":
+        return "Explore new destinations and experiences";
+      case "PackageProvider":
+        return "Offer travel packages and services";
       default:
-        return '';
+        return "";
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
       {/* Background decorative elements */}
@@ -182,8 +216,11 @@ const Register = () => {
             Join our community!
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors duration-200">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors duration-200"
+            >
               Sign in here
             </Link>
           </p>
@@ -195,20 +232,29 @@ const Register = () => {
             <div className="rounded-xl bg-red-50 border-l-4 border-red-500 p-4 animate-shake">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Validation Error</h3>
-                  <div className="mt-1 text-sm text-red-700">
-                    {error}
-                  </div>
+                  <h3 className="text-sm font-medium text-red-800">
+                    Validation Error
+                  </h3>
+                  <div className="mt-1 text-sm text-red-700">{error}</div>
                 </div>
               </div>
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               {/* Profile Picture Upload */}
@@ -258,7 +304,10 @@ const Register = () => {
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="group">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="firstName"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     First Name
                   </label>
                   <div className="relative">
@@ -277,9 +326,12 @@ const Register = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="group">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="lastName"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Last Name
                   </label>
                   <div className="relative">
@@ -299,10 +351,13 @@ const Register = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Email Input */}
               <div className="group">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -324,7 +379,10 @@ const Register = () => {
 
               {/* Mobile Number Input */}
               <div className="group">
-                <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="mobile"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Mobile Number
                 </label>
                 <div className="relative">
@@ -343,10 +401,13 @@ const Register = () => {
                   />
                 </div>
               </div>
-              
+
               {/* Password Input */}
               <div className="group">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -356,7 +417,7 @@ const Register = () => {
                   <input
                     id="password"
                     name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Create a secure password"
@@ -376,10 +437,13 @@ const Register = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Confirm Password Input */}
               <div className="group">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -389,7 +453,7 @@ const Register = () => {
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Confirm your password"
@@ -409,10 +473,13 @@ const Register = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Role Selection */}
               <div className="group">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   I want to join as a
                 </label>
                 <div className="relative">
@@ -432,8 +499,17 @@ const Register = () => {
                     <option value="PackageProvider">🏢 Package Provider</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -452,9 +528,25 @@ const Register = () => {
               >
                 {authState.isLoading ? (
                   <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Creating your account...
                   </div>
@@ -471,9 +563,14 @@ const Register = () => {
           {/* Terms and Privacy */}
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              By creating an account, you agree to our{' '}
-              <a href="#" className="text-emerald-600 hover:text-emerald-500">Terms of Service</a> and{' '}
-              <a href="#" className="text-emerald-600 hover:text-emerald-500">Privacy Policy</a>
+              By creating an account, you agree to our{" "}
+              <a href="#" className="text-emerald-600 hover:text-emerald-500">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-emerald-600 hover:text-emerald-500">
+                Privacy Policy
+              </a>
             </p>
           </div>
         </div>
