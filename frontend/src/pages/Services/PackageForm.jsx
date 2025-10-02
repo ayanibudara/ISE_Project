@@ -68,12 +68,14 @@ const TourPackageForm = () => {
 
     try {
       // Step 3: Build single data object
+      const providerId = localStorage.getItem("providerId");
       const data = {
         packageName: serviceName,
         category,
         province,
         description,
         image,
+        providerId,
         packages: packageTypes.map((type) => ({
           packageType: type,
           price: Number(prices[type]),

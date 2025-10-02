@@ -24,6 +24,7 @@ import AdvertisementManagement from "./pages/dashboard/AdvertisementManagement";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import { useEffect } from "react";
+import ManagePackages from "./pages/Services/ManagePackage";
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
@@ -93,6 +94,7 @@ const AuthenticatedRoutes = () => {
       <Route path="/appoiments" element={<AppointmentsPage />} />
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
+      <Route path="/managepackages" element={<ManagePackages />} />
 
       {/* Auth Routes */}
       <Route
