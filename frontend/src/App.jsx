@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,12 +7,10 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
+
 import Home from "./pages/home";
 import AppointmentForm from "./pages/appointment/appointmentform";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
-
 import Guideform from "./pages/Guide/GuideSchedulingForm";
 import Guidedashboard from "./pages/Guide/Guidedashboard";
 
@@ -29,9 +27,9 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
-import { useEffect } from "react";
 
-
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
@@ -60,7 +58,7 @@ const AuthenticatedRoutes = () => {
     );
   }
 
-  // Helper function to render dashboard based on user role
+  // Helper: redirect based on role
   const renderDashboard = () => {
     if (!authState.isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -80,7 +78,7 @@ const AuthenticatedRoutes = () => {
     }
   };
 
-  // Helper function to check authentication and role permissions
+  // Helper: protected routes by role
   const renderProtectedRoute = (element, allowedRoles) => {
     if (!authState.isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -93,150 +91,140 @@ const AuthenticatedRoutes = () => {
     return element;
   };
 
-  return(
-      <>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/apform" element={<AppointmentForm/>}/>
-          <Route path="/appoiments" element={<AppointmentsPage/>}/>
-          <Route path="/guideform" element={<Guideform/>}/>
-          <Route path="/guidedashboard" element={<Guidedashboard/>}/>
-        </Routes>  
-         <Footer />
-      
+  return (
+    <>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/apform" element={<AppointmentForm />} />
+        <Route path="/appoiments" element={<AppointmentsPage />} />
+        <Route path="/guideform" element={<Guideform />} />
+        <Route path="/guidedashboard" element={<Guidedashboard />} />
+        <Route path="/addpackage" element={<PackageForm />} />
+        <Route path="/packages" element={<Packages />} />
+        <Route path="/reviewform" element={<ReviewForm />} />
+        <Route path="/reviewlist" element={<ReviewList />} />
 
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Home />} />
-      <Route path="/apform" element={<AppointmentForm />} />
-      <Route path="/appoiments" element={<AppointmentsPage />} />
-      <Route path="/addpackage" element={<PackageForm />} />
-      <Route path="/packages" element={<Packages />} />
-      <Route path="/reviewform" element={<ReviewForm />} />
-      <Route path="/reviewlist" element={<ReviewList />} />
+        {/* Auth Routes */}
+        <Route
+          path="/login"
+          element={
+            authState.isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login />
+            )
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            authState.isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Register />
+            )
+          }
+        />
 
-      
+        {/* Dashboard Redirect */}
+        <Route path="/dashboard" element={renderDashboard()} />
 
+        {/* Role-based dashboards */}
+        <Route
+          path="/dashboard/tourist"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <TouristDashboard />
+            </DashboardLayout>,
+            ["Tourist"]
+          )}
+        />
 
-      {/* Auth Routes */}
-      <Route
-        path="/login"
-        element={
-          authState.isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Login />
-          )
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          authState.isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Register />
-          )
-        }
-      />
+        <Route
+          path="/dashboard/tourist/profile"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <ProfileEdit />
+            </DashboardLayout>,
+            ["Tourist"]
+          )}
+        />
 
-      {/* Dashboard Routes */}
-      <Route path="/dashboard" element={renderDashboard()} />
+        <Route
+          path="/dashboard/guide"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <GuideDashboard />
+            </DashboardLayout>,
+            ["Guide"]
+          )}
+        />
 
-      <Route
-        path="/dashboard/tourist"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <TouristDashboard />
-          </DashboardLayout>,
-          ["Tourist"]
-        )}
-      />
+        <Route
+          path="/dashboard/guide/profile"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <ProfileEdit />
+            </DashboardLayout>,
+            ["Guide"]
+          )}
+        />
 
-      <Route
-        path="/dashboard/tourist/profile"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <ProfileEdit />
-          </DashboardLayout>,
-          ["Tourist"]
-        )}
-      />
+        <Route
+          path="/dashboard/package-provider"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <PackageProviderDashboard />
+            </DashboardLayout>,
+            ["PackageProvider"]
+          )}
+        />
 
-      <Route
-        path="/dashboard/guide"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <GuideDashboard />
-          </DashboardLayout>,
-          ["Guide"]
-        )}
-      />
+        <Route
+          path="/dashboard/package-provider/profile"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <ProfileEdit />
+            </DashboardLayout>,
+            ["PackageProvider"]
+          )}
+        />
 
-      <Route
-        path="/dashboard/guide/profile"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <ProfileEdit />
-          </DashboardLayout>,
-          ["Guide"]
-        )}
-      />
+        <Route
+          path="/dashboard/admin"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <AdminDashboard />
+            </DashboardLayout>,
+            ["Admin"]
+          )}
+        />
 
-      <Route
-        path="/dashboard/package-provider"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <PackageProviderDashboard />
-          </DashboardLayout>,
-          ["PackageProvider"]
-        )}
-      />
+        <Route
+          path="/dashboard/admin/advertising"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <AdvertisementManagement />
+            </DashboardLayout>,
+            ["Admin"]
+          )}
+        />
 
-      <Route
-        path="/dashboard/package-provider/profile"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <ProfileEdit />
-          </DashboardLayout>,
-          ["PackageProvider"]
-        )}
-      />
-
-      <Route
-        path="/dashboard/admin"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <AdminDashboard />
-          </DashboardLayout>,
-          ["Admin"]
-        )}
-      />
-
-      <Route
-        path="/dashboard/admin/advertising"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <AdvertisementManagement />
-          </DashboardLayout>,
-          ["Admin"]
-        )}
-      />
-
-      {/* General profile route for any authenticated user */}
-      <Route
-        path="/profile"
-        element={renderProtectedRoute(
-          <DashboardLayout>
-            <ProfileEdit />
-          </DashboardLayout>,
-          ["Tourist", "Guide", "PackageProvider", "Admin"]
-        )}
-      />
-    </Routes>
+        {/* Generic Profile */}
+        <Route
+          path="/profile"
+          element={renderProtectedRoute(
+            <DashboardLayout>
+              <ProfileEdit />
+            </DashboardLayout>,
+            ["Tourist", "Guide", "PackageProvider", "Admin"]
+          )}
+        />
+      </Routes>
+    </>
   );
-
+};
 
 function App() {
   return (
