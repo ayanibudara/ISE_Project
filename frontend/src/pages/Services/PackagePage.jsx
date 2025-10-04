@@ -1,9 +1,12 @@
+// PackagePage.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // 👈 ADD THIS
 import { Eye, MapPin, Star, Sparkles, Mountain, Waves } from "lucide-react";
 
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
+  const navigate = useNavigate(); // 👈 ADD THIS
 
   useEffect(() => {
     fetchPackages();
@@ -148,9 +151,12 @@ const PackageList = () => {
                     ) : null}
                   </div>
 
-                  {/* View More Button */}
-                  <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/25 group/button">
-                    <Eye className="w-4 h-4 group-hover/button:scale-110 transition-transform duration-300" />
+                  {/* ✅ UPDATED VIEW MORE BUTTON */}
+                  <button
+                    onClick={() => navigate(`/packages/${pkg._id}`)} // 👈 NAVIGATES TO DETAIL PAGE
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/25"
+                  >
+                    <Eye className="w-4 h-4" />
                     <span>View More</span>
                   </button>
                 </div>

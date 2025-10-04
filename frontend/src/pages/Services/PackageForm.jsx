@@ -87,7 +87,7 @@ const TourPackageForm = () => {
       // Step 4: Make API call to backend
       const res = await axios.post("http://localhost:5000/api/packages", data);
 
-      alert("All three packages created successfully!");
+      alert(" package created successfully!");
 
       // ✅ Step 5: Navigate to provider dashboard
       navigate("/dashboard/package-provider", { state: { newPackage: res.data } });

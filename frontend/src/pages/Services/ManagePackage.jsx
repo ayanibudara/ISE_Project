@@ -31,7 +31,7 @@ const ManagePackages = () => {
     if (!window.confirm("Are you sure you want to delete this package?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/packages/${id}`);
+      await axios.delete(`http://localhost:5000/api/packages/${PackageId}`);
       setPackages((prev) => prev.filter((pkg) => pkg._id !== id));
     } catch (err) {
       console.error("Error deleting package:", err);
@@ -39,7 +39,7 @@ const ManagePackages = () => {
   };
 
   const handleEdit = (id) => {
-    navigate(`/provider/edit-package/${id}`);
+    navigate(`/provider/edit-package/${PackageId}`);
   };
 
   return (
