@@ -27,7 +27,7 @@ import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
 
 import { useEffect } from "react";
-import ManagePackages from "./pages/Services/ManagePackage";
+//import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
 
 
@@ -102,17 +102,16 @@ const AuthenticatedRoutes = () => {
       <Route path="/appoiments" element={<AppointmentsPage />} />
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
-<<<<<<< HEAD
+
       <Route path="/Packages/managepackages" element={<ManagePackages />} />
      <Route path="/Packages/:packageId" element={<PackageView />} />
-=======
+
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
       <Route path="/" element={<TouristDashboard />} />
       <Route path="/appointments" element={<AppointmentForm />} /> 
       
 
->>>>>>> main
 
       {/* Auth Routes */}
       <Route
