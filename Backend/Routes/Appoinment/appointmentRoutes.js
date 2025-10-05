@@ -3,7 +3,7 @@ const router = express.Router();
 const appointmentController = require('../../Controllers/Appoinment/appointmentController.js');
 const { requireAuth, restrictTo, attachToken } = require('../../middleware/authMiddleware');
 
-router.post('/add', requireAuth, attachToken, appointmentController.createAppointment);
+router.post('/add',appointmentController.createAppointment);
 router.get('/', requireAuth, attachToken, appointmentController.getAllAppointments);
 router.get('/my', requireAuth, attachToken, appointmentController.getUserAppointments);
 router.get('/:id', requireAuth, attachToken, appointmentController.getAppointmentById);

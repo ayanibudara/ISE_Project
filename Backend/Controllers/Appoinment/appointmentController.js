@@ -3,15 +3,15 @@ const User = require('../../models/User.js');
 // Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
   try {
-    const { membersCount, packageType, note, startDate } = req.body;
+    const { userId, userName, membersCount, packageType, note, startDate } = req.body;
 
-    if (!membersCount || !packageType || !startDate) {
+    if (!userId || !userName || !membersCount || !packageType || !startDate) {
       return res.status(400).json({ message: 'All required fields must be filled!' });
     }
 
     const appointment = await Appointment.create({
-      userId: req.user._id,
-      userName: `${req.user.firstName} ${req.user.lastName}`,
+      userId,
+      userName,
       membersCount,
       packageType,
       note,
@@ -21,9 +21,11 @@ exports.createAppointment = async (req, res) => {
 
     res.status(201).json({ message: 'Appointment created', appointment });
   } catch (error) {
+    console.error("Error creating appointment:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Get appointments for the logged-in user only
 // Get appointments for the logged-in user only
