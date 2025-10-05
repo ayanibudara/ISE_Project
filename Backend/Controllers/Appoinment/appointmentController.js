@@ -1,79 +1,117 @@
-const Appointment = require('../../Models/Appoiment/appointmentModel.js');
-
-// @desc Create new appointment
-// @route POST /api/appointments
+const Appointment = require('../../models/Appoiment/appointmentModel.js');
+const User = require('../../models/User.js');
+// Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
   try {
-    const { userName, membersCount, packageType, note, startDate } = req.body;
+    const { membersCount, packageType, note, startDate } = req.body;
 
-    if (!userName || !membersCount || !packageType || !startDate) {
+    if (!membersCount || !packageType || !startDate) {
       return res.status(400).json({ message: 'All required fields must be filled!' });
     }
 
     const appointment = await Appointment.create({
-      userName,
+      userId: req.user._id,
+      userName: `${req.user.firstName} ${req.user.lastName}`,
       membersCount,
       packageType,
       note,
       startDate,
+      status: 'booked',
     });
 
-    res.status(201).json(appointment);
+    res.status(201).json({ message: 'Appointment created', appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Get all appointments
-// @route GET /api/appointments
-exports.getAppointments = async (req, res) => {
+// Get appointments for the logged-in user only
+// Get appointments for the logged-in user only
+exports.getUserAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find().sort({ startDate: 1 });
-    res.json(appointments);
+    const now = new Date();
+
+    // Find appointments for the user from token
+    const appointments = await Appointment.find({ userId: req.user._id })
+      .sort({ startDate: 1 })
+      .populate('userId', 'firstName lastName email'); // optional: populate user info
+
+    const upcoming = appointments.filter(appt => new Date(appt.startDate) >= now);
+    const past = appointments.filter(appt => new Date(appt.startDate) < now);
+
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      upcoming,
+      past,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error fetching appointments', error: error.message });
   }
 };
 
-// @desc Get single appointment
-// @route GET /api/appointments/:id
+// Admin: get all appointments
+exports.getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find()
+      .sort({ startDate: 1 })
+      .populate('userId', 'firstName lastName email'); // populate user info
+
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      appointments,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching all appointments', error: error.message });
+  }
+};
+
+
+// Get a single appointment (owner or admin)
 exports.getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) {
-      return res.status(404).json({ message: 'Appointment not found' });
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
-    res.json(appointment);
+
+    res.json({ appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Update appointment
-// @route PUT /api/appointments/:id
+// Update appointment (owner or admin)
 exports.updateAppointment = async (req, res) => {
   try {
-    const updated = await Appointment.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updated) {
-      return res.status(404).json({ message: 'Appointment not found' });
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
-    res.json(updated);
+
+    Object.assign(appointment, req.body);
+    await appointment.save();
+
+    res.json({ message: 'Appointment updated', appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Delete appointment
-// @route DELETE /api/appointments/:id
+// Delete appointment (owner or admin)
 exports.deleteAppointment = async (req, res) => {
   try {
-    const deleted = await Appointment.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Appointment not found' });
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
+
+    await Appointment.findByIdAndDelete(req.params.id);
     res.json({ message: 'Appointment deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
