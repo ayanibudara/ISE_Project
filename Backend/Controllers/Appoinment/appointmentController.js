@@ -1,5 +1,5 @@
 const Appointment = require('../../models/Appoiment/appointmentModel.js');
-
+const User = require('../../models/User.js');
 // Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
   try {
@@ -19,41 +19,54 @@ exports.createAppointment = async (req, res) => {
       status: 'booked',
     });
 
-    res.status(201).json(appointment);
+    res.status(201).json({ message: 'Appointment created', appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get all appointments (admin only)
-exports.getAllAppointments = async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-    const appointments = await Appointment.find().sort({ startDate: 1 });
-    res.json(appointments);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Get appointments of the logged-in user
+// Get appointments for the logged-in user only
+// Get appointments for the logged-in user only
 exports.getUserAppointments = async (req, res) => {
   try {
     const now = new Date();
-    const appointments = await Appointment.find({ userId: req.user._id }).sort({ startDate: 1 });
+
+    // Find appointments for the user from token
+    const appointments = await Appointment.find({ userId: req.user._id })
+      .sort({ startDate: 1 })
+      .populate('userId', 'firstName lastName email'); // optional: populate user info
 
     const upcoming = appointments.filter(appt => new Date(appt.startDate) >= now);
     const past = appointments.filter(appt => new Date(appt.startDate) < now);
 
-    res.json({ upcoming, past });
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      upcoming,
+      past,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error fetching appointments', error: error.message });
   }
 };
 
-// Get single appointment by ID (owner or admin)
+// Admin: get all appointments
+exports.getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find()
+      .sort({ startDate: 1 })
+      .populate('userId', 'firstName lastName email'); // populate user info
+
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      appointments,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching all appointments', error: error.message });
+  }
+};
+
+
+// Get a single appointment (owner or admin)
 exports.getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id);
@@ -63,7 +76,7 @@ exports.getAppointmentById = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    res.json(appointment);
+    res.json({ appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -81,7 +94,8 @@ exports.updateAppointment = async (req, res) => {
 
     Object.assign(appointment, req.body);
     await appointment.save();
-    res.json(appointment);
+
+    res.json({ message: 'Appointment updated', appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
