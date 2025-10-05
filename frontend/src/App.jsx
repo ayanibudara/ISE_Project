@@ -25,6 +25,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
+
 import { useEffect } from "react";
 import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
@@ -77,6 +78,9 @@ const AuthenticatedRoutes = () => {
     }
   };
 
+ 
+
+
   // Helper function to check authentication and role permissions
   const renderProtectedRoute = (element, allowedRoles) => {
     if (!authState.isAuthenticated) {
@@ -104,6 +108,8 @@ const AuthenticatedRoutes = () => {
 =======
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
+      <Route path="/" element={<TouristDashboard />} />
+      <Route path="/appointments" element={<AppointmentForm />} /> 
       
 
 >>>>>>> main
