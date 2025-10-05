@@ -17,11 +17,29 @@ export default function TravelBookingApp() {
     startDate: "",
     needsGuide: false,
   });
-const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const navigate = useNavigate();
 
-  // Base URL for API - Change this to your backend URL
-  const BASE_URL = "http://localhost:5000/api/appointments"; // Change to your API base URL
-  // For production: const BASE_URL = "https://yourapp.com/api";
+  // Base URL for API
+  const BASE_URL = "http://localhost:5000/api/appointments";
+
+  // Get token from localStorage
+  const getToken = () => localStorage.getItem('authToken');
+
+  // Decode JWT token to get user info
+  const parseJwt = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Invalid token', e);
+      return null;
+    }
+  };
 
   const steps = [
     { id: 1, title: "Personal Info", icon: Users },
@@ -30,7 +48,7 @@ const navigate = useNavigate();
     { id: 4, title: "Confirmation", icon: CheckCircle },
   ];
 
-  // Toast notification component
+  // Toast notification component (same as before)
   const Toast = ({ show, message, type, onClose }) => {
     useEffect(() => {
       if (show) {
@@ -70,13 +88,13 @@ const navigate = useNavigate();
     };
 
     return (
-      <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+      <div className="fixed z-50 top-4 right-4 animate-slide-in-right">
         <div className={`flex items-center gap-3 px-6 py-4 rounded-lg border-2 shadow-lg max-w-md ${getToastStyles()}`}>
           {getIcon()}
           <span className="flex-1 font-medium">{message}</span>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 transition-colors hover:text-gray-600"
           >
             <X className="w-4 h-4" />
           </button>
@@ -95,16 +113,15 @@ const navigate = useNavigate();
 
   // API service functions
   const apiService = {
-    // Fetch available packages from database
     fetchPackages: async () => {
       try {
         setLoading(true);
+        const token = getToken();
         const response = await fetch(`${BASE_URL}/packages`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Add authorization header if needed
-            // 'Authorization': `Bearer ${token}`,
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
         });
 
@@ -114,12 +131,10 @@ const navigate = useNavigate();
 
         const data = await response.json();
         showToast('Packages loaded successfully!', 'success');
-        return data.packages || data; // Handle different response structures
+        return data.packages || data;
       } catch (error) {
         console.error('Error fetching packages:', error);
         showToast('Failed to load packages. Please try again.', 'error');
-        
-        // Fallback data for development/testing
         return [
           {
             id: 1,
@@ -151,16 +166,15 @@ const navigate = useNavigate();
       }
     },
 
-    // Create new booking
     createBooking: async (bookingData) => {
       try {
         setLoading(true);
+        const token = getToken();
         const response = await fetch(`${BASE_URL}/add`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // Add authorization header if needed
-            // 'Authorization': `Bearer ${token}`,
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
           body: JSON.stringify(bookingData)
         });
@@ -171,7 +185,7 @@ const navigate = useNavigate();
 
         const data = await response.json();
         showToast('Booking confirmed successfully! 🎉', 'success');
-        return data.booking || data; // Handle different response structures
+        return data.booking || data;
       } catch (error) {
         console.error('Error creating booking:', error);
         showToast('Failed to create booking. Please try again.', 'error');
@@ -181,18 +195,17 @@ const navigate = useNavigate();
       }
     },
 
-    // Fetch user bookings
-    fetchBookings: async (userId = null) => {
+    fetchBookings: async (userId) => {
       try {
         setLoading(true);
-        const url = userId ? `${BASE_URL}/bookings?userId=${userId}` : `${BASE_URL}/bookings`;
+        const token = getToken();
+        const url = `${BASE_URL}/bookings?userId=${userId}`;
         
         const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Add authorization header if needed
-            // 'Authorization': `Bearer ${token}`,
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
         });
 
@@ -201,7 +214,7 @@ const navigate = useNavigate();
         }
 
         const data = await response.json();
-        return data.bookings || data; // Handle different response structures
+        return data.bookings || data;
       } catch (error) {
         console.error('Error fetching bookings:', error);
         showToast('Failed to load bookings.', 'warning');
@@ -211,6 +224,23 @@ const navigate = useNavigate();
       }
     }
   };
+
+  // Initialize user data from token
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      const decoded = parseJwt(token);
+      if (decoded && decoded.id) {
+        setUserId(decoded.id);
+        setFormData(prev => ({ ...prev, userName: decoded.name || "" }));
+      } else {
+        // Redirect to login if invalid token
+        navigate('/login');
+      }
+    } else {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   // Load packages on component mount
   useEffect(() => {
@@ -227,14 +257,14 @@ const navigate = useNavigate();
 
   // Load bookings when viewing appointments
   useEffect(() => {
-    if (showAppointments) {
+    if (showAppointments && userId) {
       const loadBookings = async () => {
-        const bookingsData = await apiService.fetchBookings();
+        const bookingsData = await apiService.fetchBookings(userId);
         setAppointments(bookingsData);
       };
       loadBookings();
     }
-  }, [showAppointments]);
+  }, [showAppointments, userId]);
 
   const getSelectedPackage = () => {
     return packages.find(pkg => pkg.name === formData.packageType) || packages[0];
@@ -250,8 +280,11 @@ const navigate = useNavigate();
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ 
+      ...formData, 
+      [name]: type === 'checkbox' ? checked : value 
+    });
   };
 
   const nextStep = () => {
@@ -265,46 +298,45 @@ const navigate = useNavigate();
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const selectedPackage = getSelectedPackage();
-    const bookingData = {
-      userName: formData.userName,
-      membersCount: parseInt(formData.membersCount),
-      packageId: selectedPackage.id,
-      packageType: formData.packageType,
-      startDate: formData.startDate,
-      needsGuide: formData.needsGuide,
-      note: formData.note,
-      totalPrice: calculateTotalPrice(),
-      basePrice: selectedPackage.basePrice,
-      guidePrice: formData.needsGuide ? selectedPackage.guidePrice : 0,
-      status: 'Pending',
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const selectedPackage = getSelectedPackage();
+      const bookingData = {
+        userId: userId, // Include userId from token
+        userName: formData.userName,
+        membersCount: parseInt(formData.membersCount),
+        packageId: selectedPackage.id,
+        packageType: formData.packageType,
+        startDate: formData.startDate,
+        needsGuide: formData.needsGuide,
+        note: formData.note,
+        totalPrice: calculateTotalPrice(),
+        basePrice: selectedPackage.basePrice,
+        guidePrice: formData.needsGuide ? selectedPackage.guidePrice : 0,
+        status: 'Pending',
+      };
 
-    const newAppointment = await apiService.createBooking(bookingData);
-    setAppointments(prev => [...prev, newAppointment]);
+      const newAppointment = await apiService.createBooking(bookingData);
+      setAppointments(prev => [...prev, newAppointment]);
 
-    // Reset form
-    setFormData({
-      userName: "",
-      membersCount: 1,
-      packageType: packages[0]?.name || "",
-      note: "",
-      startDate: "",
-      needsGuide: false,
-    });
-    setCurrentStep(1);
+      // Reset form
+      setFormData({
+        userName: formData.userName, // Keep user name
+        membersCount: 1,
+        packageType: packages[0]?.name || "",
+        note: "",
+        startDate: "",
+        needsGuide: false,
+      });
+      setCurrentStep(1);
 
-    // ✅ Navigate to bookings page
-    navigate("/appoiments");
+      navigate("/appointments"); // Fixed typo in route name
 
-  } catch (error) {
-    console.error("Booking error:", error);
-  }
-};
-
+    } catch (error) {
+      console.error("Booking error:", error);
+    }
+  };
 
   const viewAllBookings = () => {
     setShowAppointments(true);
@@ -317,10 +349,10 @@ const navigate = useNavigate();
 
   if (loading && packages.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading travel packages...</p>
+          <div className="w-16 h-16 mx-auto mb-4 border-b-2 border-green-600 rounded-full animate-spin"></div>
+          <p className="text-lg text-gray-600">Loading travel packages...</p>
         </div>
       </div>
     );
@@ -330,16 +362,16 @@ const navigate = useNavigate();
     return (
       <>
         <Toast show={toast.show} message={toast.message} type={toast.type} onClose={hideToast} />
-        <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 p-6">
+        <div className="min-h-screen p-6 bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
           <div className="max-w-6xl mx-auto">
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
-              <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            <div className="p-8 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl">
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text">
                   Your Travel Bookings
                 </h1>
                 <button
                   onClick={backToBooking}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 text-white transition-colors bg-green-600 rounded-xl hover:bg-green-700"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   New Booking
@@ -347,30 +379,30 @@ const navigate = useNavigate();
               </div>
 
               {loading && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                <div className="py-8 text-center">
+                  <div className="w-8 h-8 mx-auto mb-2 border-b-2 border-green-600 rounded-full animate-spin"></div>
                   <p className="text-gray-600">Loading bookings...</p>
                 </div>
               )}
 
               {!loading && appointments.length === 0 ? (
-                <div className="text-center py-20">
-                  <Package className="w-24 h-24 mx-auto text-gray-300 mb-4" />
-                  <h3 className="text-2xl font-semibold text-gray-600 mb-2">No bookings yet</h3>
-                  <p className="text-gray-500 mb-6">Create your first travel booking to get started</p>
+                <div className="py-20 text-center">
+                  <Package className="w-24 h-24 mx-auto mb-4 text-gray-300" />
+                  <h3 className="mb-2 text-2xl font-semibold text-gray-600">No bookings yet</h3>
+                  <p className="mb-6 text-gray-500">Create your first travel booking to get started</p>
                   <button
                     onClick={backToBooking}
-                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all"
+                    className="px-8 py-3 text-white transition-all bg-gradient-to-r from-green-600 to-blue-600 rounded-xl hover:from-green-700 hover:to-blue-700"
                   >
                     Create Booking
                   </button>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {appointments.map((appointment) => (
-                    <div key={appointment.id} className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="font-semibold text-xl text-gray-800">{appointment.userName}</h3>
+                    <div key={appointment.id} className="p-6 transition-shadow bg-white border border-gray-100 shadow-lg rounded-2xl hover:shadow-xl">
+                      <div className="flex items-start justify-between mb-4">
+                        <h3 className="text-xl font-semibold text-gray-800">{appointment.userName}</h3>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           appointment.status === 'Confirmed' ? 'bg-green-100 text-green-800' :
                           appointment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -404,7 +436,7 @@ const navigate = useNavigate();
                         )}
                         
                         <div className="pt-3 border-t">
-                          <div className="flex justify-between items-center">
+                          <div className="flex items-center justify-between">
                             <p className="text-sm text-gray-500">
                               Booked on {new Date(appointment.createdAt || Date.now()).toLocaleDateString()}
                             </p>
@@ -428,14 +460,14 @@ const navigate = useNavigate();
   return (
     <>
       <Toast show={toast.show} message={toast.message} type={toast.type} onClose={hideToast} />
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 p-6">
+      <div className="min-h-screen p-6 bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
+          <div className="mb-12 text-center">
+            <h1 className="mb-4 text-5xl font-bold text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text">
               Plan Your Dream Journey
             </h1>
-            <p className="text-gray-600 text-xl">Book your perfect travel experience in just a few steps</p>
+            <p className="text-xl text-gray-600">Book your perfect travel experience in just a few steps</p>
           </div>
 
           {/* Progress Steps */}
@@ -479,17 +511,17 @@ const navigate = useNavigate();
           </div>
 
           {/* Main Form */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 lg:p-12">
+          <div className="p-8 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl lg:p-12">
             <div>
               {/* Step 1: Personal Info */}
               {currentStep === 1 && (
                 <div className="space-y-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Tell us about yourself</h2>
+                  <div className="mb-8 text-center">
+                    <h2 className="mb-2 text-3xl font-bold text-gray-800">Tell us about yourself</h2>
                     <p className="text-gray-600">Let's start with your basic information</p>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-8">
+                  <div className="grid gap-8 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="block text-lg font-semibold text-gray-700">Full Name *</label>
                       <input
@@ -499,7 +531,8 @@ const navigate = useNavigate();
                         onChange={handleChange}
                         required
                         placeholder="Enter your full name"
-                        className="w-full border-2 border-gray-200 rounded-xl p-4 text-lg focus:border-green-500 focus:outline-none transition-colors"
+                        className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
+                        readOnly // Auto-filled from token
                       />
                     </div>
 
@@ -513,7 +546,7 @@ const navigate = useNavigate();
                         min="1"
                         max="20"
                         required
-                        className="w-full border-2 border-gray-200 rounded-xl p-4 text-lg focus:border-green-500 focus:outline-none transition-colors"
+                        className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -523,12 +556,12 @@ const navigate = useNavigate();
               {/* Step 2: Package Selection */}
               {currentStep === 2 && (
                 <div className="space-y-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Choose Your Package</h2>
+                  <div className="mb-8 text-center">
+                    <h2 className="mb-2 text-3xl font-bold text-gray-800">Choose Your Package</h2>
                     <p className="text-gray-600">Select the perfect travel experience for you</p>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid gap-6 md:grid-cols-3">
                     {packages.filter(pkg => pkg.isActive).map((packageItem) => (
                       <div
                         key={packageItem.id}
@@ -540,7 +573,7 @@ const navigate = useNavigate();
                         onClick={() => setFormData({ ...formData, packageType: packageItem.name })}
                       >
                         <div className="text-center">
-                          <h3 className="text-2xl font-bold text-gray-800 mb-2">{packageItem.name}</h3>
+                          <h3 className="mb-2 text-2xl font-bold text-gray-800">{packageItem.name}</h3>
                           <div className="mb-4">
                             <p className="text-3xl font-bold text-green-600">${packageItem.basePrice}</p>
                             <p className="text-sm text-gray-500">+ ${packageItem.guidePrice} for guide</p>
@@ -563,12 +596,12 @@ const navigate = useNavigate();
               {/* Step 3: Date & Notes */}
               {currentStep === 3 && (
                 <div className="space-y-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">When do you want to travel?</h2>
+                  <div className="mb-8 text-center">
+                    <h2 className="mb-2 text-3xl font-bold text-gray-800">When do you want to travel?</h2>
                     <p className="text-gray-600">Pick your preferred date and add any special requests</p>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-8">
+                  <div className="grid gap-8 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="block text-lg font-semibold text-gray-700">Travel Date *</label>
                       <input
@@ -578,24 +611,24 @@ const navigate = useNavigate();
                         onChange={handleChange}
                         required
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full border-2 border-gray-200 rounded-xl p-4 text-lg focus:border-green-500 focus:outline-none transition-colors"
+                        className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
                       />
                     </div>
 
                     <div className="space-y-4">
                       <label className="block text-lg font-semibold text-gray-700">Additional Services</label>
-                      <div className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-xl hover:border-green-300 transition-colors">
+                      <div className="flex items-center gap-3 p-4 transition-colors border-2 border-gray-200 rounded-xl hover:border-green-300">
                         <input
                           type="checkbox"
                           id="needsGuide"
                           name="needsGuide"
                           checked={formData.needsGuide}
-                          onChange={(e) => setFormData({ ...formData, needsGuide: e.target.checked })}
+                          onChange={handleChange}
                           className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
                         />
-                        <label htmlFor="needsGuide" className="text-lg text-gray-700 cursor-pointer flex-1">
+                        <label htmlFor="needsGuide" className="flex-1 text-lg text-gray-700 cursor-pointer">
                           <span className="font-medium">Add Professional Guide</span>
-                          <div className="text-sm text-gray-500 mt-1">
+                          <div className="mt-1 text-sm text-gray-500">
                             Get a local expert guide (+${getSelectedPackage()?.guidePrice || 0} per day)
                           </div>
                         </label>
@@ -611,7 +644,7 @@ const navigate = useNavigate();
                       onChange={handleChange}
                       placeholder="Any special preferences, dietary requirements, or requests..."
                       rows="4"
-                      className="w-full border-2 border-gray-200 rounded-xl p-4 text-lg focus:border-green-500 focus:outline-none transition-colors resize-none"
+                      className="w-full p-4 text-lg transition-colors border-2 border-gray-200 resize-none rounded-xl focus:border-green-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -620,15 +653,15 @@ const navigate = useNavigate();
               {/* Step 4: Confirmation */}
               {currentStep === 4 && (
                 <div className="space-y-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Confirm Your Booking</h2>
+                  <div className="mb-8 text-center">
+                    <h2 className="mb-2 text-3xl font-bold text-gray-800">Confirm Your Booking</h2>
                     <p className="text-gray-600">Review your travel details before confirming</p>
                   </div>
 
-                  <div className="bg-gray-50 rounded-2xl p-8">
-                    <div className="grid md:grid-cols-2 gap-8">
+                  <div className="p-8 bg-gray-50 rounded-2xl">
+                    <div className="grid gap-8 md:grid-cols-2">
                       <div>
-                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Booking Details</h3>
+                        <h3 className="mb-4 text-xl font-semibold text-gray-800">Booking Details</h3>
                         <div className="space-y-3">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Name:</span>
@@ -650,20 +683,20 @@ const navigate = useNavigate();
                             <span className="text-gray-600">Date:</span>
                             <span className="font-semibold">{formData.startDate}</span>
                           </div>
-                          <div className="border-t pt-3 mt-3">
-                            <div className="flex justify-between text-sm text-gray-500 mb-1">
+                          <div className="pt-3 mt-3 border-t">
+                            <div className="flex justify-between mb-1 text-sm text-gray-500">
                               <span>Base Price ({formData.packageType}):</span>
                               <span>${getSelectedPackage()?.basePrice || 0}</span>
                             </div>
                             {formData.needsGuide && (
-                              <div className="flex justify-between text-sm text-gray-500 mb-1">
+                              <div className="flex justify-between mb-1 text-sm text-gray-500">
                                 <span>Guide Service:</span>
                                 <span>+${getSelectedPackage()?.guidePrice || 0}</span>
                               </div>
                             )}
                             <div className="flex justify-between">
-                              <span className="text-gray-600 font-medium">Total Price:</span>
-                              <span className="font-bold text-xl text-green-600">
+                              <span className="font-medium text-gray-600">Total Price:</span>
+                              <span className="text-xl font-bold text-green-600">
                                 ${calculateTotalPrice()}
                               </span>
                             </div>
@@ -673,8 +706,8 @@ const navigate = useNavigate();
 
                       {formData.note && (
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-800 mb-4">Special Requests</h3>
-                          <p className="text-gray-600 bg-white rounded-lg p-4">{formData.note}</p>
+                          <h3 className="mb-4 text-xl font-semibold text-gray-800">Special Requests</h3>
+                          <p className="p-4 text-gray-600 bg-white rounded-lg">{formData.note}</p>
                         </div>
                       )}
                     </div>
@@ -683,14 +716,14 @@ const navigate = useNavigate();
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between items-center mt-12 pt-8 border-t">
+              <div className="flex items-center justify-between pt-8 mt-12 border-t">
                 <div className="flex gap-4">
                   {currentStep > 1 && (
                     <button
                       type="button"
                       onClick={prevStep}
                       disabled={loading}
-                      className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-colors border-2 border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       Previous
@@ -700,7 +733,7 @@ const navigate = useNavigate();
                   <button
                     type="button"
                     onClick={viewAllBookings}
-                    className="px-6 py-3 border-2 border-green-200 text-green-600 rounded-xl hover:bg-green-50 transition-colors"
+                    className="px-6 py-3 text-green-600 transition-colors border-2 border-green-200 rounded-xl hover:bg-green-50"
                   >
                     View All Bookings
                   </button>
@@ -716,7 +749,7 @@ const navigate = useNavigate();
                       (currentStep === 3 && !formData.startDate) ||
                       loading
                     }
-                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-8 py-3 text-white transition-all bg-gradient-to-r from-green-600 to-blue-600 rounded-xl hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Processing...' : 'Next'}
                     <ArrowRight className="w-4 h-4" />
@@ -726,7 +759,7 @@ const navigate = useNavigate();
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-8 py-3 text-white transition-all bg-gradient-to-r from-green-600 to-blue-600 rounded-xl hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <CheckCircle className="w-4 h-4" />
                     {loading ? 'Confirming Booking...' : 'Confirm Booking'}
