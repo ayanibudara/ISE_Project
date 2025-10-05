@@ -230,11 +230,11 @@ const PackageView = () => {
             {/* Package Title Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {packageData.name}
+                {packageData.packageName}
               </h1>
               <div className="flex items-center gap-2 text-gray-600">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm">{packageData.province}</span>
+                <span className="text-sm">{packageData.packageName}</span>
               </div>
             </div>
 
