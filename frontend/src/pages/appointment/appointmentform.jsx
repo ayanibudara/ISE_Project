@@ -17,29 +17,11 @@ export default function TravelBookingApp() {
     startDate: "",
     needsGuide: false,
   });
-  const [userId, setUserId] = useState(null);
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
-  // Base URL for API
-  const BASE_URL = "http://localhost:5000/api/appointments";
-
-  // Get token from localStorage
-  const getToken = () => localStorage.getItem('authToken');
-
-  // Decode JWT token to get user info
-  const parseJwt = (token) => {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      console.error('Invalid token', e);
-      return null;
-    }
-  };
+  // Base URL for API - Change this to your backend URL
+  const BASE_URL = "http://localhost:5000/api/appointments"; // Change to your API base URL
+  // For production: const BASE_URL = "https://yourapp.com/api";
 
   const steps = [
     { id: 1, title: "Personal Info", icon: Users },
@@ -48,7 +30,7 @@ export default function TravelBookingApp() {
     { id: 4, title: "Confirmation", icon: CheckCircle },
   ];
 
-  // Toast notification component (same as before)
+  // Toast notification component
   const Toast = ({ show, message, type, onClose }) => {
     useEffect(() => {
       if (show) {
@@ -113,15 +95,16 @@ export default function TravelBookingApp() {
 
   // API service functions
   const apiService = {
+    // Fetch available packages from database
     fetchPackages: async () => {
       try {
         setLoading(true);
-        const token = getToken();
         const response = await fetch(`${BASE_URL}/packages`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            // Add authorization header if needed
+            // 'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -131,10 +114,12 @@ export default function TravelBookingApp() {
 
         const data = await response.json();
         showToast('Packages loaded successfully!', 'success');
-        return data.packages || data;
+        return data.packages || data; // Handle different response structures
       } catch (error) {
         console.error('Error fetching packages:', error);
         showToast('Failed to load packages. Please try again.', 'error');
+        
+        // Fallback data for development/testing
         return [
           {
             id: 1,
@@ -166,15 +151,16 @@ export default function TravelBookingApp() {
       }
     },
 
+    // Create new booking
     createBooking: async (bookingData) => {
       try {
         setLoading(true);
-        const token = getToken();
         const response = await fetch(`${BASE_URL}/add`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            // Add authorization header if needed
+            // 'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify(bookingData)
         });
@@ -185,7 +171,7 @@ export default function TravelBookingApp() {
 
         const data = await response.json();
         showToast('Booking confirmed successfully! 🎉', 'success');
-        return data.booking || data;
+        return data.booking || data; // Handle different response structures
       } catch (error) {
         console.error('Error creating booking:', error);
         showToast('Failed to create booking. Please try again.', 'error');
@@ -195,17 +181,18 @@ export default function TravelBookingApp() {
       }
     },
 
-    fetchBookings: async (userId) => {
+    // Fetch user bookings
+    fetchBookings: async (userId = null) => {
       try {
         setLoading(true);
-        const token = getToken();
-        const url = `${BASE_URL}/bookings?userId=${userId}`;
+        const url = userId ? `${BASE_URL}/bookings?userId=${userId}` : `${BASE_URL}/bookings`;
         
         const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            // Add authorization header if needed
+            // 'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -214,7 +201,7 @@ export default function TravelBookingApp() {
         }
 
         const data = await response.json();
-        return data.bookings || data;
+        return data.bookings || data; // Handle different response structures
       } catch (error) {
         console.error('Error fetching bookings:', error);
         showToast('Failed to load bookings.', 'warning');
@@ -224,23 +211,6 @@ export default function TravelBookingApp() {
       }
     }
   };
-
-  // Initialize user data from token
-  useEffect(() => {
-    const token = getToken();
-    if (token) {
-      const decoded = parseJwt(token);
-      if (decoded && decoded.id) {
-        setUserId(decoded.id);
-        setFormData(prev => ({ ...prev, userName: decoded.name || "" }));
-      } else {
-        // Redirect to login if invalid token
-        navigate('/login');
-      }
-    } else {
-      navigate('/login');
-    }
-  }, [navigate]);
 
   // Load packages on component mount
   useEffect(() => {
@@ -257,14 +227,14 @@ export default function TravelBookingApp() {
 
   // Load bookings when viewing appointments
   useEffect(() => {
-    if (showAppointments && userId) {
+    if (showAppointments) {
       const loadBookings = async () => {
-        const bookingsData = await apiService.fetchBookings(userId);
+        const bookingsData = await apiService.fetchBookings();
         setAppointments(bookingsData);
       };
       loadBookings();
     }
-  }, [showAppointments, userId]);
+  }, [showAppointments]);
 
   const getSelectedPackage = () => {
     return packages.find(pkg => pkg.name === formData.packageType) || packages[0];
@@ -280,11 +250,8 @@ export default function TravelBookingApp() {
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({ 
-      ...formData, 
-      [name]: type === 'checkbox' ? checked : value 
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const nextStep = () => {
@@ -298,45 +265,46 @@ export default function TravelBookingApp() {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const selectedPackage = getSelectedPackage();
-      const bookingData = {
-        userId: userId, // Include userId from token
-        userName: formData.userName,
-        membersCount: parseInt(formData.membersCount),
-        packageId: selectedPackage.id,
-        packageType: formData.packageType,
-        startDate: formData.startDate,
-        needsGuide: formData.needsGuide,
-        note: formData.note,
-        totalPrice: calculateTotalPrice(),
-        basePrice: selectedPackage.basePrice,
-        guidePrice: formData.needsGuide ? selectedPackage.guidePrice : 0,
-        status: 'Pending',
-      };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const selectedPackage = getSelectedPackage();
+    const bookingData = {
+      userName: formData.userName,
+      membersCount: parseInt(formData.membersCount),
+      packageId: selectedPackage.id,
+      packageType: formData.packageType,
+      startDate: formData.startDate,
+      needsGuide: formData.needsGuide,
+      note: formData.note,
+      totalPrice: calculateTotalPrice(),
+      basePrice: selectedPackage.basePrice,
+      guidePrice: formData.needsGuide ? selectedPackage.guidePrice : 0,
+      status: 'Pending',
+    };
 
-      const newAppointment = await apiService.createBooking(bookingData);
-      setAppointments(prev => [...prev, newAppointment]);
+    const newAppointment = await apiService.createBooking(bookingData);
+    setAppointments(prev => [...prev, newAppointment]);
 
-      // Reset form
-      setFormData({
-        userName: formData.userName, // Keep user name
-        membersCount: 1,
-        packageType: packages[0]?.name || "",
-        note: "",
-        startDate: "",
-        needsGuide: false,
-      });
-      setCurrentStep(1);
+    // Reset form
+    setFormData({
+      userName: "",
+      membersCount: 1,
+      packageType: packages[0]?.name || "",
+      note: "",
+      startDate: "",
+      needsGuide: false,
+    });
+    setCurrentStep(1);
 
-      navigate("/appointments"); // Fixed typo in route name
+    // ✅ Navigate to bookings page
+    navigate("/appoiments");
 
-    } catch (error) {
-      console.error("Booking error:", error);
-    }
-  };
+  } catch (error) {
+    console.error("Booking error:", error);
+  }
+};
+
 
   const viewAllBookings = () => {
     setShowAppointments(true);
@@ -532,7 +500,6 @@ export default function TravelBookingApp() {
                         required
                         placeholder="Enter your full name"
                         className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
-                        readOnly // Auto-filled from token
                       />
                     </div>
 
@@ -623,7 +590,7 @@ export default function TravelBookingApp() {
                           id="needsGuide"
                           name="needsGuide"
                           checked={formData.needsGuide}
-                          onChange={handleChange}
+                          onChange={(e) => setFormData({ ...formData, needsGuide: e.target.checked })}
                           className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
                         />
                         <label htmlFor="needsGuide" className="flex-1 text-lg text-gray-700 cursor-pointer">
