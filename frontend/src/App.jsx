@@ -103,7 +103,7 @@ const AuthenticatedRoutes = () => {
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
 
-      <Route path="/Packages/managepackages" element={<ManagePackages />} />
+    
      <Route path="/Packages/:packageId" element={<PackageView />} />
 
       <Route path="/reviewform" element={<ReviewForm />} />

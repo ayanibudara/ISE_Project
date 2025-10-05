@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MapPin,
   Camera,
@@ -8,7 +8,8 @@ import {
   Gem,
 } from "lucide-react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // ✅ Import navigate
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const TourPackageForm = () => {
   const [serviceName, setServiceName] = useState("");
@@ -21,7 +22,16 @@ const TourPackageForm = () => {
   const [services, setServices] = useState({ Standard: "", Premium: "", VIP: "" });
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate(); // ✅ setup navigate
+  const { authState } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authState.isAuthenticated) {
+      alert("You must be logged in to create a tour package.");
+      navigate("/login");
+    }
+  }, [authState.isAuthenticated, navigate]);
 
   const provinces = [
     "Western Province",
@@ -45,13 +55,12 @@ const TourPackageForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Step 1: Validate main fields
+    // Validate main fields
     if (!serviceName || !category || !province || !description) {
       alert("Please fill in all required fields.");
       return;
     }
 
-    // Step 2: Validate all tiers
     const packageTypes = ["Standard", "Premium", "VIP"];
     for (let type of packageTypes) {
       if (!prices[type] || !tourDays[type] || !services[type]) {
@@ -67,15 +76,14 @@ const TourPackageForm = () => {
     setLoading(true);
 
     try {
-      // Step 3: Build single data object
-      const providerId = localStorage.getItem("providerId");
+      // ✅ Build payload EXACTLY as your example
       const data = {
+        providerId: authState.user.id, // e.g., "68add2f502b9fd08c69c409d"
         packageName: serviceName,
-        category,
+        category, // e.g., "Culture"
         province,
         description,
-        image,
-        providerId,
+        image: image.trim(), // ✅ trim extra spaces (your example had trailing spaces!)
         packages: packageTypes.map((type) => ({
           packageType: type,
           price: Number(prices[type]),
@@ -84,15 +92,18 @@ const TourPackageForm = () => {
         })),
       };
 
-      // Step 4: Make API call to backend
-      const res = await axios.post("http://localhost:5000/api/packages", data);
+      // Optional: include auth token if required by backend
+      const token = localStorage.getItem("token");
+      const config = token
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : {};
 
-      alert(" package created successfully!");
+      const res = await axios.post("http://localhost:5000/api/packages", data, config);
 
-      // ✅ Step 5: Navigate to provider dashboard
+      alert("Tour package created successfully!");
       navigate("/dashboard/package-provider", { state: { newPackage: res.data } });
 
-      // (Optional) Reset form
+      // Reset form
       setServiceName("");
       setCategory("");
       setProvince("");
@@ -104,7 +115,7 @@ const TourPackageForm = () => {
     } catch (err) {
       console.error("Error creating package:", err);
       alert(
-        `Error creating package: ${err.response?.data?.message || err.message}`
+        `Error: ${err.response?.data?.message || err.message || "Something went wrong"}`
       );
     } finally {
       setLoading(false);
@@ -132,6 +143,10 @@ const TourPackageForm = () => {
     },
   ];
 
+  if (!authState.isAuthenticated) {
+    return null; // or loading spinner
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 lg:p-8">
       <div className="relative max-w-7xl mx-auto">
@@ -142,12 +157,11 @@ const TourPackageForm = () => {
               <div className="space-y-6">
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Package className="w-4 h-4 text-blue-600" /> Tour Package
-                    Name *
+                    <Package className="w-4 h-4 text-blue-600" /> Tour Package Name *
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g., Magical Sri Lanka Adventure"
+                    placeholder="e.g., Cultural Heritage Tour"
                     value={serviceName}
                     onChange={(e) => setServiceName(e.target.value)}
                     className="w-full border-2 border-gray-200 rounded-xl px-4 py-3"
@@ -165,7 +179,7 @@ const TourPackageForm = () => {
                     <option value="">Select Category</option>
                     <option value="Adventure">Adventure</option>
                     <option value="Beach">Beach</option>
-                    <option value="Cultural">Cultural</option>
+                    <option value="Culture">Culture</option> {/* ✅ Fixed to "Culture" */}
                   </select>
                 </div>
                 <div className="group">
@@ -195,7 +209,7 @@ const TourPackageForm = () => {
                   </label>
                   <input
                     type="text"
-                    placeholder="https://example.com/tour.jpg"
+                    placeholder="https://example.com/images/tour.jpg"
                     value={image}
                     onChange={(e) => setImage(e.target.value)}
                     className="w-full border-2 border-gray-200 rounded-xl px-4 py-3"
@@ -269,7 +283,7 @@ const TourPackageForm = () => {
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {loading ? "Creating Packages..." : "Create Packages"}
+                {loading ? "Creating Package..." : "Create Package"}
               </button>
             </div>
           </div>
