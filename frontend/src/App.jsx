@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 
@@ -16,13 +17,16 @@ import Guidedashboard from "./pages/Guide/Guidedashboard";
 
 import PackageForm from "./pages/Services/PackageForm";
 import Packages from "./pages/Services/PackagePage";
+
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+
 import TouristDashboard from "./pages/dashboard/TouristDashboard";
 import GuideDashboard from "./pages/dashboard/GuideDashboard";
 import PackageProviderDashboard from "./pages/dashboard/PackageProviderDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import AdvertisementManagement from "./pages/dashboard/AdvertisementManagement";
+
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
@@ -58,7 +62,7 @@ const AuthenticatedRoutes = () => {
     );
   }
 
-  // Helper: redirect based on role
+  // Redirect based on role
   const renderDashboard = () => {
     if (!authState.isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -78,7 +82,7 @@ const AuthenticatedRoutes = () => {
     }
   };
 
-  // Helper: protected routes by role
+  // Protected routes with role check
   const renderProtectedRoute = (element, allowedRoles) => {
     if (!authState.isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -92,137 +96,135 @@ const AuthenticatedRoutes = () => {
   };
 
   return (
-    <>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/apform" element={<AppointmentForm />} />
-        <Route path="/appoiments" element={<AppointmentsPage />} />
-        <Route path="/guideform" element={<Guideform />} />
-        <Route path="/guidedashboard" element={<Guidedashboard />} />
-        <Route path="/addpackage" element={<PackageForm />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/reviewform" element={<ReviewForm />} />
-        <Route path="/reviewlist" element={<ReviewList />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/apform" element={<AppointmentForm />} />
+      <Route path="/appointments" element={<AppointmentsPage />} />
+      <Route path="/guideform" element={<Guideform />} />
+      <Route path="/guidedashboard" element={<Guidedashboard />} />
+      <Route path="/addpackage" element={<PackageForm />} />
+      <Route path="/packages" element={<Packages />} />
+      <Route path="/reviewform" element={<ReviewForm />} />
+      <Route path="/reviewlist" element={<ReviewList />} />
 
-        {/* Auth Routes */}
-        <Route
-          path="/login"
-          element={
-            authState.isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Login />
-            )
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            authState.isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Register />
-            )
-          }
-        />
+      {/* Auth Routes */}
+      <Route
+        path="/login"
+        element={
+          authState.isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Login />
+          )
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          authState.isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Register />
+          )
+        }
+      />
 
-        {/* Dashboard Redirect */}
-        <Route path="/dashboard" element={renderDashboard()} />
+      {/* Dashboard Redirect */}
+      <Route path="/dashboard" element={renderDashboard()} />
 
-        {/* Role-based dashboards */}
-        <Route
-          path="/dashboard/tourist"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <TouristDashboard />
-            </DashboardLayout>,
-            ["Tourist"]
-          )}
-        />
+      {/* Role-based Dashboards */}
+      <Route
+        path="/dashboard/tourist"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <TouristDashboard />
+          </DashboardLayout>,
+          ["Tourist"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/tourist/profile"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <ProfileEdit />
-            </DashboardLayout>,
-            ["Tourist"]
-          )}
-        />
+      <Route
+        path="/dashboard/tourist/profile"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <ProfileEdit />
+          </DashboardLayout>,
+          ["Tourist"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/guide"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <GuideDashboard />
-            </DashboardLayout>,
-            ["Guide"]
-          )}
-        />
+      <Route
+        path="/dashboard/guide"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <GuideDashboard />
+          </DashboardLayout>,
+          ["Guide"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/guide/profile"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <ProfileEdit />
-            </DashboardLayout>,
-            ["Guide"]
-          )}
-        />
+      <Route
+        path="/dashboard/guide/profile"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <ProfileEdit />
+          </DashboardLayout>,
+          ["Guide"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/package-provider"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <PackageProviderDashboard />
-            </DashboardLayout>,
-            ["PackageProvider"]
-          )}
-        />
+      <Route
+        path="/dashboard/package-provider"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <PackageProviderDashboard />
+          </DashboardLayout>,
+          ["PackageProvider"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/package-provider/profile"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <ProfileEdit />
-            </DashboardLayout>,
-            ["PackageProvider"]
-          )}
-        />
+      <Route
+        path="/dashboard/package-provider/profile"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <ProfileEdit />
+          </DashboardLayout>,
+          ["PackageProvider"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/admin"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <AdminDashboard />
-            </DashboardLayout>,
-            ["Admin"]
-          )}
-        />
+      <Route
+        path="/dashboard/admin"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <AdminDashboard />
+          </DashboardLayout>,
+          ["Admin"]
+        )}
+      />
 
-        <Route
-          path="/dashboard/admin/advertising"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <AdvertisementManagement />
-            </DashboardLayout>,
-            ["Admin"]
-          )}
-        />
+      <Route
+        path="/dashboard/admin/advertising"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <AdvertisementManagement />
+          </DashboardLayout>,
+          ["Admin"]
+        )}
+      />
 
-        {/* Generic Profile */}
-        <Route
-          path="/profile"
-          element={renderProtectedRoute(
-            <DashboardLayout>
-              <ProfileEdit />
-            </DashboardLayout>,
-            ["Tourist", "Guide", "PackageProvider", "Admin"]
-          )}
-        />
-      </Routes>
-    </>
+      {/* Generic Profile for All Roles */}
+      <Route
+        path="/profile"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <ProfileEdit />
+          </DashboardLayout>,
+          ["Tourist", "Guide", "PackageProvider", "Admin"]
+        )}
+      />
+    </Routes>
   );
 };
 
@@ -241,3 +243,4 @@ function App() {
 }
 
 export default App;
+
