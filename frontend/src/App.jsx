@@ -100,11 +100,10 @@ const AuthenticatedRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/apform" element={<AppointmentForm />} />
       <Route path="/appoiments" element={<AppointmentsPage />} />
+      
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
-
-    
-     <Route path="/Packages/:packageId" element={<PackageView />} />
+      <Route path="/packages/:packageId" element={<PackageView />} />
 
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
