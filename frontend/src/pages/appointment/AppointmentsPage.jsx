@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Users, Package, FileText, Check, X, Eye, Download, Search, Filter } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext'; // Adjust path if needed
-import api from '../../utils/api'; // Your axios instance with auth interceptor
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../utils/api';
 
 const AppointmentsPage = () => {
   const { authState } = useAuth();
@@ -15,20 +15,14 @@ const AppointmentsPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  // Format ISO date to separate date and time
+  // 🔐 Check if current user is a PackageProvider
+  const isPackageProvider = authState.user?.role === 'PackageProvider';
+
   const formatDate = (isoDate) => {
     const date = new Date(isoDate);
     return {
-      date: date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      }),
-      time: date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
-      }),
+      date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
       fullDate: date.toISOString().split('T')[0]
     };
   };
@@ -44,14 +38,11 @@ const AppointmentsPage = () => {
       try {
         setLoading(true);
         const response = await api.get('api/appointments/my');
-        
-        // ✅ Extract 'upcoming' from response.data
         const { upcoming = [] } = response.data;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Map backend data to UI format
         const upcomingAppointments = upcoming
           .filter(app => new Date(app.startDate) >= today)
           .map(app => ({
@@ -61,7 +52,7 @@ const AppointmentsPage = () => {
             packageType: app.packageType,
             note: app.note || '',
             startDate: app.startDate,
-            status: app.status, // e.g., "booked"
+            status: app.status,
             createdAt: app.createdAt,
             formattedDate: formatDate(app.startDate),
             createdDate: formatDate(app.createdAt)
@@ -106,7 +97,7 @@ const AppointmentsPage = () => {
 
   const handleConfirm = async (id) => {
     try {
-      await api.put(`/appointments/${id}/confirm`, { status: 'confirmed' });
+      await api.put(`/api/appointments/${id}/confirm`, { status: 'confirmed' });
       const updatedAppointments = appointments.map(app =>
         app.id === id ? { ...app, status: 'confirmed' } : app
       );
@@ -119,7 +110,7 @@ const AppointmentsPage = () => {
 
   const handleReject = async (id) => {
     try {
-      await api.put(`/appointments/${id}/reject`, { status: 'rejected' });
+      await api.put(`/api/appointments/${id}/reject`, { status: 'rejected' });
       const updatedAppointments = appointments.map(app =>
         app.id === id ? { ...app, status: 'rejected' } : app
       );
@@ -160,7 +151,7 @@ const AppointmentsPage = () => {
     switch (status) {
       case 'confirmed':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'booked': // ✅ Handle 'booked' as pending-like state
+      case 'booked':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -198,11 +189,11 @@ const AppointmentsPage = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-red-50 to-pink-100">
-      <div className="text-center">
-        <div className="mb-4 text-xl text-red-600">⚠️</div>
-        <p className="font-medium text-red-600">{error}</p>
+        <div className="text-center">
+          <div className="mb-4 text-xl text-red-600">⚠️</div>
+          <p className="font-medium text-red-600">{error}</p>
+        </div>
       </div>
-    </div>
     );
   }
 
@@ -325,7 +316,8 @@ const AppointmentsPage = () => {
                         <Eye className="w-4 h-4" />
                       </button>
                       
-                      {appointment.status === 'booked' && (
+                      {/* ✅ Only show Confirm/Reject buttons to PackageProvider */}
+                      {isPackageProvider && appointment.status === 'booked' && (
                         <>
                           <button
                             onClick={() => handleConfirm(appointment.id)}
@@ -450,7 +442,8 @@ const AppointmentsPage = () => {
                 </div>
               </div>
               
-              {selectedAppointment.status === 'booked' && (
+              {/* ✅ Modal action buttons only for PackageProvider */}
+              {isPackageProvider && selectedAppointment.status === 'booked' && (
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => {

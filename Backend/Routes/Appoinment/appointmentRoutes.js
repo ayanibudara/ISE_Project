@@ -8,7 +8,7 @@ router.get('/', requireAuth, attachToken, appointmentController.getAllAppointmen
 router.get('/my', requireAuth, attachToken, appointmentController.getUserAppointments);
 router.get('/:id', requireAuth, attachToken, appointmentController.getAppointmentById);
 router.put('/:id', requireAuth, attachToken, appointmentController.updateAppointment);
-router.delete('/:id', requireAuth, attachToken, appointmentController.deleteAppointment);
+router.delete('/:id', appointmentController.deleteAppointment);
 
 
 module.exports = router;

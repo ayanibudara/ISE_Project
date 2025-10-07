@@ -1,8 +1,8 @@
 import { useAuth } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Calendar, MapPin, Clock, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
-import api from "../../utils/api"; // Adjust path to your api instance
+import { Calendar, MapPin, Clock, Sparkles, ChevronLeft, ChevronRight, List } from "lucide-react";
+import api from "../../utils/api";
 
 const TouristDashboard = () => {
   const { authState } = useAuth();
@@ -127,12 +127,20 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex gap-4 mb-8">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-4 mb-8">
           <Link to="/apform" className="group">
             <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 font-semibold flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Book New Appointment
+            </button>
+          </Link>
+
+          {/* ✅ NEW: View All Appointments Button */}
+          <Link to="/appoiments" className="group">
+            <button className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 font-semibold flex items-center gap-2">
+              <List className="w-5 h-5" />
+              View All Appointments
             </button>
           </Link>
         </div>
