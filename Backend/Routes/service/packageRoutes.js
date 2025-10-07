@@ -4,7 +4,7 @@ const packageController = require('../../Controllers/service/packageController.j
 const { requireAuth, restrictTo, attachToken } = require('../../middleware/authMiddleware');
 
 router.post('/packages',  packageController.createPackage);
-router.get('/packages', requireAuth, attachToken, packageController.getAllPackages);
+//router.get('/packages', requireAuth, attachToken, packageController.getAllPackages);
 router.get('/packages/:packageId', requireAuth, attachToken, packageController.getPackageById);
 router.put('/packages/:packageId', requireAuth, attachToken, packageController.updatePackage);
 router.delete('/packages/:packageId', requireAuth, attachToken, packageController.deletePackage);
