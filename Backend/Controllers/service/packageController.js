@@ -11,16 +11,10 @@ exports.createPackage = async (req, res) => {
   }
 };
 
-// Get all packages
 exports.getAllPackages = async (req, res) => {
   try {
-    // Make sure the user is authenticated
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    // Find packages related to the logged-in provider
-    const packages = await Package.find({ providerId: req.user.id });
+    // Fetch all packages from the database
+    const packages = await Package.find();
 
     res.json(packages);
   } catch (err) {
