@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, User, Users, Package, FileText, Check, X, Eye, Download, Search, Filter } from 'lucide-react';
+import { Calendar, Clock, User, Users, Package, FileText, Check, X, Eye, Download, Search, Filter, UserCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 
 const AppointmentsPage = () => {
   const { authState } = useAuth();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,8 +17,8 @@ const AppointmentsPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  // 🔐 Check if current user is a PackageProvider
   const isPackageProvider = authState.user?.role === 'PackageProvider';
+  const isGuide = authState.user?.role === 'Guide';
 
   const formatDate = (isoDate) => {
     const date = new Date(isoDate);
@@ -37,13 +39,27 @@ const AppointmentsPage = () => {
 
       try {
         setLoading(true);
-        const response = await api.get('api/appointments/my');
-        const { upcoming = [] } = response.data;
+        let response;
+
+        if (isGuide) {
+          response = await api.get('api/appointments');
+        } else {
+          response = await api.get('api/appointments/my');
+        }
+
+        const data = response.data;
+        let rawAppointments = Array.isArray(data)
+          ? data
+          : Array.isArray(data.appointments)
+          ? data.appointments
+          : Array.isArray(data.upcoming)
+          ? data.upcoming
+          : [];
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const upcomingAppointments = upcoming
+        const processedAppointments = rawAppointments
           .filter(app => new Date(app.startDate) >= today)
           .map(app => ({
             id: app._id,
@@ -52,15 +68,18 @@ const AppointmentsPage = () => {
             packageType: app.packageType,
             note: app.note || '',
             startDate: app.startDate,
+            endDate: app.endDate,
             status: app.status,
             createdAt: app.createdAt,
+            needsGuide: app.needsGuide || false,
+            guideId: app.guideId || null,
             formattedDate: formatDate(app.startDate),
             createdDate: formatDate(app.createdAt)
           }))
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-        setAppointments(upcomingAppointments);
-        setFilteredAppointments(upcomingAppointments);
+        setAppointments(processedAppointments);
+        setFilteredAppointments(processedAppointments);
         setError(null);
       } catch (err) {
         console.error('Error fetching appointments:', err);
@@ -71,29 +90,7 @@ const AppointmentsPage = () => {
     };
 
     fetchAppointments();
-  }, [authState.isAuthenticated]);
-
-  useEffect(() => {
-    let filtered = [...appointments];
-    
-    if (searchTerm) {
-      filtered = filtered.filter(appointment =>
-        appointment.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.packageType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.note?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(appointment => appointment.status === filterStatus);
-    }
-    
-    if (filterDate) {
-      filtered = filtered.filter(appointment => appointment.formattedDate.fullDate === filterDate);
-    }
-    
-    setFilteredAppointments(filtered);
-  }, [searchTerm, filterStatus, filterDate, appointments]);
+  }, [authState.isAuthenticated, isGuide]);
 
   const handleConfirm = async (id) => {
     try {
@@ -133,9 +130,9 @@ const AppointmentsPage = () => {
 
   const generateReport = () => {
     const csvContent = "text/csv;charset=utf-8," +
-      "ID,Patient Name,Members Count,Package Type,Date,Time,Status,Note,Created Date\n" +
+      "ID,Name,Members,Package,Date,Time,Status,Needs Guide,Assigned Guide,Note,Created\n" +
       filteredAppointments.map(app => 
-        `${app.id},"${app.userName}",${app.membersCount},"${app.packageType}","${app.formattedDate.date}","${app.formattedDate.time}","${app.status}","${app.note}","${app.createdDate.date}"`
+        `${app.id},"${app.userName}",${app.membersCount},"${app.packageType}","${app.formattedDate.date}","${app.formattedDate.time}","${app.status}","${app.needsGuide ? 'Yes' : 'No'}","${app.guideId || 'None'}","${app.note}","${app.createdDate.date}"`
       ).join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -149,29 +146,39 @@ const AppointmentsPage = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'booked':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'booked': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getPackageColor = (packageType) => {
     switch (packageType?.toLowerCase()) {
-      case 'vip':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'premium':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'standard':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'vip': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'premium': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'standard': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getGuideStatus = (appointment) => {
+    if (appointment.guideId) {
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded">
+          <UserCheck className="w-3 h-3" />
+          Assigned
+        </span>
+      );
+    } else if (appointment.needsGuide) {
+      return (
+        <span className="text-xs text-orange-600">Needs Guide</span>
+      );
+    } else {
+      return (
+        <span className="text-xs text-gray-500">No guide</span>
+      );
     }
   };
 
@@ -204,8 +211,14 @@ const AppointmentsPage = () => {
         <div className="p-6 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="mb-2 text-3xl font-bold text-gray-900">Appointments Management</h1>
-              <p className="text-gray-600">Manage and track upcoming appointments</p>
+              <h1 className="mb-2 text-3xl font-bold text-gray-900">
+                {isGuide ? "All Appointments" : "My Appointments"}
+              </h1>
+              <p className="text-gray-600">
+                {isGuide 
+                  ? "View and manage all tour appointments" 
+                  : "Manage and track your upcoming appointments"}
+              </p>
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">Total Appointments</div>
@@ -293,6 +306,7 @@ const AppointmentsPage = () => {
                           <Users className="w-4 h-4" />
                           {appointment.membersCount} member{appointment.membersCount !== 1 ? 's' : ''}
                         </div>
+                        {getGuideStatus(appointment)}
                       </div>
                     </div>
                   </div>
@@ -316,7 +330,7 @@ const AppointmentsPage = () => {
                         <Eye className="w-4 h-4" />
                       </button>
                       
-                      {/* ✅ Only show Confirm/Reject buttons to PackageProvider */}
+                      {/* ✅ PackageProvider Actions */}
                       {isPackageProvider && appointment.status === 'booked' && (
                         <>
                           <button
@@ -334,6 +348,17 @@ const AppointmentsPage = () => {
                             <X className="w-4 h-4" />
                           </button>
                         </>
+                      )}
+
+                      {/* ✅ GUIDE-ONLY: Assign Guide Button */}
+                      {isGuide && appointment.needsGuide && !appointment.guideId && (
+                        <button
+                          onClick={() => navigate(`/assign-guide/${appointment.id}`)}
+                          className="p-2 text-indigo-600 transition-colors duration-200 rounded-lg hover:text-indigo-700 hover:bg-indigo-50"
+                          title="Assign Guide"
+                        >
+                          <UserCheck className="w-4 h-4" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -372,7 +397,7 @@ const AppointmentsPage = () => {
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50">
                   <User className="w-5 h-5 text-blue-600" />
                   <div>
-                    <div className="text-sm text-gray-500">Patient Name</div>
+                    <div className="text-sm text-gray-500">Traveler Name</div>
                     <div className="font-medium text-gray-900">{selectedAppointment.userName}</div>
                   </div>
                 </div>
@@ -380,10 +405,22 @@ const AppointmentsPage = () => {
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                   <Calendar className="w-5 h-5 text-gray-600" />
                   <div>
-                    <div className="text-sm text-gray-500">Appointment Date</div>
+                    <div className="text-sm text-gray-500">Start Date</div>
                     <div className="font-medium text-gray-900">{selectedAppointment.formattedDate.date}</div>
                   </div>
                 </div>
+
+                {selectedAppointment.endDate && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <div className="text-sm text-gray-500">End Date</div>
+                      <div className="font-medium text-gray-900">
+                        {new Date(selectedAppointment.endDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                   <Clock className="w-5 h-5 text-gray-600" />
@@ -410,6 +447,26 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
                 </div>
+                
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                  <UserCheck className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <div className="text-sm text-gray-500">Guide Requested</div>
+                    <div className="font-medium text-gray-900">
+                      {selectedAppointment.needsGuide ? 'Yes' : 'No'}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedAppointment.guideId && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50">
+                    <UserCheck className="w-5 h-5 text-green-600" />
+                    <div>
+                      <div className="text-sm text-gray-500">Assigned Guide</div>
+                      <div className="font-medium text-gray-900">Assigned</div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                   <div className="w-5 h-5 bg-gray-600 rounded-full"></div>
@@ -442,7 +499,21 @@ const AppointmentsPage = () => {
                 </div>
               </div>
               
-              {/* ✅ Modal action buttons only for PackageProvider */}
+              {/* ✅ GUIDE-ONLY: Assign Guide Button in Modal */}
+              {isGuide && selectedAppointment.needsGuide && !selectedAppointment.guideId && (
+                <button
+                  onClick={() => {
+                    closeDetailsModal();
+                    navigate(`/assign-guide/${selectedAppointment.id}`);
+                  }}
+                  className="flex items-center justify-center w-full gap-2 px-4 py-2 mt-6 text-white transition-colors duration-200 bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  Assign Guide
+                </button>
+              )}
+              
+              {/* PackageProvider Actions in Modal */}
               {isPackageProvider && selectedAppointment.status === 'booked' && (
                 <div className="flex gap-3 mt-6">
                   <button

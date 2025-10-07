@@ -17,6 +17,7 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    
     packageType: {
       type: String,
       required: true,
