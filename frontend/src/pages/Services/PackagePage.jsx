@@ -1,119 +1,197 @@
 // PackagePage.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // 👈 ADD THIS
+import { useNavigate } from "react-router-dom";
 import { Eye, MapPin, Star, Sparkles, Mountain, Waves } from "lucide-react";
 
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
-  const navigate = useNavigate(); // 👈 ADD THIS
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPackages();
   }, []);
 
   const fetchPackages = async () => {
+    setLoading(true);
+    setError(null);
+
+    // Get token from localStorage
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setError("Authentication token missing. Please log in.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await axios.get("http://localhost:5000/api/packages");
+      const res = await axios.get("http://localhost:5000/api/packages", {
+        headers: {
+          Authorization: `Bearer ${token}`, // 👈 Attach JWT token
+        },
+      });
       setPackages(res.data);
     } catch (err) {
       console.error("Error fetching packages:", err);
+      setError(
+        err.response?.status === 401
+          ? "Session expired. Please log in again."
+          : "Failed to load packages. Please try again later."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   const getCategoryIcon = (category) => {
     switch (category?.toLowerCase()) {
-      case 'cultural': return <Star className="w-4 h-4" />;
-      case 'adventure': return <Mountain className="w-4 h-4" />;
-      case 'beach': return <Waves className="w-4 h-4" />;
-      default: return <Sparkles className="w-4 h-4" />;
+      case "cultural":
+        return <Star className="w-4 h-4" />;
+      case "adventure":
+        return <Mountain className="w-4 h-4" />;
+      case "beach":
+        return <Waves className="w-4 h-4" />;
+      default:
+        return <Sparkles className="w-4 h-4" />;
     }
   };
 
   const getCategoryColor = (category) => {
     switch (category?.toLowerCase()) {
-      case 'cultural': return 'from-amber-500 to-orange-600';
-      case 'adventure': return 'from-emerald-500 to-teal-600';
-      case 'beach': return 'from-blue-500 to-cyan-600';
-      default: return 'from-purple-500 to-pink-600';
+      case "cultural":
+        return "from-amber-500 to-orange-600";
+      case "adventure":
+        return "from-emerald-500 to-teal-600";
+      case "beach":
+        return "from-blue-500 to-cyan-600";
+      default:
+        return "from-purple-500 to-pink-600";
     }
   };
 
   const getSubPackageColor = (packageType) => {
     switch (packageType?.toLowerCase()) {
-      case 'standard': return 'from-blue-500 to-blue-600';
-      case 'premium': return 'from-purple-500 to-purple-600';
-      case 'vip': return 'from-amber-500 to-amber-600';
-      default: return 'from-gray-500 to-gray-600';
+      case "standard":
+        return "from-blue-500 to-blue-600";
+      case "premium":
+        return "from-purple-500 to-purple-600";
+      case "vip":
+        return "from-amber-500 to-amber-600";
+      default:
+        return "from-gray-500 to-gray-600";
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <Sparkles className="w-12 h-12 mx-auto text-blue-500 animate-spin" />
+          <p className="mt-4 text-gray-600">Loading packages...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="max-w-md p-8 mx-auto text-center border border-gray-200 shadow-xl bg-white/90 backdrop-blur-md rounded-3xl">
+          <Sparkles className="w-16 h-16 mx-auto mb-4 text-red-400" />
+          <p className="text-lg font-medium text-red-600">{error}</p>
+          <button
+            onClick={() => navigate("/login")}
+            className="px-4 py-2 mt-4 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 relative overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-blue-100/30 to-purple-100/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-l from-emerald-100/30 to-teal-100/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute w-full h-full rounded-full -top-1/2 -left-1/2 bg-gradient-to-r from-blue-100/30 to-purple-100/30 blur-3xl animate-pulse"></div>
+        <div className="absolute w-full h-full delay-1000 rounded-full -bottom-1/2 -right-1/2 bg-gradient-to-l from-emerald-100/30 to-teal-100/30 blur-3xl animate-pulse"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
+      <div className="container relative z-10 px-4 py-8 mx-auto lg:py-12">
         {/* Hero Header */}
-        <div className="text-center mb-12 lg:mb-16">
-          <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent mb-6 leading-tight">
+        <div className="mb-12 text-center lg:mb-16">
+          <h1 className="mb-6 text-4xl font-bold leading-tight text-transparent lg:text-6xl xl:text-7xl bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text">
             Travel Packages
           </h1>
-          
-          <p className="text-gray-600 text-lg lg:text-xl font-medium">
+          <p className="text-lg font-medium text-gray-600 lg:text-xl">
             Find the perfect tour package for your dream vacation.
           </p>
         </div>
 
         {packages.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="bg-white/90 backdrop-blur-md rounded-3xl p-12 border border-gray-200 shadow-xl max-w-md mx-auto">
-              <Sparkles className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">No packages available.</p>
+          <div className="py-20 text-center">
+            <div className="max-w-md p-12 mx-auto border border-gray-200 shadow-xl bg-white/90 backdrop-blur-md rounded-3xl">
+              <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg text-gray-600">No packages available.</p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:gap-8">
             {packages.map((pkg, index) => (
               <div
                 key={pkg._id}
-                className="group bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200 shadow-lg hover:bg-white hover:border-gray-300 transition-all duration-500 hover:transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-gray-300/50"
-                style={{ 
+                className="overflow-hidden transition-all duration-500 border border-gray-200 shadow-lg group bg-white/90 backdrop-blur-xl rounded-3xl hover:bg-white hover:border-gray-300 hover:transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-gray-300/50"
+                style={{
                   animationDelay: `${index * 150}ms`,
-                  animation: 'fadeInUp 0.8s ease-out forwards'
+                  animation: "fadeInUp 0.8s ease-out forwards",
                 }}
               >
                 {/* Package Image */}
-                <div className="relative h-48 lg:h-56 overflow-hidden">
+                <div className="relative h-48 overflow-hidden lg:h-56">
                   {pkg.image ? (
-                    <img 
-                      src={pkg.image} 
+                    <img
+                      src={pkg.image}
                       alt={pkg.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                     />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${getCategoryColor(pkg.category)} flex items-center justify-center`}>
+                    <div
+                      className={`w-full h-full bg-gradient-to-br ${getCategoryColor(
+                        pkg.category
+                      )} flex items-center justify-center`}
+                    >
                       {getCategoryIcon(pkg.category)}
-                      <span className="ml-2 text-white font-medium">{pkg.category}</span>
+                      <span className="ml-2 font-medium text-white">
+                        {pkg.category}
+                      </span>
                     </div>
                   )}
-                  
+
                   {/* Category Badge */}
                   <div className="absolute top-4 left-4">
-                    <div className={`inline-flex items-center gap-2 bg-gradient-to-r ${getCategoryColor(pkg.category)} rounded-full px-3 py-1 shadow-lg`}>
+                    <div
+                      className={`inline-flex items-center gap-2 bg-gradient-to-r ${getCategoryColor(
+                        pkg.category
+                      )} rounded-full px-3 py-1 shadow-lg`}
+                    >
                       {getCategoryIcon(pkg.category)}
-                      <span className="text-white font-semibold text-xs">{pkg.category}</span>
+                      <span className="text-xs font-semibold text-white">
+                        {pkg.category}
+                      </span>
                     </div>
                   </div>
 
                   {/* Province Badge */}
                   <div className="absolute top-4 right-4">
-                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-white/90">
+                    <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white/90">
                       <MapPin className="w-3 h-3" />
-                      <span className="text-xs font-medium">{pkg.province}</span>
+                      <span className="text-xs font-medium">
+                        {pkg.province}
+                      </span>
                     </div>
                   </div>
 
@@ -123,38 +201,41 @@ const PackageList = () => {
 
                 {/* Package Content */}
                 <div className="p-6">
-                  {/* Package Title */}
-                  <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3 group-hover:text-gray-700 transition-colors duration-300 line-clamp-2">
+                  <h3 className="mb-3 text-xl font-bold text-gray-900 transition-colors duration-300 lg:text-2xl group-hover:text-gray-700 line-clamp-2">
                     {pkg.name}
                   </h3>
-                  
-                  {/* Package Description */}
-                  <p className="text-gray-600 text-sm lg:text-base leading-relaxed mb-6 line-clamp-3">
+                  <p className="mb-6 text-sm leading-relaxed text-gray-600 lg:text-base line-clamp-3">
                     {pkg.description}
                   </p>
 
                   {/* Sub Packages */}
-                  <div className="space-y-3 mb-6">
-                    {pkg.subPackages && pkg.subPackages.length > 0 ? (
-                      pkg.subPackages.map((sub, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between bg-gray-50/80 backdrop-blur-sm rounded-xl p-3 border border-gray-200 hover:bg-gray-100/80 transition-all duration-300"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 bg-gradient-to-r ${getSubPackageColor(sub.packageType)} rounded-full shadow-lg`}></div>
-                            <span className="text-gray-800 font-medium text-sm">{sub.packageType}</span>
-                          </div>
-                          <span className="text-green-600 font-bold text-sm">Rs.{sub.price}</span>
+                  <div className="mb-6 space-y-3">
+                    {pkg.subPackages?.map((sub, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 transition-all duration-300 border border-gray-200 bg-gray-50/80 backdrop-blur-sm rounded-xl hover:bg-gray-100/80"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 bg-gradient-to-r ${getSubPackageColor(
+                              sub.packageType
+                            )} rounded-full shadow-lg`}
+                          ></div>
+                          <span className="text-sm font-medium text-gray-800">
+                            {sub.packageType}
+                          </span>
                         </div>
-                      ))
-                    ) : null}
+                        <span className="text-sm font-bold text-green-600">
+                          Rs.{sub.price}
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* ✅ UPDATED VIEW MORE BUTTON */}
+                  {/* View More Button */}
                   <button
-                    onClick={() => navigate(`/packages/${pkg._id}`)} // 👈 NAVIGATES TO DETAIL PAGE
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/25"
+                    onClick={() => navigate(`/packages/${pkg._id}`)}
+                    className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl hover:shadow-lg hover:shadow-blue-500/25"
                   >
                     <Eye className="w-4 h-4" />
                     <span>View More</span>
@@ -162,7 +243,7 @@ const PackageList = () => {
                 </div>
 
                 {/* Hover Effect Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-100/0 via-purple-100/0 to-pink-100/0 group-hover:from-blue-100/10 group-hover:via-purple-100/10 group-hover:to-pink-100/10 rounded-3xl transition-all duration-500 pointer-events-none"></div>
+                <div className="absolute inset-0 transition-all duration-500 pointer-events-none bg-gradient-to-r from-blue-100/0 via-purple-100/0 to-pink-100/0 group-hover:from-blue-100/10 group-hover:via-purple-100/10 group-hover:to-pink-100/10 rounded-3xl"></div>
               </div>
             ))}
           </div>
@@ -180,14 +261,14 @@ const PackageList = () => {
             transform: translateY(0);
           }
         }
-        
+
         .line-clamp-2 {
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        
+
         .line-clamp-3 {
           display: -webkit-box;
           -webkit-line-clamp: 3;
