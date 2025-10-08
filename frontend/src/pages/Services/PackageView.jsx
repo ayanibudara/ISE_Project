@@ -335,11 +335,11 @@ const PackageView = () => {
               {/* Book Appointment Button */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <button
-                  onClick={() => navigate(`/book-appointment/${packageId}`)}
+                  onClick={() => navigate(`/apform/${packageId}`)}
                   className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <Calendar className="w-5 h-5" />
-                  Book Appointment
+                  Book Now
                 </button>
               </div>
             </div>
