@@ -1,23 +1,56 @@
 const mongoose = require('mongoose');
 
-const availabilitySchema = new mongoose.Schema({
-  date: { type: Date, required: true },
-  isAvailable: { type: Boolean, default: true },
-});
+const guideSchema = new mongoose.Schema(
+  {
+    // Reference to the user account
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
 
-const tourSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  place: { type: String, required: true },
-  date: { type: Date, required: true },
-});
+    // Basic personal information
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    age: {
+      type: Number,
+      required: true,
+      min: 18,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
 
-const guideSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  age: { type: Number, required: true },
-  email: { type: String, required: true, unique: true },
-  availability: [availabilitySchema],
-  upcomingTours: [tourSchema],
-});
+    // Availability dates stored as simple objects
+    availability: [
+      {
+        date: { type: Date, required: true },
+        isAvailable: { type: Boolean, default: true },
+      },
+    ],
+
+    // Upcoming tours stored as simple objects
+    upcomingTours: [
+      {
+        title: { type: String, required: true },
+        place: { type: String, required: true },
+        date: { type: Date, required: true },
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Guide', guideSchema);
