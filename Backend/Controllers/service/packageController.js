@@ -3,10 +3,12 @@ const Package = require('../../Models/Services/packageModel.js');
 // Create a new package
 exports.createPackage = async (req, res) => {
   try {
+     console.log("📦 Received package data:", req.body);
     const newPackage = new Package(req.body);
     await newPackage.save();
     res.status(201).json(newPackage);
   } catch (err) {
+    console.error("❌ Error creating package:", err.message);
     res.status(400).json({ error: err.message });
   }
 };
