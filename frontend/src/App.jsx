@@ -25,7 +25,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
-
+import Chatbot from "./AI/chatbot";
 import { useEffect } from "react";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
@@ -52,8 +52,8 @@ const AuthenticatedRoutes = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="w-12 h-12 border-4 rounded-full animate-spin border-primary-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -95,6 +95,7 @@ const AuthenticatedRoutes = () => {
   };
 
   return (
+    
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
@@ -107,8 +108,8 @@ const AuthenticatedRoutes = () => {
 
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
-      <Route path="/" element={<TouristDashboard />} />
-      <Route path="/appointments" element={<AppointmentForm />} /> 
+      <Route path="/dashboad" element={<TouristDashboard />} />
+      
       
 
 
@@ -235,9 +236,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        
         <ToastProvider>
           <Header />
           <AuthenticatedRoutes />
+          <Chatbot/>
           <Footer />
         </ToastProvider>
       </AuthProvider>
