@@ -78,7 +78,7 @@ const TourPackageForm = () => {
     try {
       // ✅ Build payload EXACTLY as your example
       const data = {
-        providerId: authState.user.id, // e.g., "68add2f502b9fd08c69c409d"
+        providerId: authState.user._id, // e.g., "68add2f502b9fd08c69c409d"
         packageName: serviceName,
         category, // e.g., "Culture"
         province,

@@ -27,13 +27,28 @@ exports.getAllPackages = async (req, res) => {
 exports.getPackageById = async (req, res) => {
   try {
     const { packageId } = req.params;
-    const pkg = await Package.findById(packageId);
+    const pkg = await Package.findById(packageId).populate('providerId', 'name email');;
     if (!pkg) return res.status(404).json({ error: "Package not found" });
     res.json(pkg);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Get packages by provider ID
+exports.getPackagesByProvider = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    const packages = await Package.find({ providerId });
+    res.json(packages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
 
 // Update package by ID
 exports.updatePackage = async (req, res) => {
