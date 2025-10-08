@@ -25,7 +25,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
-
+import Chatbot from "./AI/chatbot";
 import { useEffect } from "react";
 
 
@@ -231,9 +231,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        
         <ToastProvider>
           <Header />
           <AuthenticatedRoutes />
+          <Chatbot/>
           <Footer />
         </ToastProvider>
       </AuthProvider>
