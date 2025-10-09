@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Star, Users, Calendar, MessageSquare, TrendingUp, Filter, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function ReviewList({ refresh }) {
   const [reviews, setReviews] = useState([]);
@@ -8,11 +10,13 @@ export default function ReviewList({ refresh }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [filterRating, setFilterRating] = useState("all");
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    
+
     fetch("http://localhost:5000/api/review")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch reviews");
@@ -33,7 +37,7 @@ export default function ReviewList({ refresh }) {
   const filteredReviews = reviews
     .filter(review => {
       const matchesSearch = review.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          review.message.toLowerCase().includes(searchTerm.toLowerCase());
+        review.message.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRating = filterRating === "all" || review.rating.toString() === filterRating;
       return matchesSearch && matchesRating;
     })
@@ -52,7 +56,7 @@ export default function ReviewList({ refresh }) {
       }
     });
 
-  const averageRating = reviews.length > 0 ? 
+  const averageRating = reviews.length > 0 ?
     (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1) : 0;
 
   const ratingDistribution = [5, 4, 3, 2, 1].map(star => ({
@@ -66,11 +70,10 @@ export default function ReviewList({ refresh }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`w-4 h-4 ${
-            star <= rating
+          className={`w-4 h-4 ${star <= rating
               ? 'fill-yellow-400 text-yellow-400'
               : 'text-gray-300'
-          }`}
+            }`}
         />
       ))}
     </div>
@@ -96,6 +99,8 @@ export default function ReviewList({ refresh }) {
     </div>
   );
 
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
@@ -120,6 +125,17 @@ export default function ReviewList({ refresh }) {
           <p className="text-gray-600 text-lg">See what our customers are saying</p>
         </div>
 
+        {/* Give Feedback Button */}
+        <div className="text-center mb-8">
+          <button
+            onClick={() => navigate("/reviewform")}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
+            <MessageSquare className="w-5 h-5" />
+            Give Your Feedback
+          </button>
+        </div>
+
         {/* Stats Section */}
         {reviews.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -127,7 +143,7 @@ export default function ReviewList({ refresh }) {
               <div className="text-3xl font-bold text-purple-600 mb-2">{reviews.length}</div>
               <div className="text-gray-600 font-medium">Total Reviews</div>
             </div>
-            
+
             <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="text-3xl font-bold text-yellow-500">{averageRating}</span>
@@ -135,7 +151,7 @@ export default function ReviewList({ refresh }) {
               </div>
               <div className="text-gray-600 font-medium">Average Rating</div>
             </div>
-            
+
             <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl p-6 text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">
                 {Math.round((reviews.filter(r => r.rating >= 4).length / reviews.length) * 100)}%
@@ -211,7 +227,7 @@ export default function ReviewList({ refresh }) {
                     <div key={star} className="flex items-center gap-3">
                       <span className="text-sm font-medium w-6">{star}★</span>
                       <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${percentage}%` }}
                         ></div>
@@ -240,7 +256,7 @@ export default function ReviewList({ refresh }) {
               </div>
             ) : (
               <div className="space-y-6">
-                {filteredReviews.map((review, index) => (
+                {filteredReviews.map((review) => (
                   <div
                     key={review._id}
                     className="group bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl hover:shadow-2xl rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02]"
@@ -250,7 +266,7 @@ export default function ReviewList({ refresh }) {
                       <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
                         {review.userName.charAt(0).toUpperCase()}
                       </div>
-                      
+
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-3">
@@ -262,11 +278,11 @@ export default function ReviewList({ refresh }) {
                             </span>
                           </div>
                         </div>
-                        
+
                         <p className="text-gray-700 leading-relaxed mb-4 text-base">
                           {review.message}
                         </p>
-                        
+
                         <div className="flex items-center text-sm text-gray-500">
                           <Calendar className="w-4 h-4 mr-2" />
                           {new Date(review.createdAt).toLocaleDateString('en-US', {

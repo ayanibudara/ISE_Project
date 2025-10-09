@@ -60,10 +60,10 @@ export function Header() {
             Destinations
           </a>
           <a
-            href="#"
+            href="/reviewlist"
             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
           >
-            Tour Guides
+            Reviews
           </a>
           <a
             href="#"
