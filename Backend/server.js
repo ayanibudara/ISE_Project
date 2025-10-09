@@ -15,6 +15,7 @@ const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
 const guideRoutes = require("./Routes/Guide/guideRoute");
 const packageRoutes = require("./Routes/service/packageRoutes.js");
 const advertisementRoutes = require("./Routes/advertisementRoutes");
+const review = require('./Routes/Review/reviewRoutes.js')
 
 // Initialize express app
 const app = express();
@@ -68,6 +69,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/guides", guideRoutes);
 app.use("/api", packageRoutes);
 app.use("/api/advertisements", advertisementRoutes);
+app.use("/api/review",review)
 
 // Root route
 app.get("/", (req, res) => {

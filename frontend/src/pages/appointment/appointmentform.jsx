@@ -11,15 +11,18 @@ import {
   Check,
   AlertCircle
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function TravelBookingApp() {
+  // ✅ CHANGED: Use 'packageId' instead of 'id'
+  const { packageId } = useParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [showAppointments, setShowAppointments] = useState(false);
   const [appointments, setAppointments] = useState([]);
-  const [packages, setPackages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [packageData, setPackageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [formData, setFormData] = useState({
     userName: "",
@@ -27,7 +30,7 @@ export default function TravelBookingApp() {
     packageType: "",
     note: "",
     startDate: "",
-    endDate: "", // ✅ Added endDate
+    endDate: "",
     needsGuide: false,
   });
 
@@ -46,15 +49,54 @@ export default function TravelBookingApp() {
   }, [userNameFromAuth]);
 
   const BASE_URL = "http://localhost:5000/api/appointments";
+  const PACKAGES_BASE_URL = "http://localhost:5000/api/packages";
 
-  const steps = [
-    { id: 1, title: "Personal Info", icon: Users },
-    { id: 2, title: "Travel Details", icon: Package },
-    { id: 3, title: "Date & Notes", icon: Calendar },
-    { id: 4, title: "Confirmation", icon: CheckCircle },
-  ];
+  // ✅ FETCH PACKAGE USING 'packageId'
+  useEffect(() => {
+    const fetchPackage = async () => {
+      // ✅ Validate packageId format (24 hex characters)
+      if (!packageId || !/^[0-9a-fA-F]{24}$/.test(packageId)) {
+        setError("Invalid package ID format");
+        setLoading(false);
+        return;
+      }
 
-  // Toast Component (unchanged)
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${PACKAGES_BASE_URL}/${packageId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
+
+        if (response.status === 404) {
+          setError("Package not found in database");
+          setPackageData(null);
+        } else if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        } else {
+          const data = await response.json();
+          setPackageData(data);
+          if (data.packages?.length > 0) {
+            setFormData(prev => ({ 
+              ...prev, 
+              packageType: data.packages[0].packageType 
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError("Failed to connect to server");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPackage();
+  }, [packageId]); // ✅ Depend on 'packageId'
+
+  // Toast Component
   const Toast = ({ show, message, type, onClose }) => {
     useEffect(() => {
       if (show) {
@@ -106,123 +148,18 @@ export default function TravelBookingApp() {
     setToast({ show: false, message: "", type: "" });
   };
 
-  // API Service
-  const apiService = {
-    fetchPackages: async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${BASE_URL}/packages`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        showToast("Packages loaded successfully!", "success");
-        return data.packages || data;
-      } catch (error) {
-        console.error("Error fetching packages:", error);
-        showToast("Failed to load packages. Please try again.", "error");
-        return [
-          { id: 1, name: "Standard", basePrice: 299, guidePrice: 50, features: ["Basic accommodation", "Local transport", "Breakfast included"], isActive: true },
-          { id: 2, name: "Premium", basePrice: 599, guidePrice: 80, features: ["Premium hotels", "Private transport", "All meals", "Tour guide available"], isActive: true },
-          { id: 3, name: "VIP", basePrice: 999, guidePrice: 120, features: ["Luxury resorts", "Private jet/car", "Fine dining", "Personal concierge", "Spa access", "Premium guide service"], isActive: true },
-        ];
-      } finally {
-        setLoading(false);
-      }
-    },
-
-    createBooking: async (bookingData) => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${BASE_URL}/add`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(bookingData),
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-        showToast("Booking confirmed successfully! 🎉", "success");
-        navigate("/appoiments"); // ✅ Fixed typo
-        return data.booking || data;
-      } catch (error) {
-        console.error("Error creating booking:", error);
-        showToast("Failed to create booking. Please try again.", "error");
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-
-    fetchBookings: async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const url = userId
-          ? `${BASE_URL}/bookings?userId=${userId}`
-          : `${BASE_URL}/bookings`;
-
-        const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-        return data.bookings || data;
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
-        showToast("Failed to load bookings.", "warning");
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-  };
-
-  useEffect(() => {
-    const loadPackages = async () => {
-      const packagesData = await apiService.fetchPackages();
-      setPackages(packagesData);
-      if (packagesData.length > 0) {
-        setFormData((prev) => ({ ...prev, packageType: packagesData[0].name }));
-      }
-    };
-    loadPackages();
-  }, []);
-
-  useEffect(() => {
-    if (showAppointments && userId) {
-      const loadBookings = async () => {
-        const bookingsData = await apiService.fetchBookings();
-        setAppointments(bookingsData);
-      };
-      loadBookings();
-    }
-  }, [showAppointments, userId]);
-
-  const getSelectedPackage = () => {
-    return packages.find((pkg) => pkg.name === formData.packageType) || packages[0];
+  // Get selected tier
+  const getSelectedTier = () => {
+    if (!packageData?.packages) return null;
+    return packageData.packages.find(tier => tier.packageType === formData.packageType) 
+      || packageData.packages[0];
   };
 
   const calculateTotalPrice = () => {
-    const selectedPackage = getSelectedPackage();
-    if (!selectedPackage) return 0;
-    const basePrice = selectedPackage.basePrice;
-    const guidePrice = formData.needsGuide ? selectedPackage.guidePrice : 0;
+    const tier = getSelectedTier();
+    if (!tier) return 0;
+    const basePrice = tier.price;
+    const guidePrice = formData.needsGuide ? Math.round(basePrice * 0.2) : 0;
     return basePrice + guidePrice;
   };
 
@@ -236,7 +173,6 @@ export default function TravelBookingApp() {
 
   const nextStep = () => {
     if (currentStep < 4) {
-      // Validate Step 3 before proceeding
       if (currentStep === 3) {
         if (!formData.startDate) {
           showToast("Please select a start date.", "warning");
@@ -248,7 +184,6 @@ export default function TravelBookingApp() {
         }
       }
       setCurrentStep(currentStep + 1);
-      showToast(`Step ${currentStep + 1} completed!`, "success");
     }
   };
 
@@ -258,40 +193,67 @@ export default function TravelBookingApp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!userId) {
+      showToast("Please log in to complete your booking.", "error");
+      return;
+    }
+
+    const tier = getSelectedTier();
+    if (!tier) {
+      showToast("Please select a valid package tier.", "error");
+      return;
+    }
+
     try {
-      const selectedPackage = getSelectedPackage();
+      setLoading(true);
+      const token = localStorage.getItem("token");
       const bookingData = {
         userId,
         userName: formData.userName,
         membersCount: parseInt(formData.membersCount),
-        packageId: selectedPackage.id,
-        packageType: formData.packageType,
+        packageId: packageData._id, // ✅ Uses the packageId from URL
+        selectedTier: formData.packageType,
         startDate: formData.startDate,
-        endDate: formData.endDate || formData.startDate, // fallback to same day
+        endDate: formData.endDate || formData.startDate,
         needsGuide: formData.needsGuide,
         note: formData.note,
         totalPrice: calculateTotalPrice(),
-        basePrice: selectedPackage.basePrice,
-        guidePrice: formData.needsGuide ? selectedPackage.guidePrice : 0,
-        status: "Pending",
+        basePrice: tier.price,
+        guidePrice: formData.needsGuide ? Math.round(tier.price * 0.2) : 0,
+        status: "booked",
       };
 
-      const newAppointment = await apiService.createBooking(bookingData);
-      setAppointments((prev) => [...prev, newAppointment]);
+      const response = await fetch(`${BASE_URL}/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bookingData),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Booking failed: ${response.status}`);
+      }
+
+      showToast("Booking confirmed successfully! 🎉", "success");
       setFormData({
         userName: userNameFromAuth,
         membersCount: 1,
-        packageType: packages[0]?.name || "",
+        packageType: packageData.packages[0]?.packageType || "",
         note: "",
         startDate: "",
-        endDate: "", // ✅ Reset endDate
+        endDate: "",
         needsGuide: false,
       });
-
-      setCurrentStep(1);
+      setTimeout(() => navigate("/appoiments"), 1500);
     } catch (error) {
       console.error("Booking error:", error);
+      showToast(error.message || "Failed to create booking. Please try again.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -308,18 +270,40 @@ export default function TravelBookingApp() {
     setCurrentStep(1);
   };
 
-  if (loading && packages.length === 0) {
+  // 🟢 LOADING STATE
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 border-b-2 border-green-600 rounded-full animate-spin"></div>
-          <p className="text-lg text-gray-600">Loading travel packages...</p>
+          <p className="text-lg text-gray-600">Loading package details...</p>
         </div>
       </div>
     );
   }
 
-  // Appointments View — Updated to show date range
+  // 🟢 ERROR HANDLING
+  if (error || !packageData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
+        <div className="text-center p-8 bg-white rounded-2xl shadow-lg max-w-md">
+          <Package className="w-24 h-24 mx-auto text-gray-300" />
+          <h2 className="text-2xl font-bold text-gray-800 mt-4">Package Not Found</h2>
+          <p className="text-gray-600 mt-2">
+            {error || "The requested travel package could not be found."}
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-6 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Appointments View
   if (showAppointments) {
     return (
       <>
@@ -329,11 +313,11 @@ export default function TravelBookingApp() {
             <div className="p-8 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl">
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text">
-                  Your Travel Bookings
+                  Your Bookings
                 </h1>
                 <button
                   onClick={backToBooking}
-                  className="flex items-center gap-2 px-6 py-3 text-white transition-colors bg-green-600 rounded-xl hover:bg-green-700"
+                  className="flex items-center gap-2 px-6 py-3 text-white bg-green-600 rounded-xl hover:bg-green-700"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   New Booking
@@ -349,10 +333,10 @@ export default function TravelBookingApp() {
                 <div className="py-20 text-center">
                   <Package className="w-24 h-24 mx-auto mb-4 text-gray-300" />
                   <h3 className="mb-2 text-2xl font-semibold text-gray-600">No bookings yet</h3>
-                  <p className="mb-6 text-gray-500">Create your first travel booking to get started</p>
+                  <p className="mb-6 text-gray-500">Create your first travel booking</p>
                   <button
                     onClick={backToBooking}
-                    className="px-8 py-3 text-white transition-all bg-gradient-to-r from-green-600 to-blue-600 rounded-xl hover:from-green-700 hover:to-blue-700"
+                    className="px-8 py-3 text-white bg-green-600 rounded-xl hover:bg-green-700"
                   >
                     Create Booking
                   </button>
@@ -361,21 +345,19 @@ export default function TravelBookingApp() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {appointments.map((appointment) => (
                     <div
-                      key={appointment.id}
-                      className="p-6 transition-shadow bg-white border border-gray-100 shadow-lg rounded-2xl hover:shadow-xl"
+                      key={appointment._id || appointment.id}
+                      className="p-6 bg-white border border-gray-100 shadow-lg rounded-2xl"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <h3 className="text-xl font-semibold text-gray-800">
                           {appointment.userName}
                         </h3>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          appointment.status === "Confirmed"
+                          appointment.status === "completed"
                             ? "bg-green-100 text-green-800"
-                            : appointment.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {appointment.status}
+                          {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                         </span>
                       </div>
 
@@ -387,10 +369,7 @@ export default function TravelBookingApp() {
 
                         <div className="flex items-center gap-2 text-gray-600">
                           <Package className="w-4 h-4" />
-                          <span>
-                            {appointment.packageType} Package{" "}
-                            {appointment.needsGuide && "+ Guide"}
-                          </span>
+                          <span>{appointment.selectedTier} Package</span>
                         </div>
 
                         <div className="flex items-center gap-2 text-gray-600">
@@ -414,7 +393,7 @@ export default function TravelBookingApp() {
                         <div className="pt-3 border-t">
                           <div className="flex items-center justify-between">
                             <p className="text-sm text-gray-500">
-                              Booked on {new Date(appointment.createdAt || Date.now()).toLocaleDateString()}
+                              Booked on {new Date(appointment.createdAt).toLocaleDateString()}
                             </p>
                             <p className="text-lg font-bold text-green-600">${appointment.totalPrice}</p>
                           </div>
@@ -439,151 +418,22 @@ export default function TravelBookingApp() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 text-center">
             <h1 className="mb-4 text-5xl font-bold text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text">
-              Plan Your Dream Journey
+              Book {packageData.packageName}
             </h1>
             <p className="text-xl text-gray-600">
-              Book your perfect travel experience in just a few steps
+              Complete your booking in just a few steps
             </p>
           </div>
 
-          <div className="mb-12">
-            <div className="flex justify-center">
-              <div className="flex items-center space-x-8">
-                {steps.map((step, index) => {
-                  const Icon = step.icon;
-                  const isActive = currentStep >= step.id;
-                  const isCurrent = currentStep === step.id;
-
-                  return (
-                    <div key={step.id} className="flex items-center">
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          isCurrent
-                            ? "bg-green-600 text-white shadow-lg scale-110"
-                            : isActive
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200 text-gray-400"
-                        }`}
-                      >
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <span
-                        className={`mt-2 text-sm font-medium ${
-                          isActive ? "text-green-600" : "text-gray-400"
-                        }`}
-                      >
-                        {step.title}
-                      </span>
-
-                      {index < steps.length - 1 && (
-                        <div
-                          className={`w-20 h-1 mx-4 transition-all duration-300 ${
-                            currentStep > step.id ? "bg-blue-500" : "bg-gray-200"
-                          }`}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
           <div className="p-8 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl lg:p-12">
-            {/* Step 3: Date & Notes — UPDATED */}
-            {currentStep === 3 && (
-              <div className="space-y-8">
-                <div className="mb-8 text-center">
-                  <h2 className="mb-2 text-3xl font-bold text-gray-800">
-                    When do you want to travel?
-                  </h2>
-                  <p className="text-gray-600">
-                    Pick your travel dates and add any special requests
-                  </p>
-                </div>
-
-                <div className="grid gap-8 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="block text-lg font-semibold text-gray-700">
-                      Start Date *
-                    </label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleChange}
-                      required
-                      min={new Date().toISOString().split("T")[0]}
-                      className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-lg font-semibold text-gray-700">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleChange}
-                      min={formData.startDate || new Date().toISOString().split("T")[0]}
-                      className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Leave blank for a single-day trip
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="block text-lg font-semibold text-gray-700">
-                    Additional Services
-                  </label>
-                  <div className="flex items-center gap-3 p-4 transition-colors border-2 border-gray-200 rounded-xl hover:border-green-300">
-                    <input
-                      type="checkbox"
-                      id="needsGuide"
-                      name="needsGuide"
-                      checked={formData.needsGuide}
-                      onChange={handleChange}
-                      className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
-                    />
-                    <label htmlFor="needsGuide" className="flex-1 text-lg text-gray-700 cursor-pointer">
-                      <span className="font-medium">Add Professional Guide</span>
-                      <div className="mt-1 text-sm text-gray-500">
-                        Get a local expert guide (+${getSelectedPackage()?.guidePrice || 0} per trip)
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-lg font-semibold text-gray-700">
-                    Special Requests
-                  </label>
-                  <textarea
-                    name="note"
-                    value={formData.note}
-                    onChange={handleChange}
-                    placeholder="Any special preferences, dietary requirements, or requests..."
-                    rows="4"
-                    className="w-full p-4 text-lg transition-colors border-2 border-gray-200 resize-none rounded-xl focus:border-green-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Other steps (1, 2, 4) remain mostly unchanged — only Step 4 updated below */}
-
-            {/* Step 1 & 2 are unchanged — omitted for brevity but kept in full code */}
+            {/* Step 1: Personal Info */}
             {currentStep === 1 && (
               <div className="space-y-8">
                 <div className="mb-8 text-center">
-                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Tell us about yourself</h2>
-                  <p className="text-gray-600">Let's start with your basic information</p>
+                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Your Information</h2>
+                  <p className="text-gray-600">We'll use this for your booking confirmation</p>
                 </div>
-                <div className="grid gap-8 md:grid-cols-2">
+                <div className="max-w-md mx-auto space-y-6">
                   <div className="space-y-2">
                     <label className="block text-lg font-semibold text-gray-700">Full Name *</label>
                     <input
@@ -614,110 +464,160 @@ export default function TravelBookingApp() {
               </div>
             )}
 
+            {/* Step 2: Package Selection */}
             {currentStep === 2 && (
               <div className="space-y-8">
                 <div className="mb-8 text-center">
-                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Choose Your Package</h2>
-                  <p className="text-gray-600">Select the perfect travel experience for you</p>
+                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Choose Your Package Tier</h2>
+                  <p className="text-gray-600">Select the experience that suits you best</p>
                 </div>
+                
                 <div className="grid gap-6 md:grid-cols-3">
-                  {packages
-                    .filter((pkg) => pkg.isActive)
-                    .map((packageItem) => (
-                      <div
-                        key={packageItem.id}
-                        className={`border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 ${
-                          formData.packageType === packageItem.name
-                            ? "border-green-500 bg-green-50 shadow-lg transform scale-105"
-                            : "border-gray-200 hover:border-gray-300 hover:shadow-md"
-                        }`}
-                        onClick={() => setFormData({ ...formData, packageType: packageItem.name })}
-                      >
-                        <div className="text-center">
-                          <h3 className="mb-2 text-2xl font-bold text-gray-800">{packageItem.name}</h3>
-                          <div className="mb-4">
-                            <p className="text-3xl font-bold text-green-600">${packageItem.basePrice}</p>
-                            <p className="text-sm text-gray-500">+ ${packageItem.guidePrice} for guide</p>
-                          </div>
-                          <ul className="space-y-2 text-left">
-                            {packageItem.features.map((feature, index) => (
-                              <li key={index} className="flex items-center gap-2 text-gray-600">
-                                <CheckCircle className="w-4 h-4 text-blue-500" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
+                  {packageData.packages.map((tier) => (
+                    <div
+                      key={tier._id}
+                      className={`border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 ${
+                        formData.packageType === tier.packageType
+                          ? "border-green-500 bg-green-50 shadow-lg transform scale-105"
+                          : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+                      }`}
+                      onClick={() => setFormData({ ...formData, packageType: tier.packageType })}
+                    >
+                      <div className="text-center">
+                        <h3 className="mb-2 text-2xl font-bold text-gray-800">{tier.packageType}</h3>
+                        <div className="mb-4">
+                          <p className="text-3xl font-bold text-green-600">${tier.price}</p>
+                          <p className="text-sm text-gray-500">{tier.tourDays} days tour</p>
                         </div>
+                        <p className="text-gray-600">{tier.services}</p>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
+            {/* Step 3: Date & Notes */}
+            {currentStep === 3 && (
+              <div className="space-y-8">
+                <div className="mb-8 text-center">
+                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Travel Dates</h2>
+                  <p className="text-gray-600">Select your preferred travel period</p>
+                </div>
+
+                <div className="grid gap-8 md:grid-cols-2 max-w-2xl mx-auto">
+                  <div className="space-y-2">
+                    <label className="block text-lg font-semibold text-gray-700">
+                      Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleChange}
+                      required
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-lg font-semibold text-gray-700">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={formData.endDate}
+                      onChange={handleChange}
+                      min={formData.startDate || new Date().toISOString().split("T")[0]}
+                      className="w-full p-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none"
+                    />
+                    <p className="text-sm text-gray-500">
+                      Leave blank for single-day trip
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-w-md mx-auto space-y-4">
+                  <label className="block text-lg font-semibold text-gray-700">
+                    Additional Services
+                  </label>
+                  <div className="flex items-center gap-3 p-4 transition-colors border-2 border-gray-200 rounded-xl hover:border-green-300">
+                    <input
+                      type="checkbox"
+                      id="needsGuide"
+                      name="needsGuide"
+                      checked={formData.needsGuide}
+                      onChange={handleChange}
+                      className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                    />
+                    <label htmlFor="needsGuide" className="flex-1 text-lg text-gray-700 cursor-pointer">
+                      <span className="font-medium">Add Professional Guide</span>
+                      <div className="mt-1 text-sm text-gray-500">
+                        Local expert guide (+${Math.round((getSelectedTier()?.price || 0) * 0.2)})
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="max-w-2xl mx-auto space-y-2">
+                  <label className="block text-lg font-semibold text-gray-700">
+                    Special Requests
+                  </label>
+                  <textarea
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    placeholder="Dietary requirements, accessibility needs, etc..."
+                    rows="3"
+                    className="w-full p-4 text-lg transition-colors border-2 border-gray-200 resize-none rounded-xl focus:border-green-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Confirmation */}
             {currentStep === 4 && (
               <div className="space-y-8">
                 <div className="mb-8 text-center">
-                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Confirm Your Booking</h2>
-                  <p className="text-gray-600">Review your travel details before confirming</p>
+                  <h2 className="mb-2 text-3xl font-bold text-gray-800">Confirm Booking</h2>
+                  <p className="text-gray-600">Review your details before confirming</p>
                 </div>
 
-                <div className="p-8 bg-gray-50 rounded-2xl">
-                  <div className="grid gap-8 md:grid-cols-2">
-                    <div>
-                      <h3 className="mb-4 text-xl font-semibold text-gray-800">Booking Details</h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Name:</span>
-                          <span className="font-semibold">{formData.userName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Travelers:</span>
-                          <span className="font-semibold">{formData.membersCount}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Package:</span>
-                          <span className="font-semibold">{formData.packageType}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Professional Guide:</span>
-                          <span className="font-semibold">{formData.needsGuide ? "Yes" : "No"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Start Date:</span>
-                          <span className="font-semibold">{formData.startDate}</span>
-                        </div>
-                        {formData.endDate && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">End Date:</span>
-                            <span className="font-semibold">{formData.endDate}</span>
-                          </div>
-                        )}
-                        <div className="pt-3 mt-3 border-t">
-                          <div className="flex justify-between mb-1 text-sm text-gray-500">
-                            <span>Base Price ({formData.packageType}):</span>
-                            <span>${getSelectedPackage()?.basePrice || 0}</span>
-                          </div>
-                          {formData.needsGuide && (
-                            <div className="flex justify-between mb-1 text-sm text-gray-500">
-                              <span>Guide Service:</span>
-                              <span>+${getSelectedPackage()?.guidePrice || 0}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between">
-                            <span className="font-medium text-gray-600">Total Price:</span>
-                            <span className="text-xl font-bold text-green-600">${calculateTotalPrice()}</span>
-                          </div>
-                        </div>
-                      </div>
+                <div className="max-w-3xl mx-auto p-6 bg-gray-50 rounded-2xl">
+                  <div className="grid gap-4">
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-600">Package:</span>
+                      <span className="font-semibold">{packageData.packageName} ({formData.packageType})</span>
                     </div>
-
-                    {formData.note && (
-                      <div>
-                        <h3 className="mb-4 text-xl font-semibold text-gray-800">Special Requests</h3>
-                        <p className="p-4 text-gray-600 bg-white rounded-lg">{formData.note}</p>
-                      </div>
-                    )}
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-600">Travelers:</span>
+                      <span className="font-semibold">{formData.membersCount}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-600">Dates:</span>
+                      <span className="font-semibold">
+                        {formData.startDate}
+                        {formData.endDate && ` - ${formData.endDate}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-600">Guide:</span>
+                      <span className="font-semibold">{formData.needsGuide ? "Yes" : "No"}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-gray-600 font-medium">Total Price:</span>
+                      <span className="text-xl font-bold text-green-600">${calculateTotalPrice()}</span>
+                    </div>
                   </div>
+                  
+                  {formData.note && (
+                    <div className="mt-4 p-4 bg-white rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-2">Special Requests:</h4>
+                      <p className="text-gray-600">{formData.note}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -730,7 +630,7 @@ export default function TravelBookingApp() {
                     type="button"
                     onClick={prevStep}
                     disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-colors border-2 border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-colors border-2 border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Previous
@@ -741,7 +641,7 @@ export default function TravelBookingApp() {
                   onClick={viewAllBookings}
                   className="px-6 py-3 text-green-600 transition-colors border-2 border-green-200 rounded-xl hover:bg-green-50"
                 >
-                  View All Bookings
+                  My Bookings
                 </button>
               </div>
 
@@ -754,9 +654,9 @@ export default function TravelBookingApp() {
                     (currentStep === 2 && !formData.packageType) ||
                     loading
                   }
-                  className="flex items-center gap-2 px-8 py-3 text-white transition-all bg-gradient-to-r from-green-600 to-blue-600 rounded-xl hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-8 py-3 text-white bg-green-600 rounded-xl hover:bg-green-700 disabled:opacity-50"
                 >
-                  {loading ? "Processing..." : "Next"}
+                  Next
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -764,25 +664,15 @@ export default function TravelBookingApp() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex items-center gap-2 px-8 py-3 text-white transition-all bg-gradient-to-r from-green-600 to-blue-600 rounded-xl hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-8 py-3 text-white bg-green-600 rounded-xl hover:bg-green-700 disabled:opacity-50"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  {loading ? "Confirming Booking..." : "Confirm Booking"}
+                  Confirm Booking
                 </button>
               )}
             </div>
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes slide-in-right {
-            from { opacity: 0; transform: translateX(100%); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-          .animate-slide-in-right {
-            animation: slide-in-right 0.3s ease-out;
-          }
-        `}</style>
       </div>
     </>
   );

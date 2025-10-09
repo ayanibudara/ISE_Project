@@ -129,7 +129,7 @@ const TouristDashboard = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
-          <Link to="/apform" className="group">
+          <Link to="/packages" className="group">
             <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 font-semibold flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Book New Appointment
