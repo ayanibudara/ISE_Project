@@ -33,20 +33,20 @@ const guideSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    // Availability dates stored as simple objects
+    // Availability (optional)
     availability: [
       {
-        date: { type: Date, required: true },
+        date: { type: Date },
         isAvailable: { type: Boolean, default: true },
       },
     ],
 
-    // Upcoming tours stored as simple objects
+    // Upcoming tours (optional)
     upcomingTours: [
       {
-        title: { type: String, required: true },
-        place: { type: String, required: true },
-        date: { type: Date, required: true },
+        title: { type: String },
+        place: { type: String },
+        date: { type: Date },
       },
     ],
   },

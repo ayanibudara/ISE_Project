@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "../../contexts/AuthContext"; // import your AuthContext
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function RegisterGuide() {
-  const { authState } = useAuth(); // get logged-in user
-  const userId = authState.user?._id; // assuming your user object has _id
+  const { authState } = useAuth();
+  const user = authState.user;
+  const userId = user?._id;
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -17,6 +18,18 @@ export default function RegisterGuide() {
   const [upcomingTours, setUpcomingTours] = useState([{ title: "", place: "", date: "" }]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  // ✅ Auto-fill user data when available
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,7 +46,8 @@ export default function RegisterGuide() {
   };
 
   const addAvailability = () => setAvailability([...availability, { date: "", isAvailable: true }]);
-  const removeAvailability = (index) => setAvailability([...availability.slice(0, index), ...availability.slice(index + 1)]);
+  const removeAvailability = (index) =>
+    setAvailability(availability.filter((_, i) => i !== index));
 
   const handleTourChange = (index, e) => {
     const newTours = [...upcomingTours];
@@ -41,8 +55,10 @@ export default function RegisterGuide() {
     setUpcomingTours(newTours);
   };
 
-  const addTour = () => setUpcomingTours([...upcomingTours, { title: "", place: "", date: "" }]);
-  const removeTour = (index) => setUpcomingTours([...upcomingTours.slice(0, index), ...upcomingTours.slice(index + 1)]);
+  const addTour = () =>
+    setUpcomingTours([...upcomingTours, { title: "", place: "", date: "" }]);
+  const removeTour = (index) =>
+    setUpcomingTours(upcomingTours.filter((_, i) => i !== index));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,29 +72,45 @@ export default function RegisterGuide() {
     try {
       const payload = { ...formData, userId, availability, upcomingTours };
 
-      // Pass JWT automatically if you have Axios interceptors setup in api.js
       const response = await axios.post("http://localhost:5000/api/guides", payload, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}` // optional if axios interceptor handles
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       setMessage("Guide registered successfully!");
-      setFormData({ firstName: "", lastName: "", age: "", email: "" });
+      setFormData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        age: "",
+        email: user.email || "",
+      });
       setAvailability([{ date: "", isAvailable: true }]);
       setUpcomingTours([{ title: "", place: "", date: "" }]);
     } catch (error) {
       console.error(error);
       setMessage(error.response?.data?.message || "Error registering guide");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100">
       <div className="w-full max-w-3xl p-8 bg-white shadow-lg rounded-xl">
-        <h2 className="mb-6 text-2xl font-bold text-center">Register Guide</h2>
-        {message && <p className="mb-4 text-center text-green-600">{message}</p>}
+        <h2 className="mb-6 text-2xl font-bold text-center text-indigo-700">
+          Register Guide
+        </h2>
+
+        {message && (
+          <p
+            className={`mb-4 text-center ${
+              message.includes("success") ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {message}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* First Name */}
@@ -89,8 +121,8 @@ export default function RegisterGuide() {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              required
-              className="block w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              readOnly
+              className="block w-full p-2 mt-1 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed"
             />
           </div>
 
@@ -102,8 +134,8 @@ export default function RegisterGuide() {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              required
-              className="block w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              readOnly
+              className="block w-full p-2 mt-1 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed"
             />
           </div>
 
@@ -128,12 +160,11 @@ export default function RegisterGuide() {
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
-              required
-              className="block w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              readOnly
+              className="block w-full p-2 mt-1 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed"
             />
           </div>
-            
+
           {/* Availability */}
           <div>
             <label className="block mb-2 text-gray-700">Availability</label>
@@ -145,7 +176,6 @@ export default function RegisterGuide() {
                   value={av.date}
                   onChange={(e) => handleAvailabilityChange(index, e)}
                   className="p-2 border border-gray-300 rounded-md"
-                  required
                 />
                 <label className="flex items-center gap-1">
                   <input
@@ -168,7 +198,11 @@ export default function RegisterGuide() {
                 )}
               </div>
             ))}
-            <button type="button" onClick={addAvailability} className="mt-2 font-semibold text-indigo-600">
+            <button
+              type="button"
+              onClick={addAvailability}
+              className="mt-2 font-semibold text-indigo-600"
+            >
               + Add Availability
             </button>
           </div>
@@ -184,7 +218,6 @@ export default function RegisterGuide() {
                   placeholder="Title"
                   value={tour.title}
                   onChange={(e) => handleTourChange(index, e)}
-                  required
                   className="p-2 border border-gray-300 rounded-md"
                 />
                 <input
@@ -193,7 +226,6 @@ export default function RegisterGuide() {
                   placeholder="Place"
                   value={tour.place}
                   onChange={(e) => handleTourChange(index, e)}
-                  required
                   className="p-2 border border-gray-300 rounded-md"
                 />
                 <input
@@ -201,7 +233,6 @@ export default function RegisterGuide() {
                   name="date"
                   value={tour.date}
                   onChange={(e) => handleTourChange(index, e)}
-                  required
                   className="p-2 border border-gray-300 rounded-md"
                 />
                 {upcomingTours.length > 1 && (
@@ -215,7 +246,11 @@ export default function RegisterGuide() {
                 )}
               </div>
             ))}
-            <button type="button" onClick={addTour} className="mt-2 font-semibold text-indigo-600">
+            <button
+              type="button"
+              onClick={addTour}
+              className="mt-2 font-semibold text-indigo-600"
+            >
               + Add Tour
             </button>
           </div>
