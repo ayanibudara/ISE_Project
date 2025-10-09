@@ -226,8 +226,8 @@ const PackageView = () => {
                 {packageData.description}
               </p>
             </div>
-
-            {/* ✅ Provider Information */}
+ </div>
+            {/* ✅ Provider Information 
             {packageData.providerId && (
               <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl p-8 shadow-xl border border-indigo-100">
                 
@@ -240,7 +240,7 @@ const PackageView = () => {
                   {/* Provider Name */}
                   
 
-                  {/* Provider Email */}
+                  {/* Provider Email 
                   {packageData.providerId.email && (
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
@@ -253,9 +253,9 @@ const PackageView = () => {
                         </p>
                       </div>
                     </div>
-                  )}
+                  )}*/}
 
-                  {/* Provider Phone */}
+                  {/* Provider Phone 
                   {packageData.providerId.mobile && (
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
@@ -273,7 +273,7 @@ const PackageView = () => {
               </div>
             )}
           </div>
-
+*/}
           {/* Right Column */}
           <div className="space-y-6">
             <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 sticky top-8">
