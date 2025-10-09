@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {
-  Calendar,
-  User,
-  DollarSign,
-  Star,
-} from "lucide-react";
+import { Calendar, User, DollarSign, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function GuideAssignForm() {
   const [isEditing, setIsEditing] = useState(true);
   const [totalDays, setTotalDays] = useState(0);
   const [totalPayment, setTotalPayment] = useState(0);
   const [selectedGuide, setSelectedGuide] = useState(null);
+  const [guides, setGuides] = useState([]);
   const [formData, setFormData] = useState({
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
@@ -20,31 +17,21 @@ export default function GuideAssignForm() {
     paymentPerDay: 150,
   });
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+  // Fetch guides from backend
+  const fetchGuides = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/guides");
+      const data = await res.json();
+      setGuides(data);
+    } catch (err) {
+      console.error("Failed to fetch guides:", err);
+    }
+  };
 
-  // Dummy guide list (replace later with backend fetch)
-  const [guides] = useState([
-    {
-      _id: "66e0d9e5b7f3c23b8c4b5678",
-      name: "John Smith",
-      expertise: "Mountain Trekking",
-      availability: true,
-      rating: 4.9,
-    },
-    {
-      _id: "66e0d9e5b7f3c23b8c4b5679",
-      name: "Sarah Johnson",
-      expertise: "Cultural Heritage",
-      availability: true,
-      rating: 4.8,
-    },
-    {
-      _id: "66e0d9e5b7f3c23b8c4b5680",
-      name: "Mike Chen",
-      expertise: "Wildlife Safari",
-      availability: false,
-      rating: 4.7,
-    },
-  ]);
+  useEffect(() => {
+    fetchGuides();
+  }, []);
 
   // Calculate days
   const calculateDays = (startDate, endDate) => {
@@ -117,10 +104,20 @@ export default function GuideAssignForm() {
       console.log("✅ Saved to MongoDB:", savedData);
 
       setIsEditing(false);
+      navigate("/dashboard");
     } catch (err) {
       console.error("❌ Error saving booking:", err);
     }
   };
+
+  // Filter guides by selected start date
+  const availableGuides = guides.filter((guide) =>
+    guide.availability.some(
+      (a) =>
+        a.isAvailable &&
+        new Date(a.date).toISOString().split("T")[0] === formData.startDate
+    )
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -166,31 +163,34 @@ export default function GuideAssignForm() {
             <User className="mr-2 text-blue-500" /> Choose Guide
           </h2>
           <div className="space-y-2">
-            {guides.map((guide) => (
-              <div
-                key={guide._id}
-                onClick={() =>
-                  guide.availability &&
-                  isEditing &&
-                  handleInputChange("guideId", guide._id)
-                }
-                className={`p-3 border rounded-lg cursor-pointer ${
-                  formData.guideId === guide._id
-                    ? "border-blue-500 bg-blue-50"
-                    : guide.availability
-                    ? "hover:border-blue-300"
-                    : "bg-gray-100 opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <div className="flex justify-between">
-                  <span>{guide.name} – {guide.expertise}</span>
-                  <span className="flex items-center text-yellow-500">
-                    <Star className="h-4 w-4 fill-current" />
-                    {guide.rating}
-                  </span>
+            {availableGuides.length > 0 ? (
+              availableGuides.map((guide) => (
+                <div
+                  key={guide._id}
+                  onClick={() =>
+                    isEditing && handleInputChange("guideId", guide._id)
+                  }
+                  className={`p-3 border rounded-lg cursor-pointer ${
+                    formData.guideId === guide._id
+                      ? "border-blue-500 bg-blue-50"
+                      : "hover:border-blue-300"
+                  }`}
+                >
+                  <div className="flex justify-between">
+                    <span>
+                      {guide.userId.firstName} {guide.userId.lastName} –{" "}
+                      {guide.expertise || "No expertise"}
+                    </span>
+                    <span className="flex items-center text-yellow-500">
+                      <Star className="h-4 w-4 fill-current" />
+                      {guide.rating || 0}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-500">No guides available for this date.</p>
+            )}
           </div>
           {errors.guideId && (
             <p className="text-red-600 text-sm">{errors.guideId}</p>

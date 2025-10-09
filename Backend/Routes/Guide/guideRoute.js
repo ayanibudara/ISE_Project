@@ -6,10 +6,11 @@ router.get('/', guideController.getAllGuides);
 router.get('/:id', guideController.getGuideById);
 router.put('/:id', guideController.updateGuide);
 router.delete('/:id', guideController.deleteGuide);
+router.get('/user/:userId', guideController.getGuideByUserId);
 
 // Special Routes
 router.get('/:id/availability', guideController.getAvailability);
-router.post('/:id/availability', guideController.addAvailability);
+router.post("/user/:userId/availability", guideController.addAvailabilityByUser);
 router.post('/:id/tours', guideController.addUpcomingTour);
 router.delete('/tour/:tourId', guideController.removeUpcomingTour);
 

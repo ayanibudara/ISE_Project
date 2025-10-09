@@ -10,29 +10,33 @@ const GuideDashboard = () => {
   const { user } = authState;
   const navigate = useNavigate();
 
-  const [guideId, setGuideId] = useState(null); // store guide _id
+  const [guideData, setGuideData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Fetch guide details by userId
   useEffect(() => {
     const fetchGuide = async () => {
       if (!user?._id) return;
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/guides/${user._id}`,
+          `http://localhost:5000/api/guides/user/${user._id}`,
           {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }
         );
 
+        // If guide data exists, set it
         if (response.data?._id) {
-          setGuideId(response.data._id); // store the guide ID
+          setGuideData(response.data);
+        } else {
+          setGuideData(null);
         }
       } catch (error) {
         if (error.response?.status === 404) {
-          setGuideId(null); // not registered
+          setGuideData(null); // Not registered as a guide
         } else {
-          console.error("Error fetching guide:", error);
+          console.error("❌ Error fetching guide:", error);
         }
       } finally {
         setLoading(false);
@@ -47,8 +51,14 @@ const GuideDashboard = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
+
+  const isRegistered = !!guideData;
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -63,8 +73,7 @@ const GuideDashboard = () => {
           </p>
         </div>
 
-        {/* Register as Guide Button */}
-        {!guideId && (
+        {!isRegistered && (
           <button
             onClick={handleRegisterClick}
             className="px-5 py-2 mt-4 font-semibold text-white transition-colors bg-indigo-600 rounded-lg sm:mt-0 hover:bg-indigo-700"
@@ -74,24 +83,38 @@ const GuideDashboard = () => {
         )}
       </div>
 
-      {/* Show dashboard only if registered */}
-      {guideId ? (
+      {/* Dashboard Sections */}
+      {isRegistered ? (
         <>
+          {/* ✅ Availability Section */}
           <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold text-gray-800">
               Your Availability
             </h2>
             <div className="p-4 bg-white rounded-lg shadow">
-              <AvailabilityCalendar guideId={guideId} />
+              <AvailabilityCalendar
+                userId={user._id} // ✅ Pass userId instead of guideId
+                availability={guideData.availability || []}
+                onAvailabilityUpdated={(updated) =>
+                  setGuideData((prev) => ({ ...prev, availability: updated }))
+                }
+              />
             </div>
           </div>
 
+          {/* ✅ Upcoming Tours Section */}
           <div>
             <h2 className="mb-4 text-xl font-semibold text-gray-800">
               Upcoming Tours
             </h2>
             <div className="p-4 bg-white rounded-lg shadow">
-              <UpcomingTours guideId={guideId} />
+              <UpcomingTours
+                userId={user._id} // ✅ Pass userId instead of guideId
+                tours={guideData.upcomingTours || []}
+                onToursUpdated={(updated) =>
+                  setGuideData((prev) => ({ ...prev, upcomingTours: updated }))
+                }
+              />
             </div>
           </div>
         </>
@@ -99,7 +122,9 @@ const GuideDashboard = () => {
         <div className="mt-10 text-center text-gray-600">
           <p>
             You haven’t registered as a guide yet. Click the{" "}
-            <span className="font-medium text-indigo-600">Register as Guide</span>{" "}
+            <span className="font-medium text-indigo-600">
+              Register as Guide
+            </span>{" "}
             button above to get started.
           </p>
         </div>

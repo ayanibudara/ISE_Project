@@ -61,6 +61,23 @@ exports.getAllGuides = async (req, res) => {
   }
 };
 
+// ✅ Find guide using userId instead of _id
+exports.getGuideByUserId = async (req, res) => {
+  try {
+    const guide = await Guide.findOne({ userId: req.params.userId })
+      .populate("userId", "firstName lastName email");
+
+    if (!guide) {
+      return res.status(404).json({ message: "Guide not found for this user" });
+    }
+
+    res.status(200).json(guide);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
 // ✅ Get guide by ID
 exports.getGuideById = async (req, res) => {
   try {
@@ -97,19 +114,33 @@ exports.deleteGuide = async (req, res) => {
   }
 };
 
-// ✅ Add availability
-exports.addAvailability = async (req, res) => {
-  try {
-    const { date, isAvailable } = req.body;
-    const guide = await Guide.findById(req.params.id);
-    if (!guide) return res.status(404).json({ message: 'Guide not found' });
 
-    guide.availability.push({ date, isAvailable });
+
+// ✅ Add availability
+exports.addAvailabilityByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { availability } = req.body; // expect [{ date, isAvailable }, ...]
+
+    if (!availability || !Array.isArray(availability)) {
+      return res.status(400).json({ message: "Availability array is required" });
+    }
+
+    // Find guide by userId
+    const guide = await Guide.findOne({ userId });
+    if (!guide) return res.status(404).json({ message: "Guide not found" });
+
+    // Replace availability with new array
+    guide.availability = availability;
     await guide.save();
 
-    res.status(200).json({ message: 'Availability added successfully', guide });
+    res.status(200).json({
+      message: "Availability added successfully",
+      guide,
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 

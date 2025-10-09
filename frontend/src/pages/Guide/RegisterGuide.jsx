@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify"; // ✅ import toast
+import "react-toastify/dist/ReactToastify.css";
 
 export default function RegisterGuide() {
   const { authState } = useAuth();
   const user = authState.user;
   const userId = user?._id;
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -17,9 +21,8 @@ export default function RegisterGuide() {
   const [availability, setAvailability] = useState([{ date: "", isAvailable: true }]);
   const [upcomingTours, setUpcomingTours] = useState([{ title: "", place: "", date: "" }]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  // ✅ Auto-fill user data when available
+  // ✅ Auto-fill user data
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -55,8 +58,7 @@ export default function RegisterGuide() {
     setUpcomingTours(newTours);
   };
 
-  const addTour = () =>
-    setUpcomingTours([...upcomingTours, { title: "", place: "", date: "" }]);
+  const addTour = () => setUpcomingTours([...upcomingTours, { title: "", place: "", date: "" }]);
   const removeTour = (index) =>
     setUpcomingTours(upcomingTours.filter((_, i) => i !== index));
 
@@ -64,7 +66,7 @@ export default function RegisterGuide() {
     e.preventDefault();
 
     if (!userId) {
-      setMessage("You must be logged in to register as a guide.");
+      toast.error("You must be logged in to register as a guide.");
       return;
     }
 
@@ -78,7 +80,9 @@ export default function RegisterGuide() {
         },
       });
 
-      setMessage("Guide registered successfully!");
+      toast.success("🎉 Guide registered successfully!");
+
+      // ✅ Reset form after success
       setFormData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -87,9 +91,14 @@ export default function RegisterGuide() {
       });
       setAvailability([{ date: "", isAvailable: true }]);
       setUpcomingTours([{ title: "", place: "", date: "" }]);
+
+      // ✅ Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
     } catch (error) {
       console.error(error);
-      setMessage(error.response?.data?.message || "Error registering guide");
+      toast.error(error.response?.data?.message || "❌ Error registering guide");
     } finally {
       setLoading(false);
     }
@@ -101,16 +110,6 @@ export default function RegisterGuide() {
         <h2 className="mb-6 text-2xl font-bold text-center text-indigo-700">
           Register Guide
         </h2>
-
-        {message && (
-          <p
-            className={`mb-4 text-center ${
-              message.includes("success") ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* First Name */}
