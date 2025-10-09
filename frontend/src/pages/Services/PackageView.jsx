@@ -86,8 +86,6 @@ const PackageView = () => {
     }
   };
 
-
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -177,7 +175,6 @@ const PackageView = () => {
                   </div>
                 )}
 
-                {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
                 {/* Category Badge */}
@@ -194,7 +191,7 @@ const PackageView = () => {
                   </div>
                 </div>
 
-                {/* Province Badge on Image */}
+                {/* Province Badge */}
                 {packageData.province && (
                   <div className="absolute top-6 right-6">
                     <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-5 py-2.5 shadow-2xl">
@@ -207,7 +204,6 @@ const PackageView = () => {
                 )}
               </div>
 
-              {/* Package Name */}
               <div className="p-8">
                 <h1 className="text-3xl font-bold text-gray-900">
                   {packageData.packageName}
@@ -231,40 +227,45 @@ const PackageView = () => {
               </p>
             </div>
 
-            {/* Provider Information */}
-            {(packageData.providerId?.firstname || packageData.providerId?.email) && (
+            {/* ✅ Provider Information */}
+            {packageData.providerId && (
               <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl p-8 shadow-xl border border-indigo-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Provider Details
-                  </h2>
-                </div>
-                <div className="h-px bg-gradient-to-r from-indigo-200 via-blue-300 to-indigo-200 mb-6"></div>
                 
-                <div className="space-y-4">
-                  {packageData.providerId?.firstname && (
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">Provider Name</p>
-                        <p className="text-lg font-bold text-gray-900">{packageData.providerId.firstname}</p>
-                      </div>
-                    </div>
-                  )}
+                <div className="h-px bg-gradient-to-r from-indigo-200 via-blue-300 to-indigo-200 mb-6"></div>
 
-                  {packageData.providerId?.email && (
+                <div className="space-y-4">
+
+
+
+                  {/* Provider Name */}
+                  
+
+                  {/* Provider Email */}
+                  {packageData.providerId.email && (
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
                         <Mail className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 font-medium">Email Address</p>
-                        <p className="text-lg font-semibold text-blue-600">{packageData.providerId.email}</p>
+                        <p className="text-sm text-gray-600 font-medium">Provider Email Address</p>
+                        <p className="text-lg font-semibold text-blue-600">
+                          {packageData.providerId.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Provider Phone */}
+                  {packageData.providerId.mobile && (
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                        <Phone className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Phone Number</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {packageData.providerId.mobile}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -310,19 +311,19 @@ const PackageView = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-gray-700">
                           <Calendar className="w-4 h-4 text-blue-500" />
                           <span className="font-medium">{pkg.tourDays} Days Tour</span>
                         </div>
                         <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-sm font-semibold text-gray-700 mb-1">
+                          <p className="text-sm font-semibold text-gray-700 mb-2">
                             Includes:
                           </p>
-                          <p className="text-sm text-gray-600 leading-relaxed">
+                          <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                             {pkg.services}
-                          </p>
+                          </div>
                         </div>
                       </div>
                     </div>

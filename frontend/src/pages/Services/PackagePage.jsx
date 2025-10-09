@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // 👈 ADD THIS
+import { useNavigate } from "react-router-dom";
 import { Eye, MapPin, Star, Sparkles, Mountain, Waves } from "lucide-react";
 
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
-  const navigate = useNavigate(); // 👈 ADD THIS
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPackages();
@@ -91,7 +90,7 @@ const PackageList = () => {
                   {pkg.image ? (
                     <img 
                       src={pkg.image} 
-                      alt={pkg.name}
+                      alt={pkg.packageName}
                       className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                     />
                   ) : (
@@ -125,7 +124,7 @@ const PackageList = () => {
                 <div className="p-6">
                   {/* Package Title */}
                   <h3 className="mb-3 text-xl font-bold text-gray-900 transition-colors duration-300 lg:text-2xl group-hover:text-gray-700 line-clamp-2">
-                    {pkg.name}
+                    {pkg.packageName}
                   </h3>
                   
                   {/* Package Description */}
@@ -151,9 +150,9 @@ const PackageList = () => {
                     ) : null}
                   </div>
 
-                  {/* ✅ UPDATED VIEW MORE BUTTON */}
+                  {/* View More Button */}
                   <button
-                    onClick={() => navigate(`/packages/${pkg._id}`)} // 👈 NAVIGATES TO DETAIL PAGE
+                    onClick={() => navigate(`/packages/${pkg._id}`)}
                     className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl hover:shadow-lg hover:shadow-blue-500/25"
                   >
                     <Eye className="w-4 h-4" />

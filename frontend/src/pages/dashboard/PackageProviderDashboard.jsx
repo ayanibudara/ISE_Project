@@ -1,6 +1,8 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const PackageProviderDashboard = () => {
   const { authState } = useAuth();
@@ -12,12 +14,11 @@ const PackageProviderDashboard = () => {
   const [error, setError] = useState(null);
 
   // Fetch provider's packages
-  const fetchPackages = async () => {
+  const fetchPackages = async (providerId) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/packages/provider/${user?._id}`);
+      const response = await fetch(`http://localhost:5000/api/packages/provider/${providerId}`);
       if (!response.ok) throw new Error('Failed to fetch packages');
-      
       const data = await response.json();
       setPackages(data);
       setError(null);
@@ -30,14 +31,13 @@ const PackageProviderDashboard = () => {
   };
 
   useEffect(() => {
-    if (user?._id) {
-      console.log("Fetching packages for provider ID:", user._id);
-      fetchPackages();
-    }else {
-    console.log("No user or user._id available"); // 🔍
-    setLoading(false);
-  }
-  }, [user]);
+    const providerId = user?._id || user?.id;
+    if (authState.isAuthenticated && providerId) {
+      fetchPackages(providerId);
+    } else {
+      setLoading(false);
+    }
+  }, [authState.isAuthenticated, user]);
 
   const handleAddPackage = () => {
     navigate('/addpackage');
@@ -47,25 +47,63 @@ const PackageProviderDashboard = () => {
     navigate(`/edit-package/${packageId}`);
   };
 
+  // Delete package
   const handleDeletePackage = async (packageId, packageName) => {
     if (!window.confirm(`Are you sure you want to delete "${packageName}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/packages/${packageId}`, {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (token && token !== "null") {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/packages/${packageId}`, {
         method: 'DELETE',
+        headers,
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Failed to delete package');
 
-      // Remove deleted package from state
       setPackages(packages.filter(pkg => pkg._id !== packageId));
     } catch (error) {
       console.error('Error deleting package:', error);
       alert('Failed to delete package. Please try again.');
     }
   };
+
+  // Generate PDF Report
+  const handleGenerateReport = () => {
+  if (packages.length === 0) {
+    alert("No packages available to generate a report.");
+    return;
+  }
+
+  // BOM character to fix Excel UTF-8 issue
+  const BOM = "\uFEFF";
+
+  const csvHeader = "ID,Package Name,Category,Province,Options & Prices\n";
+  const csvRows = packages.map((pkg, idx) => {
+    const options = pkg.packages?.map(p => `${p.packageType}: Rs.${p.price}`).join("; ");
+    return `${idx + 1},"${pkg.packageName}","${pkg.category}","${pkg.province}","${options}"`;
+  }).join("\n");
+
+  const csvContent = BOM + csvHeader + csvRows;
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", "packages_report.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+ 
 
   if (loading) {
     return (
@@ -108,9 +146,9 @@ const PackageProviderDashboard = () => {
 
         {/* Actions Card */}
         <div className="mb-8">
-          <div className="bg-white/80 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-slate-800">My Packages</h3>
+          <div className="bg-white/80 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <h3 className="text-xl font-semibold text-slate-800">My Packages</h3>
+            <div className="flex gap-3 flex-wrap">
               <button
                 onClick={handleAddPackage}
                 className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-blue-500/25"
@@ -122,6 +160,12 @@ const PackageProviderDashboard = () => {
                   </svg>
                   <span>Add Package</span>
                 </div>
+              </button>
+              <button
+                onClick={handleGenerateReport}
+                className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Generate  Report
               </button>
             </div>
           </div>

@@ -55,6 +55,13 @@ const TourPackageForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate user
+  const userId = authState.user?._id || authState.user?.id;
+  if (!userId) {
+    alert("No user or user ID available. Please log in again.");
+    return;
+  }
+
     // Validate main fields
     if (!serviceName || !category || !province || !description) {
       alert("Please fill in all required fields.");
@@ -78,7 +85,7 @@ const TourPackageForm = () => {
     try {
       // ✅ Build payload EXACTLY as your example
       const data = {
-        providerId: authState.user._id, // e.g., "68add2f502b9fd08c69c409d"
+        providerId:  userId, // e.g., "68add2f502b9fd08c69c409d"
         packageName: serviceName,
         category, // e.g., "Culture"
         province,
@@ -98,6 +105,7 @@ const TourPackageForm = () => {
         ? { headers: { Authorization: `Bearer ${token}` } }
         : {};
 
+        console.log("Submitting package data:", data);
       const res = await axios.post("http://localhost:5000/api/packages", data, config);
 
       alert("Tour package created successfully!");

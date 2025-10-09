@@ -64,7 +64,7 @@ exports.updatePackage = async (req, res) => {
   }
 };
 
-// Delete package by ID
+/* Delete package by ID
 exports.deletePackage = async (req, res) => {
   try {
     const { packageId } = req.params;
@@ -74,7 +74,22 @@ exports.deletePackage = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};*/
+
+// Delete package by ID
+exports.deletePackage = async (req, res) => {
+  try {
+    console.log("Delete request by user:", req.user); // Add this line
+    const { packageId } = req.params;
+    const deletedPackage = await Package.findByIdAndDelete(packageId);
+    if (!deletedPackage) return res.status(404).json({ error: "Package not found" });
+    res.json({ message: "Package deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err); // Add this line
+    res.status(500).json({ error: err.message });
+  }
 };
+
 
 // Get packages by category (optional: filter by province too)
 exports.getPackagesByCategory = async (req, res) => {

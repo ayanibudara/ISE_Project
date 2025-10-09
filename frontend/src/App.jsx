@@ -29,6 +29,7 @@ import Chatbot from "./AI/chatbot";
 import { useEffect } from "react";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
+import EditPackageForm from "./pages/Services/EditPackageForm";
 
 
 // Component to handle authenticated routes
@@ -99,12 +100,13 @@ const AuthenticatedRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
-      <Route path="/apform" element={<AppointmentForm />} />
+      <Route path="/apform/:packageId" element={<AppointmentForm />} />
       <Route path="/appoiments" element={<AppointmentsPage />} />
       
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
       <Route path="/packages/:packageId" element={<PackageView />} />
+      <Route path="/edit-package/:packageId" element={<EditPackageForm />} />
 
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
