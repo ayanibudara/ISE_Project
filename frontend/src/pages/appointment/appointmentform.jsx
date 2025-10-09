@@ -486,7 +486,7 @@ export default function TravelBookingApp() {
                       <div className="text-center">
                         <h3 className="mb-2 text-2xl font-bold text-gray-800">{tier.packageType}</h3>
                         <div className="mb-4">
-                          <p className="text-3xl font-bold text-green-600">${tier.price}</p>
+                          <p className="text-3xl font-bold text-green-600">Rs{tier.price}</p>
                           <p className="text-sm text-gray-500">{tier.tourDays} days tour</p>
                         </div>
                         <p className="text-gray-600">{tier.services}</p>
@@ -555,7 +555,7 @@ export default function TravelBookingApp() {
                     <label htmlFor="needsGuide" className="flex-1 text-lg text-gray-700 cursor-pointer">
                       <span className="font-medium">Add Professional Guide</span>
                       <div className="mt-1 text-sm text-gray-500">
-                        Local expert guide (+${Math.round((getSelectedTier()?.price || 0) * 0.2)})
+                        Local expert guide (+Rs{Math.round((getSelectedTier()?.price || 0) * 0.2)})
                       </div>
                     </label>
                   </div>
@@ -608,7 +608,7 @@ export default function TravelBookingApp() {
                     </div>
                     <div className="flex justify-between py-2">
                       <span className="font-medium text-gray-600">Total Price:</span>
-                      <span className="text-xl font-bold text-green-600">${calculateTotalPrice()}</span>
+                      <span className="text-xl font-bold text-green-600">Rs{calculateTotalPrice()}</span>
                     </div>
                   </div>
                   
