@@ -7,7 +7,7 @@ const { requireAuth, restrictTo, attachToken } = require('../../middleware/authM
 router.post('/add', requireAuth, attachToken, appointmentController.createAppointment);
 
 // Get all appointments (admin only)
-router.get('/', requireAuth, attachToken, restrictTo('admin'), appointmentController.getAllAppointments);
+router.get('/', appointmentController.getAllAppointments);
 
 // Get logged-in user's appointments
 router.get('/my', requireAuth, attachToken, appointmentController.getUserAppointments);

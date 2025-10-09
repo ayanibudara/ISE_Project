@@ -286,15 +286,15 @@ export default function TravelBookingApp() {
   if (error || !packageData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
-        <div className="text-center p-8 bg-white rounded-2xl shadow-lg max-w-md">
+        <div className="max-w-md p-8 text-center bg-white shadow-lg rounded-2xl">
           <Package className="w-24 h-24 mx-auto text-gray-300" />
-          <h2 className="text-2xl font-bold text-gray-800 mt-4">Package Not Found</h2>
-          <p className="text-gray-600 mt-2">
+          <h2 className="mt-4 text-2xl font-bold text-gray-800">Package Not Found</h2>
+          <p className="mt-2 text-gray-600">
             {error || "The requested travel package could not be found."}
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="mt-6 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+            className="px-6 py-3 mt-6 text-white transition-colors bg-green-600 rounded-xl hover:bg-green-700"
           >
             Go Back
           </button>
@@ -505,7 +505,7 @@ export default function TravelBookingApp() {
                   <p className="text-gray-600">Select your preferred travel period</p>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-2 max-w-2xl mx-auto">
+                <div className="grid max-w-2xl gap-8 mx-auto md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="block text-lg font-semibold text-gray-700">
                       Start Date *
@@ -585,7 +585,7 @@ export default function TravelBookingApp() {
                   <p className="text-gray-600">Review your details before confirming</p>
                 </div>
 
-                <div className="max-w-3xl mx-auto p-6 bg-gray-50 rounded-2xl">
+                <div className="max-w-3xl p-6 mx-auto bg-gray-50 rounded-2xl">
                   <div className="grid gap-4">
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-gray-600">Package:</span>
@@ -607,14 +607,14 @@ export default function TravelBookingApp() {
                       <span className="font-semibold">{formData.needsGuide ? "Yes" : "No"}</span>
                     </div>
                     <div className="flex justify-between py-2">
-                      <span className="text-gray-600 font-medium">Total Price:</span>
+                      <span className="font-medium text-gray-600">Total Price:</span>
                       <span className="text-xl font-bold text-green-600">${calculateTotalPrice()}</span>
                     </div>
                   </div>
                   
                   {formData.note && (
-                    <div className="mt-4 p-4 bg-white rounded-lg">
-                      <h4 className="font-semibold text-gray-800 mb-2">Special Requests:</h4>
+                    <div className="p-4 mt-4 bg-white rounded-lg">
+                      <h4 className="mb-2 font-semibold text-gray-800">Special Requests:</h4>
                       <p className="text-gray-600">{formData.note}</p>
                     </div>
                   )}
