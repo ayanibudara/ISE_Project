@@ -53,12 +53,22 @@ export function Header() {
           >
             Home
           </a>
-          <a
+        {/*<a
             href="#"
             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
           >
             Destinations
-          </a>
+          </a> */}
+
+
+           {/* connet the destination to packages */}
+            <Link
+            to="/packages"
+             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
+             >
+             Destinations
+             </Link>
+
           <a
             href="/reviewlist"
             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
