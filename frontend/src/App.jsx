@@ -36,6 +36,8 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import RegisterGuide from "./pages/Guide/RegisterGuide";
 
+import Chatbot from "./AI/chatbot";
+
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
   const { authState, checkAuth } = useAuth();
@@ -109,6 +111,9 @@ const AuthenticatedRoutes = () => {
       <Route path="/packages" element={<Packages />} />
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
+
+      {/* Extra route (previous merge-added route corrected spelling) */}
+      <Route path="/dashboard" element={<TouristDashboard />} />
 
       {/* Auth Routes */}
       <Route
@@ -237,6 +242,7 @@ function App() {
         <ToastProvider>
           <Header />
           <AuthenticatedRoutes />
+          <Chatbot />
           <Footer />
         </ToastProvider>
       </AuthProvider>
@@ -245,4 +251,3 @@ function App() {
 }
 
 export default App;
-

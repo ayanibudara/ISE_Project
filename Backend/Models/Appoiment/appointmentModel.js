@@ -17,6 +17,7 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    
     packageType: {
       type: String,
       required: true,
@@ -29,6 +30,16 @@ const appointmentSchema = new mongoose.Schema(
     startDate: {
       type: Date,
       required: true,
+    },
+     endDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (value) {
+          return !this.startDate || value > this.startDate;
+        },
+        message: 'End date must be after start date.',
+      },
     },
     status: {
       type: String,
