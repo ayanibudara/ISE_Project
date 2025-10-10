@@ -18,6 +18,11 @@ const reviewSchema = new mongoose.Schema(
       min: 1,
       max: 5,
     },
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Package', 
+      required: true,
+    },
   },
   { timestamps: true }
 );

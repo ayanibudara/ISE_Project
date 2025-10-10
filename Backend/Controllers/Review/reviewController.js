@@ -1,78 +1,109 @@
 const Review = require('../../Models/Review/reviewModel.js');
+const Package = require('../../Models/Services/packageModel.js'); // make sure this path matches your structure
 
 // @desc Create new review
-// @route POST /api/reviews
+// @route POST /api/reviews/add
 exports.createReview = async (req, res) => {
   try {
-    const { userName, message, rating } = req.body;
+    const { message, rating, packageId } = req.body;
 
-    if (!userName || !message || !rating) {
+    if (!message || !rating || !packageId) {
       return res.status(400).json({ message: 'All fields are required!' });
     }
+
+    // Use logged-in user's name (if available)
+    const userName = req.user ? req.user.firstName || req.user.name || 'Anonymous' : 'Anonymous';
 
     const review = await Review.create({
       userName,
       message,
       rating,
+      packageId,
     });
 
-    res.status(201).json(review);
+    res.status(201).json({
+      message: 'Review added successfully!',
+      review,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Get all reviews
+// @desc Get all reviews for the logged-in provider’s packages
 // @route GET /api/reviews
 exports.getReviews = async (req, res) => {
   try {
-    const reviews = await Review.find().sort({ createdAt: -1 }); // latest first
+    // Find packages that belong to this provider
+    const providerId = req.user.id;
+    const providerPackages = await Package.find({ providerId }).select('_id');
+
+    if (!providerPackages.length) {
+      return res.status(404).json({ message: 'No packages found for this provider.' });
+    }
+
+    const packageIds = providerPackages.map(pkg => pkg._id);
+
+    // Get all reviews linked to those packages
+    const reviews = await Review.find({ packageId: { $in: packageIds } })
+      .populate('packageId', 'name category price')
+      .sort({ createdAt: -1 });
+
     res.json(reviews);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Get single review
-// @route GET /api/reviews/:id
+// @desc Get reviews for a specific package
+// @route GET /api/reviews/package/:packageId
+exports.getReviewsByPackage = async (req, res) => {
+  try {
+    const { packageId } = req.params;
+
+    const reviews = await Review.find({ packageId })
+      .populate('packageId', 'name category price')
+      .sort({ createdAt: -1 });
+
+    if (!reviews.length) {
+      return res.status(404).json({ message: 'No reviews found for this package.' });
+    }
+
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Other CRUD routes remain unchanged...
 exports.getReviewById = async (req, res) => {
   try {
-    const review = await Review.findById(req.params.id);
-    if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
+    const review = await Review.findById(req.params.id).populate('packageId', 'name category price');
+    if (!review) return res.status(404).json({ message: 'Review not found' });
     res.json(review);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Update review
-// @route PUT /api/reviews/:id
 exports.updateReview = async (req, res) => {
   try {
     const updated = await Review.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    });
-    if (!updated) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
-    res.json(updated);
+    }).populate('packageId', 'name category price');
+    if (!updated) return res.status(404).json({ message: 'Review not found' });
+    res.json({ message: 'Review updated successfully!', review: updated });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Delete review
-// @route DELETE /api/reviews/:id
 exports.deleteReview = async (req, res) => {
   try {
     const deleted = await Review.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
-    res.json({ message: 'Review deleted successfully' });
+    if (!deleted) return res.status(404).json({ message: 'Review not found' });
+    res.json({ message: 'Review deleted successfully!' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

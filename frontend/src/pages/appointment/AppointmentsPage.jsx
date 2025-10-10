@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, User, Users, Package, FileText, Check, X, Eye, Download, Search, Filter, UserCheck } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  User,
+  Users,
+  Package,
+  FileText,
+  Check,
+  X,
+  Eye,
+  Printer,
+  Search,
+  Filter,
+  UserCheck,
+  MapPin,
+  ChevronDown,
+  MoreVertical,
+  Grid,
+  List,
+  TrendingUp,
+  Activity,
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
@@ -16,16 +37,28 @@ const AppointmentsPage = () => {
   const [error, setError] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [expandedCard, setExpandedCard] = useState(null);
 
   const isPackageProvider = authState.user?.role === 'PackageProvider';
   const isGuide = authState.user?.role === 'Guide';
+  const isAdmin = authState.user?.role === 'Admin';
 
   const formatDate = (isoDate) => {
+    if (!isoDate) return { date: 'N/A', time: 'N/A', fullDate: '' };
     const date = new Date(isoDate);
     return {
-      date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-      time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-      fullDate: date.toISOString().split('T')[0]
+      date: date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }),
+      time: date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }),
+      fullDate: date.toISOString().split('T')[0],
     };
   };
 
@@ -48,33 +81,36 @@ const AppointmentsPage = () => {
         }
 
         const data = response.data;
-        let rawAppointments = Array.isArray(data)
-          ? data
-          : Array.isArray(data.appointments)
-          ? data.appointments
-          : Array.isArray(data.upcoming)
-          ? data.upcoming
-          : [];
+        let rawAppointments = [];
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        if (Array.isArray(data)) {
+          rawAppointments = data;
+        } else if (data && typeof data === 'object') {
+          if (Array.isArray(data.appointments)) {
+            rawAppointments = data.appointments;
+          } else {
+            rawAppointments = [
+              ...(Array.isArray(data.upcoming) ? data.upcoming : []),
+              ...(Array.isArray(data.past) ? data.past : []),
+            ];
+          }
+        }
 
         const processedAppointments = rawAppointments
-          .filter(app => new Date(app.startDate) >= today)
-          .map(app => ({
+          .map((app) => ({
             id: app._id,
-            userName: app.userName,
-            membersCount: app.membersCount,
-            packageType: app.packageType,
+            userName: app.userName || `${app.userId?.firstName || ''} ${app.userId?.lastName || ''}`.trim() || 'Unknown User',
+            membersCount: app.membersCount || 1,
+            packageType: app.selectedTier || app.packageType || 'Standard',
             note: app.note || '',
             startDate: app.startDate,
             endDate: app.endDate,
-            status: app.status,
+            status: app.status || 'booked',
             createdAt: app.createdAt,
             needsGuide: app.needsGuide || false,
             guideId: app.guideId || null,
             formattedDate: formatDate(app.startDate),
-            createdDate: formatDate(app.createdAt)
+            createdDate: formatDate(app.createdAt),
           }))
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
@@ -92,13 +128,36 @@ const AppointmentsPage = () => {
     fetchAppointments();
   }, [authState.isAuthenticated, isGuide]);
 
+  useEffect(() => {
+    let result = [...appointments];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (app) =>
+          app.userName.toLowerCase().includes(term) ||
+          app.packageType.toLowerCase().includes(term) ||
+          app.id.toLowerCase().includes(term)
+      );
+    }
+
+    if (filterStatus !== 'all') {
+      result = result.filter((app) => app.status === filterStatus);
+    }
+
+    if (filterDate) {
+      result = result.filter((app) => app.formattedDate.fullDate === filterDate);
+    }
+
+    setFilteredAppointments(result);
+  }, [searchTerm, filterStatus, filterDate, appointments]);
+
   const handleConfirm = async (id) => {
     try {
       await api.put(`/api/appointments/${id}/confirm`, { status: 'confirmed' });
-      const updatedAppointments = appointments.map(app =>
-        app.id === id ? { ...app, status: 'confirmed' } : app
+      setAppointments((prev) =>
+        prev.map((app) => (app.id === id ? { ...app, status: 'confirmed' } : app))
       );
-      setAppointments(updatedAppointments);
     } catch (err) {
       console.error('Failed to confirm appointment:', err);
       setError(err.response?.data?.message || 'Failed to confirm appointment');
@@ -108,10 +167,9 @@ const AppointmentsPage = () => {
   const handleReject = async (id) => {
     try {
       await api.put(`/api/appointments/${id}/reject`, { status: 'rejected' });
-      const updatedAppointments = appointments.map(app =>
-        app.id === id ? { ...app, status: 'rejected' } : app
+      setAppointments((prev) =>
+        prev.map((app) => (app.id === id ? { ...app, status: 'rejected' } : app))
       );
-      setAppointments(updatedAppointments);
     } catch (err) {
       console.error('Failed to reject appointment:', err);
       setError(err.response?.data?.message || 'Failed to reject appointment');
@@ -129,65 +187,261 @@ const AppointmentsPage = () => {
   };
 
   const generateReport = () => {
-    const csvContent = "text/csv;charset=utf-8," +
-      "ID,Name,Members,Package,Date,Time,Status,Needs Guide,Assigned Guide,Note,Created\n" +
-      filteredAppointments.map(app => 
-        `${app.id},"${app.userName}",${app.membersCount},"${app.packageType}","${app.formattedDate.date}","${app.formattedDate.time}","${app.status}","${app.needsGuide ? 'Yes' : 'No'}","${app.guideId || 'None'}","${app.note}","${app.createdDate.date}"`
-      ).join("\n");
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Appointments Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              background: white;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 3px solid #2563eb;
+              padding-bottom: 15px;
+            }
+            .header h1 {
+              color: #1e40af;
+              margin: 0 0 10px 0;
+            }
+            .report-info {
+              color: #6b7280;
+              font-size: 14px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            th {
+              background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+              color: white;
+              padding: 12px 8px;
+              text-align: left;
+              font-weight: 600;
+              font-size: 13px;
+            }
+            td {
+              padding: 10px 8px;
+              border-bottom: 1px solid #e5e7eb;
+              font-size: 12px;
+            }
+            tr:nth-child(even) {
+              background-color: #f9fafb;
+            }
+            tr:hover {
+              background-color: #f3f4f6;
+            }
+            .status-confirmed {
+              background: #d1fae5;
+              color: #065f46;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 11px;
+            }
+            .status-booked, .status-pending {
+              background: #fef3c7;
+              color: #92400e;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 11px;
+            }
+            .status-rejected {
+              background: #fee2e2;
+              color: #991b1b;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 11px;
+            }
+            .package-vip {
+              background: #f3e8ff;
+              color: #6b21a8;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 11px;
+            }
+            .package-premium {
+              background: #dbeafe;
+              color: #1e40af;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 11px;
+            }
+            .package-standard {
+              background: #f3f4f6;
+              color: #374151;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 11px;
+            }
+            .guide-status {
+              color: #059669;
+              font-weight: 600;
+            }
+            .needs-guide {
+              color: #ea580c;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+              padding-top: 15px;
+              border-top: 1px solid #e5e7eb;
+            }
+            @media print {
+              body { padding: 0; }
+              .header { page-break-after: avoid; }
+              tr { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>📅 Appointments Report</h1>
+            <div class="report-info">
+              Generated on ${new Date().toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+            <div class="report-info">Total Appointments: ${filteredAppointments.length}</div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer Name</th>
+                <th>Members</th>
+                <th>Package</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Guide Status</th>
+                <th>Note</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredAppointments.map(app => `
+                <tr>
+                  <td>${app.id.slice(-6)}</td>
+                  <td><strong>${app.userName}</strong></td>
+                  <td>${app.membersCount}</td>
+                  <td><span class="package-${app.packageType.toLowerCase()}">${app.packageType}</span></td>
+                  <td>${app.formattedDate.date}</td>
+                  <td>${app.formattedDate.time}</td>
+                  <td><span class="status-${app.status}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span></td>
+                  <td>${app.guideId ? '<span class="guide-status">✓ Assigned</span>' : app.needsGuide ? '<span class="needs-guide">Needs Guide</span>' : 'Not required'}</td>
+                  <td>${app.note || '-'}</td>
+                  <td>${app.createdDate.date}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p><strong>Summary:</strong> 
+              Confirmed: ${filteredAppointments.filter(a => a.status === 'confirmed').length} | 
+              Booked: ${filteredAppointments.filter(a => a.status === 'booked').length} | 
+              Rejected: ${filteredAppointments.filter(a => a.status === 'rejected').length}
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
     
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "appointments_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'booked': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'confirmed':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+      case 'booked':
+      case 'pending':
+        return 'bg-amber-100 text-amber-700 border-amber-300';
+      case 'rejected':
+        return 'bg-rose-100 text-rose-700 border-rose-300';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-300';
     }
   };
 
   const getPackageColor = (packageType) => {
     switch (packageType?.toLowerCase()) {
-      case 'vip': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'premium': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'standard': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'vip':
+        return 'bg-gradient-to-br from-purple-500 to-pink-500';
+      case 'premium':
+        return 'bg-gradient-to-br from-blue-500 to-cyan-500';
+      case 'standard':
+        return 'bg-gradient-to-br from-slate-500 to-slate-600';
+      default:
+        return 'bg-gradient-to-br from-gray-500 to-gray-600';
     }
   };
 
   const getGuideStatus = (appointment) => {
     if (appointment.guideId) {
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded">
-          <UserCheck className="w-3 h-3" />
-          Assigned
-        </span>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-200">
+          <UserCheck className="w-3.5 h-3.5" />
+          Guide Assigned
+        </div>
       );
     } else if (appointment.needsGuide) {
       return (
-        <span className="text-xs text-orange-600">Needs Guide</span>
-      );
-    } else {
-      return (
-        <span className="text-xs text-gray-500">No guide</span>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-700 bg-orange-50 rounded-full border border-orange-200">
+          <Activity className="w-3.5 h-3.5" />
+          Needs Guide
+        </div>
       );
     }
+    return null;
+  };
+
+  const getStats = () => {
+    return {
+      total: filteredAppointments.length,
+      confirmed: filteredAppointments.filter(a => a.status === 'confirmed').length,
+      booked: filteredAppointments.filter(a => a.status === 'booked').length,
+      rejected: filteredAppointments.filter(a => a.status === 'rejected').length,
+    };
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 border-b-2 border-blue-600 rounded-full animate-spin"></div>
-          <p className="text-gray-600">Loading appointments...</p>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 rounded-full border-t-blue-600 animate-spin"></div>
+          </div>
+          <p className="text-lg font-medium text-slate-600">Loading appointments...</p>
         </div>
       </div>
     );
@@ -195,58 +449,141 @@ const AppointmentsPage = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-red-50 to-pink-100">
-        <div className="text-center">
-          <div className="mb-4 text-xl text-red-600">⚠️</div>
-          <p className="font-medium text-red-600">{error}</p>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-red-50 to-pink-50">
+        <div className="max-w-md p-8 text-center bg-white shadow-xl rounded-2xl">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+            <X className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="mb-2 text-xl font-bold text-slate-900">Error Loading Appointments</h3>
+          <p className="text-slate-600">{error}</p>
         </div>
       </div>
     );
   }
 
+  const stats = getStats();
+
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="p-6 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="mb-2 text-3xl font-bold text-gray-900">
-                {isGuide ? "All Appointments" : "My Appointments"}
-              </h1>
-              <p className="text-gray-600">
-                {isGuide 
-                  ? "View and manage all tour appointments" 
-                  : "Manage and track your upcoming appointments"}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Total Appointments</div>
-              <div className="text-2xl font-bold text-blue-600">{filteredAppointments.length}</div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="relative p-8 overflow-hidden bg-white shadow-xl rounded-3xl">
+            <div className="absolute top-0 right-0 w-64 h-64 transform translate-x-32 -translate-y-32 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 transform -translate-x-24 translate-y-24 rounded-full bg-gradient-to-tr from-indigo-400/20 to-pink-400/20 blur-3xl"></div>
+            
+            <div className="relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="mb-3 text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text">
+                    {isGuide ? 'All Appointments' : 'My Appointments'}
+                  </h1>
+                  <p className="text-lg text-slate-600">
+                    {isGuide
+                      ? 'Manage and track all tour appointments'
+                      : 'View and manage your booking appointments'}
+                  </p>
+                </div>
+                
+                {/* View Toggle */}
+                <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-100">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2.5 rounded-lg transition-all ${
+                      viewMode === 'grid'
+                        ? 'bg-white shadow-md text-blue-600'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    <Grid className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2.5 rounded-lg transition-all ${
+                      viewMode === 'list'
+                        ? 'bg-white shadow-md text-blue-600'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    <List className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-4">
+                <div className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Total</p>
+                      <p className="mt-1 text-3xl font-bold text-blue-700">{stats.total}</p>
+                    </div>
+                    <div className="p-3 bg-blue-200 rounded-xl">
+                      <Calendar className="w-6 h-6 text-blue-700" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl border-emerald-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-emerald-600">Confirmed</p>
+                      <p className="mt-1 text-3xl font-bold text-emerald-700">{stats.confirmed}</p>
+                    </div>
+                    <div className="p-3 bg-emerald-200 rounded-xl">
+                      <Check className="w-6 h-6 text-emerald-700" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-amber-600">Booked</p>
+                      <p className="mt-1 text-3xl font-bold text-amber-700">{stats.booked}</p>
+                    </div>
+                    <div className="p-3 bg-amber-200 rounded-xl">
+                      <Clock className="w-6 h-6 text-amber-700" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl border-rose-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-rose-600">Rejected</p>
+                      <p className="mt-1 text-3xl font-bold text-rose-700">{stats.rejected}</p>
+                    </div>
+                    <div className="p-3 bg-rose-200 rounded-xl">
+                      <X className="w-6 h-6 text-rose-700" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="p-6 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+        {/* Filters Section */}
+        <div className="p-6 mb-8 bg-white shadow-lg rounded-2xl">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="relative">
-              <Search className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
+              <Search className="absolute w-5 h-5 text-slate-400 left-3.5 top-3.5" />
               <input
                 type="text"
-                placeholder="Search appointments..."
+                placeholder="Search by name, package, or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full py-3 pr-4 transition-all border-2 pl-11 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400"
               />
             </div>
-            
+
             <div className="relative">
-              <Filter className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
+              <Filter className="absolute w-5 h-5 text-slate-400 left-3.5 top-3.5" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full py-3 pr-4 transition-all border-2 appearance-none pl-11 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400"
               >
                 <option value="all">All Statuses</option>
                 <option value="booked">Booked</option>
@@ -254,276 +591,322 @@ const AppointmentsPage = () => {
                 <option value="rejected">Rejected</option>
               </select>
             </div>
-            
+
             <div className="relative">
-              <Calendar className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
+              <Calendar className="absolute w-5 h-5 text-slate-400 left-3.5 top-3.5" />
               <input
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full py-3 pr-4 transition-all border-2 pl-11 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400"
               />
             </div>
-            
+
             <button
               onClick={generateReport}
-              className="flex items-center justify-center gap-2 px-4 py-2 text-white transition-colors duration-200 bg-green-600 rounded-lg hover:bg-green-700"
+              className="flex items-center justify-center gap-2 px-6 py-3 font-semibold text-white transition-all duration-300 transform rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-xl hover:scale-105 active:scale-95"
             >
-              <Download className="w-4 h-4" />
-              Export CSV
+              <Printer className="w-5 h-5" />
+              Print Report
             </button>
           </div>
         </div>
 
-        {/* Appointments Grid */}
-        <div className="grid gap-6">
-          {filteredAppointments.length === 0 ? (
-            <div className="p-12 text-center bg-white border border-gray-200 shadow-sm rounded-xl">
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="mb-2 text-lg font-medium text-gray-900">No appointments found</h3>
-              <p className="text-gray-500">No upcoming appointments match your current filters.</p>
+        {/* Appointments Grid/List */}
+        {filteredAppointments.length === 0 ? (
+          <div className="p-16 text-center bg-white shadow-lg rounded-3xl">
+            <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-100 to-slate-200">
+              <Calendar className="w-12 h-12 text-slate-400" />
             </div>
-          ) : (
-            filteredAppointments.map(appointment => (
-              <div key={appointment.id} className="p-6 transition-shadow duration-200 bg-white border border-gray-200 shadow-sm rounded-xl hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <User className="w-6 h-6 text-blue-600" />
+            <h3 className="mb-2 text-2xl font-bold text-slate-900">No appointments found</h3>
+            <p className="text-lg text-slate-500">Try adjusting your filters to see more results.</p>
+          </div>
+        ) : (
+          <div className={viewMode === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'space-y-6'}>
+            {filteredAppointments.map((appointment) => (
+              <div
+                key={appointment.id}
+                className="relative overflow-hidden transition-all duration-300 bg-white shadow-lg group rounded-2xl hover:shadow-2xl hover:-translate-y-1"
+              >
+                {/* Card Header with Package Badge */}
+                <div className={`h-2 ${getPackageColor(appointment.packageType)}`}></div>
+                
+                <div className="p-6">
+                  {/* Top Section */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${getPackageColor(appointment.packageType)} text-white shadow-lg`}>
+                        <User className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-900">{appointment.userName}</h3>
+                        <p className="text-sm text-slate-500">ID: #{appointment.id.slice(-6)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{appointment.userName}</h3>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {appointment.formattedDate.date}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {appointment.formattedDate.time}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          {appointment.membersCount} member{appointment.membersCount !== 1 ? 's' : ''}
-                        </div>
-                        {getGuideStatus(appointment)}
+                    
+                    <button 
+                      className="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      onClick={() => setExpandedCard(expandedCard === appointment.id ? null : appointment.id)}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Package and Status Badges */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white ${getPackageColor(appointment.packageType)} shadow-md`}>
+                      <Package className="w-3.5 h-3.5" />
+                      {appointment.packageType}
+                    </span>
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border-2 ${getStatusColor(appointment.status)}`}>
+                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                    </span>
+                  </div>
+
+                  {/* Date and Time */}
+                  <div className="grid grid-cols-2 gap-3 p-4 mb-4 rounded-xl bg-slate-50">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        <Calendar className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-500">Date</p>
+                        <p className="text-sm font-bold text-slate-900">{appointment.formattedDate.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        <Clock className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-500">Time</p>
+                        <p className="text-sm font-bold text-slate-900">{appointment.formattedDate.time}</p>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getPackageColor(appointment.packageType)}`}>
-                      <Package className="inline w-3 h-3 mr-1" />
-                      {appointment.packageType}
-                    </span>
-                    
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(appointment.status)}`}>
-                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                    </span>
-                    
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openDetailsModal(appointment)}
-                        className="p-2 text-gray-600 transition-colors duration-200 rounded-lg hover:text-blue-600 hover:bg-blue-50"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      
-                      {/* ✅ PackageProvider Actions */}
-                      {isPackageProvider && appointment.status === 'booked' && (
-                        <>
-                          <button
-                            onClick={() => handleConfirm(appointment.id)}
-                            className="p-2 text-green-600 transition-colors duration-200 rounded-lg hover:text-green-700 hover:bg-green-50"
-                            title="Confirm Appointment"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleReject(appointment.id)}
-                            className="p-2 text-red-600 transition-colors duration-200 rounded-lg hover:text-red-700 hover:bg-red-50"
-                            title="Reject Appointment"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
 
-                      {/* ✅ GUIDE-ONLY: Assign Guide Button */}
-                      {isGuide && appointment.needsGuide && !appointment.guideId && (
-                        <button
-                          onClick={() => navigate(`/assign-guide/${appointment.id}`)}
-                          className="p-2 text-indigo-600 transition-colors duration-200 rounded-lg hover:text-indigo-700 hover:bg-indigo-50"
-                          title="Assign Guide"
-                        >
-                          <UserCheck className="w-4 h-4" />
-                        </button>
-                      )}
+                  {/* Members and Guide Status */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50">
+                      <Users className="w-4 h-4 text-slate-600" />
+                      <span className="text-sm font-semibold text-slate-700">
+                        {appointment.membersCount} {appointment.membersCount === 1 ? 'Member' : 'Members'}
+                      </span>
                     </div>
+                    {getGuideStatus(appointment)}
+                  </div>
+
+                  {/* Note */}
+                  {appointment.note && (
+                    <div className="p-3 mb-4 border-l-4 border-blue-400 rounded-r-lg bg-blue-50">
+                      <div className="flex items-start gap-2">
+                        <FileText className="w-4 h-4 mt-0.5 text-blue-600" />
+                        <p className="text-sm text-slate-700">{appointment.note}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-100">
+                    {isAdmin && (
+                      <button
+                        onClick={() => navigate(`/assign-guide/${appointment.id}`)}
+                        className="flex items-center justify-center flex-1 gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 transform rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:scale-105 active:scale-95"
+                      >
+                        <UserCheck className="w-4 h-4" />
+                        Assign Guide
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => openDetailsModal(appointment)}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-300 bg-slate-100 rounded-xl hover:bg-slate-200"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Details
+                    </button>
+
+                    {isPackageProvider && appointment.status === 'booked' && (
+                      <>
+                        <button
+                          onClick={() => handleConfirm(appointment.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 transform bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:shadow-lg hover:scale-105 active:scale-95"
+                        >
+                          <Check className="w-4 h-4" />
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => handleReject(appointment.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 transform bg-gradient-to-r from-rose-600 to-red-600 rounded-xl hover:shadow-lg hover:scale-105 active:scale-95"
+                        >
+                          <X className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-                
-                {appointment.note && (
-                  <div className="p-3 mt-4 rounded-lg bg-gray-50">
-                    <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 text-gray-400 mt-0.5" />
-                      <p className="text-sm text-gray-600">{appointment.note}</p>
-                    </div>
-                  </div>
-                )}
+
+                {/* Hover Effect Gradient */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 transition-all duration-300 transform scale-x-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 group-hover:scale-x-100"></div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Details Modal */}
       {showDetailsModal && selectedAppointment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="w-full max-w-md overflow-y-auto bg-white shadow-xl rounded-xl max-h-90vh">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Appointment Details</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl overflow-hidden transition-all duration-300 transform bg-white shadow-2xl rounded-3xl animate-in">
+            {/* Modal Header */}
+            <div className={`${getPackageColor(selectedAppointment.packageType)} p-6 text-white`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="mb-2 text-3xl font-bold">Appointment Details</h2>
+                  <p className="text-white/90">Complete information about this booking</p>
+                </div>
                 <button
                   onClick={closeDetailsModal}
-                  className="p-2 text-gray-400 transition-colors duration-200 rounded-lg hover:text-gray-600 hover:bg-gray-100"
+                  className="p-2 transition-colors rounded-lg bg-white/20 hover:bg-white/30"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
-              
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50">
-                  <User className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">Traveler Name</div>
-                    <div className="font-medium text-gray-900">{selectedAppointment.userName}</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <Calendar className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">Start Date</div>
-                    <div className="font-medium text-gray-900">{selectedAppointment.formattedDate.date}</div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="max-h-[70vh] overflow-y-auto p-6">
+              <div className="space-y-6">
+                {/* Customer Info */}
+                <div className="p-5 border-2 border-slate-200 rounded-2xl">
+                  <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
+                    <User className="w-5 h-5 text-blue-600" />
+                    Customer Information
+                  </h3>
+                  <div className="grid gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Name</span>
+                      <span className="font-bold text-slate-900">{selectedAppointment.userName}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Appointment ID</span>
+                      <span className="font-mono text-sm font-bold text-slate-900">#{selectedAppointment.id.slice(-8)}</span>
+                    </div>
                   </div>
                 </div>
 
-                {selectedAppointment.endDate && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                    <Calendar className="w-5 h-5 text-gray-600" />
-                    <div>
-                      <div className="text-sm text-gray-500">End Date</div>
-                      <div className="font-medium text-gray-900">
-                        {new Date(selectedAppointment.endDate).toLocaleDateString()}
+                {/* Booking Details */}
+                <div className="p-5 border-2 border-slate-200 rounded-2xl">
+                  <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
+                    <Package className="w-5 h-5 text-purple-600" />
+                    Booking Details
+                  </h3>
+                  <div className="grid gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Package Type</span>
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-bold text-white ${getPackageColor(selectedAppointment.packageType)} shadow-md`}>
+                        {selectedAppointment.packageType}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Status</span>
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 ${getStatusColor(selectedAppointment.status)}`}>
+                        {selectedAppointment.status.charAt(0).toUpperCase() + selectedAppointment.status.slice(1)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Members</span>
+                      <span className="font-bold text-slate-900">{selectedAppointment.membersCount}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Schedule */}
+                <div className="p-5 border-2 border-slate-200 rounded-2xl">
+                  <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
+                    <Calendar className="w-5 h-5 text-indigo-600" />
+                    Schedule
+                  </h3>
+                  <div className="grid gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Date</span>
+                      <span className="font-bold text-slate-900">{selectedAppointment.formattedDate.date}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Time</span>
+                      <span className="font-bold text-slate-900">{selectedAppointment.formattedDate.time}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Created</span>
+                      <span className="font-bold text-slate-900">{selectedAppointment.createdDate.date}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Guide Status */}
+                <div className="p-5 border-2 border-slate-200 rounded-2xl">
+                  <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
+                    <UserCheck className="w-5 h-5 text-emerald-600" />
+                    Guide Status
+                  </h3>
+                  <div className="p-4 text-center rounded-xl bg-slate-50">
+                    {selectedAppointment.guideId ? (
+                      <div className="inline-flex items-center gap-2 px-4 py-2 font-bold rounded-full text-emerald-700 bg-emerald-100">
+                        <Check className="w-5 h-5" />
+                        Guide Assigned
                       </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <Clock className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">Time</div>
-                    <div className="font-medium text-gray-900">{selectedAppointment.formattedDate.time}</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <Users className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">Members Count</div>
-                    <div className="font-medium text-gray-900">{selectedAppointment.membersCount} member{selectedAppointment.membersCount !== 1 ? 's' : ''}</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <Package className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">Package Type</div>
-                    <div className={`inline-flex px-2 py-1 rounded text-xs font-medium ${getPackageColor(selectedAppointment.packageType)}`}>
-                      {selectedAppointment.packageType}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <UserCheck className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">Guide Requested</div>
-                    <div className="font-medium text-gray-900">
-                      {selectedAppointment.needsGuide ? 'Yes' : 'No'}
-                    </div>
+                    ) : selectedAppointment.needsGuide ? (
+                      <div className="inline-flex items-center gap-2 px-4 py-2 font-bold text-orange-700 bg-orange-100 rounded-full">
+                        <Activity className="w-5 h-5" />
+                        Needs Guide Assignment
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-4 py-2 font-bold rounded-full text-slate-700 bg-slate-100">
+                        Guide Not Required
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {selectedAppointment.guideId && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50">
-                    <UserCheck className="w-5 h-5 text-green-600" />
-                    <div>
-                      <div className="text-sm text-gray-500">Assigned Guide</div>
-                      <div className="font-medium text-gray-900">Assigned</div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <div className="w-5 h-5 bg-gray-600 rounded-full"></div>
-                  <div>
-                    <div className="text-sm text-gray-500">Status</div>
-                    <div className={`inline-flex px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedAppointment.status)}`}>
-                      {selectedAppointment.status.charAt(0).toUpperCase() + selectedAppointment.status.slice(1)}
-                    </div>
-                  </div>
-                </div>
-                
+                {/* Note */}
                 {selectedAppointment.note && (
-                  <div className="p-3 rounded-lg bg-gray-50">
-                    <div className="flex items-start gap-3">
-                      <FileText className="h-5 w-5 text-gray-600 mt-0.5" />
-                      <div>
-                        <div className="mb-1 text-sm text-gray-500">Note</div>
-                        <div className="text-sm text-gray-900">{selectedAppointment.note}</div>
-                      </div>
-                    </div>
+                  <div className="p-5 border-2 border-blue-200 rounded-2xl bg-blue-50">
+                    <h3 className="flex items-center gap-2 mb-3 text-lg font-bold text-blue-900">
+                      <FileText className="w-5 h-5" />
+                      Special Notes
+                    </h3>
+                    <p className="text-slate-700">{selectedAppointment.note}</p>
                   </div>
                 )}
-                
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <div className="w-5 h-5 text-gray-600">📅</div>
-                  <div>
-                    <div className="text-sm text-gray-500">Created On</div>
-                    <div className="font-medium text-gray-900">{selectedAppointment.createdDate.date}</div>
-                  </div>
-                </div>
               </div>
-              
-              {/* ✅ GUIDE-ONLY: Assign Guide Button in Modal */}
-              {isGuide && selectedAppointment.needsGuide && !selectedAppointment.guideId && (
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex gap-3 p-6 border-t bg-slate-50 border-slate-200">
+              {isAdmin && (
                 <button
                   onClick={() => {
                     closeDetailsModal();
                     navigate(`/assign-guide/${selectedAppointment.id}`);
                   }}
-                  className="flex items-center justify-center w-full gap-2 px-4 py-2 mt-6 text-white transition-colors duration-200 bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                  className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-semibold text-white transition-all duration-300 transform rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:scale-105 active:scale-95"
                 >
-                  <UserCheck className="w-4 h-4" />
+                  <UserCheck className="w-5 h-5" />
                   Assign Guide
                 </button>
               )}
               
-              {/* PackageProvider Actions in Modal */}
               {isPackageProvider && selectedAppointment.status === 'booked' && (
-                <div className="flex gap-3 mt-6">
+                <>
                   <button
                     onClick={() => {
                       handleConfirm(selectedAppointment.id);
                       closeDetailsModal();
                     }}
-                    className="flex items-center justify-center flex-1 gap-2 px-4 py-2 text-white transition-colors duration-200 bg-green-600 rounded-lg hover:bg-green-700"
+                    className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-semibold text-white transition-all duration-300 transform bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:shadow-lg hover:scale-105 active:scale-95"
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-5 h-5" />
                     Confirm
                   </button>
                   <button
@@ -531,13 +914,20 @@ const AppointmentsPage = () => {
                       handleReject(selectedAppointment.id);
                       closeDetailsModal();
                     }}
-                    className="flex items-center justify-center flex-1 gap-2 px-4 py-2 text-white transition-colors duration-200 bg-red-600 rounded-lg hover:bg-red-700"
+                    className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-semibold text-white transition-all duration-300 transform bg-gradient-to-r from-rose-600 to-red-600 rounded-xl hover:shadow-lg hover:scale-105 active:scale-95"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                     Reject
                   </button>
-                </div>
+                </>
               )}
+              
+              <button
+                onClick={closeDetailsModal}
+                className="px-6 py-3 font-semibold transition-all duration-300 rounded-xl text-slate-700 bg-slate-200 hover:bg-slate-300"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

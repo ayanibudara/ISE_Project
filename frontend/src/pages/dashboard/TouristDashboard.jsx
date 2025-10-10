@@ -25,10 +25,22 @@ const TouristDashboard = () => {
       try {
         setLoading(true);
         const response = await api.get("api/appointments/my");
-        const { upcoming = [], past = [] } = response.data;
+        const data = response.data;
 
-        setUpcoming(upcoming);
-        setPast(past);
+        // Handle different response structures
+        let upcomingAppointments = [];
+        let pastAppointments = [];
+
+        if (Array.isArray(data)) {
+          // If response is direct array, treat as upcoming
+          upcomingAppointments = data;
+        } else if (data && typeof data === 'object') {
+          upcomingAppointments = Array.isArray(data.upcoming) ? data.upcoming : [];
+          pastAppointments = Array.isArray(data.past) ? data.past : [];
+        }
+
+        setUpcoming(upcomingAppointments);
+        setPast(pastAppointments);
         setError(null);
       } catch (err) {
         console.error("Error fetching appointments:", err);
@@ -129,14 +141,14 @@ const TouristDashboard = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
-          <Link to="/apform" className="group">
+          <Link to="/packages" className="group">
             <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 font-semibold flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Book New Appointment
             </button>
           </Link>
 
-          {/* ✅ NEW: View All Appointments Button */}
+          {/* ✅ FIXED: Correct route path */}
           <Link to="/appoiments" className="group">
             <button className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 font-semibold flex items-center gap-2">
               <List className="w-5 h-5" />
@@ -261,7 +273,7 @@ const TouristDashboard = () => {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <span className="font-semibold text-gray-800 transition-colors group-hover:text-blue-700">
-                          {appt.packageType}
+                          {appt.selectedTier || appt.packageType || 'Standard'}
                         </span>
                         <span className="px-2 py-1 text-xs font-medium text-gray-600 bg-white rounded-lg shadow-sm">
                           {appt.status}
@@ -308,7 +320,7 @@ const TouristDashboard = () => {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <span className="font-semibold text-gray-800 transition-colors group-hover:text-purple-700">
-                          {appt.packageType}
+                          {appt.selectedTier || appt.packageType || 'Standard'}
                         </span>
                         <span className="px-2 py-1 text-xs font-medium text-gray-600 bg-white rounded-lg shadow-sm">
                           {appt.status}
