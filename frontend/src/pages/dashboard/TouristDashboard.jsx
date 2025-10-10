@@ -149,7 +149,7 @@ const TouristDashboard = () => {
           </Link>
 
           {/* ✅ FIXED: Correct route path */}
-          <Link to="/appointments" className="group">
+          <Link to="/appoiments" className="group">
             <button className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 font-semibold flex items-center gap-2">
               <List className="w-5 h-5" />
               View All Appointments
