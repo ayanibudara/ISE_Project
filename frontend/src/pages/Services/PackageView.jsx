@@ -12,6 +12,7 @@ import {
   Info,
   MapPin,
   Users,
+  TrendingUp,
 } from "lucide-react";
 import Reviews from "../Review/Reviews";
 
@@ -220,17 +221,6 @@ const PackageView = () => {
                 <h1 className="text-3xl font-bold text-gray-900">
                   {packageData.packageName}
                 </h1>
-
-                {/* Total Booking Count (optional near title) */}
-                {packageData.bookingCount !== undefined && (
-                  <div className="mt-3 flex items-center gap-2 text-lg font-semibold text-blue-600">
-                    <Users className="w-5 h-5" />
-                    <span>
-                      {packageData.bookingCount}{" "}
-                      {packageData.bookingCount === 1 ? "booking" : "bookings"}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -255,7 +245,7 @@ const PackageView = () => {
               <Reviews packageId={packageId} />
             </div>
 
-            {/* ✅ TIER BOOKING COUNTS + TOTAL */}
+            {/* TIER BOOKING COUNTS + TOTAL */}
             {(packageData.tierBookingCounts || packageData.bookingCount !== undefined) && (
               <div className="relative p-8 overflow-hidden bg-white border border-gray-100 shadow-xl rounded-3xl">
                 {/* Background Decoration */}
@@ -264,7 +254,7 @@ const PackageView = () => {
                 <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-8">
                     <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                      <Package className="w-5 h-5 text-white" />
+                      <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
                       Booking Popularity By Tier
@@ -296,15 +286,30 @@ const PackageView = () => {
                     })}
                   </div>
 
-                  {/* Total Booking Summary */}
+                  {/* Total Booking Summary - Redesigned */}
                   {packageData.bookingCount !== undefined && (
-                    <div className="mt-8 text-center">
-                      <div className="inline-flex items-center gap-3 px-6 py-3 text-base font-bold text-white shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl">
-                        <Users className="w-5 h-5" />
-                        <span>
-                          {packageData.bookingCount} total{" "}
-                          {packageData.bookingCount === 1 ? "booking" : "bookings"}
-                        </span>
+                    <div className="relative mt-8 overflow-hidden bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200/50 rounded-2xl">
+                      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+                      <div className="relative p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg">
+                              <Users className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Bookings</p>
+                              <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                {packageData.bookingCount}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-xl border border-blue-200/30">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-gray-700">
+                              {packageData.bookingCount === 1 ? "booking" : "bookings"} made
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
