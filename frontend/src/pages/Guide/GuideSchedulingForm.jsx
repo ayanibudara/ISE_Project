@@ -9,15 +9,14 @@ export default function GuideAssignForm() {
   const [selectedGuide, setSelectedGuide] = useState(null);
   const [guides, setGuides] = useState([]);
   const [formData, setFormData] = useState({
-    startDate: new Date().toISOString().split("T")[0],
-    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
+    startDate: new Date().toLocaleDateString("en-CA"),
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA"),
     guideId: "",
     paymentPerDay: 150,
   });
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
   // Fetch guides from backend
   const fetchGuides = async () => {
     try {
@@ -33,7 +32,7 @@ export default function GuideAssignForm() {
     fetchGuides();
   }, []);
 
-  // Calculate days
+  // Calculate days between start and end
   const calculateDays = (startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -110,14 +109,31 @@ export default function GuideAssignForm() {
     }
   };
 
-  // Filter guides by selected start date
-  const availableGuides = guides.filter((guide) =>
-    guide.availability.some(
-      (a) =>
-        a.isAvailable &&
-        new Date(a.date).toISOString().split("T")[0] === formData.startDate
-    )
-  );
+  // ✅ Get all dates between start and end (LOCAL time)
+  const getDatesInRange = (start, end) => {
+    const dates = [];
+    let current = new Date(start);
+    const endDate = new Date(end);
+    while (current <= endDate) {
+      dates.push(current.toLocaleDateString("en-CA")); // Local YYYY-MM-DD
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  };
+
+  // ✅ Filter guides who are available for ALL selected days
+  const availableGuides = guides.filter((guide) => {
+    const rangeDates = getDatesInRange(formData.startDate, formData.endDate);
+
+    // Check if guide has all dates in their availability
+    return rangeDates.every((date) =>
+      guide.availability.some(
+        (a) =>
+          a.isAvailable &&
+          new Date(a.date).toLocaleDateString("en-CA") === date
+      )
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -189,7 +205,9 @@ export default function GuideAssignForm() {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500">No guides available for this date.</p>
+              <p className="text-gray-500">
+                No guides available for the full selected range.
+              </p>
             )}
           </div>
           {errors.guideId && (

@@ -112,8 +112,7 @@ const AuthenticatedRoutes = () => {
       <Route path="/reviewform" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
 
-      {/* Extra route (previous merge-added route corrected spelling) */}
-      <Route path="/dashboard" element={<TouristDashboard />} />
+     
 
       {/* Auth Routes */}
       <Route
