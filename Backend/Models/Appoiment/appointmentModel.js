@@ -17,11 +17,16 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
-    
-    packageType: {
+    // Reference to the selected package
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Package', // references the Package model
+      required: true,
+    },
+    selectedTier: {
       type: String,
       required: true,
-      enum: ['Standard', 'Premium', 'VIP'], // customize as needed
+      enum: ['Standard', 'Premium', 'VIP'], // which tier from the package
     },
     note: {
       type: String,
@@ -31,7 +36,7 @@ const appointmentSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-     endDate: {
+    endDate: {
       type: Date,
       required: true,
       validate: {

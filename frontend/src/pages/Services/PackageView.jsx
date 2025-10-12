@@ -15,6 +15,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
+import Reviews from "../Review/Reviews";
 
 const PackageView = () => {
   const { packageId } = useParams();
@@ -88,10 +89,10 @@ const PackageView = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading package details...</p>
+          <div className="inline-block w-16 h-16 mb-4 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+          <p className="font-medium text-gray-600">Loading package details...</p>
         </div>
       </div>
     );
@@ -99,13 +100,13 @@ const PackageView = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-        <div className="bg-white rounded-3xl p-8 border border-red-100 shadow-2xl max-w-md mx-auto text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-md p-8 mx-auto text-center bg-white border border-red-100 shadow-2xl rounded-3xl">
+          <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 bg-red-100 rounded-full">
             <Sparkles className="w-10 h-10 text-red-500" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Oops!</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h3 className="mb-2 text-2xl font-bold text-gray-900">Oops!</h3>
+          <p className="mb-6 text-gray-600">{error}</p>
           <button
             onClick={() => navigate(-1)}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-8 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
@@ -119,12 +120,12 @@ const PackageView = () => {
 
   if (!packageData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-        <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-2xl max-w-md mx-auto text-center">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-md p-8 mx-auto text-center bg-white border border-gray-200 shadow-2xl rounded-3xl">
+          <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full">
             <Sparkles className="w-10 h-10 text-gray-400" />
           </div>
-          <p className="text-gray-600 mb-6">Package not found.</p>
+          <p className="mb-6 text-gray-600">Package not found.</p>
           <button
             onClick={() => navigate("/packages")}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-8 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
@@ -138,29 +139,29 @@ const PackageView = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container px-4 py-8 mx-auto max-w-7xl">
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-semibold mb-8 transition-all duration-200 group"
+          className="flex items-center gap-2 mb-8 font-semibold text-gray-600 transition-all duration-200 hover:text-blue-600 group"
         >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
+          <ArrowLeft className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" />
           Back to Packages
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Package Image & Category */}
-            <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100">
-              <div className="relative h-96 overflow-hidden group">
+            <div className="overflow-hidden bg-white border border-gray-100 shadow-xl rounded-3xl">
+              <div className="relative overflow-hidden h-96 group">
                 {packageData.image ? (
                   <img
                     src={packageData.image}
                     alt={packageData.packageName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                   />
-                ) : (
+                ) : ( // ✅ FIXED: Changed "else" to ":"
                   <div
                     className={`w-full h-full bg-gradient-to-br ${getCategoryColor(
                       packageData.category
@@ -168,7 +169,7 @@ const PackageView = () => {
                   >
                     <div className="flex items-center gap-3">
                       {getCategoryIcon(packageData.category)}
-                      <span className="text-white font-bold text-3xl">
+                      <span className="text-3xl font-bold text-white">
                         {packageData.category}
                       </span>
                     </div>
@@ -185,7 +186,7 @@ const PackageView = () => {
                     )} rounded-full px-5 py-2.5 shadow-2xl backdrop-blur-sm`}
                   >
                     {getCategoryIcon(packageData.category)}
-                    <span className="text-white font-bold text-sm">
+                    <span className="text-sm font-bold text-white">
                       {packageData.category}
                     </span>
                   </div>
@@ -196,7 +197,7 @@ const PackageView = () => {
                   <div className="absolute top-6 right-6">
                     <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-5 py-2.5 shadow-2xl">
                       <MapPin className="w-5 h-5 text-red-500" />
-                      <span className="text-gray-900 font-bold text-sm">
+                      <span className="text-sm font-bold text-gray-900">
                         {packageData.province}
                       </span>
                     </div>
@@ -212,28 +213,38 @@ const PackageView = () => {
             </div>
 
             {/* About This Service */}
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
+            <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-3xl">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-xl">
                   <Info className="w-5 h-5 text-blue-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   About This Service
                 </h2>
               </div>
-              <div className="h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 mb-6"></div>
-              <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-line">
+              <div className="h-px mb-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+              <p className="text-lg leading-relaxed text-gray-700 whitespace-pre-line">
                 {packageData.description}
               </p>
             </div>
+
  </div>
             {/* ✅ Provider Information 
+
+
+            {/* REVIEWS SECTION */}
+            <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-3xl">
+             
+              <Reviews packageId={packageId} />
+            </div>
+
+            {/* Provider Information
             {packageData.providerId && (
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl p-8 shadow-xl border border-indigo-100">
-                
-                <div className="h-px bg-gradient-to-r from-indigo-200 via-blue-300 to-indigo-200 mb-6"></div>
+              <div className="p-8 border border-indigo-100 shadow-xl bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl">
+                <div className="h-px mb-6 bg-gradient-to-r from-indigo-200 via-blue-300 to-indigo-200"></div>
 
                 <div className="space-y-4">
+
 
 
 
@@ -241,28 +252,30 @@ const PackageView = () => {
                   
 
                   {/* Provider Email 
+
+                  {/* Provider Email */}
+
                   {packageData.providerId.email && (
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="flex items-center justify-center w-12 h-12 bg-blue-500 rounded-full">
                         <Mail className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 font-medium">Provider Email Address</p>
+                        <p className="text-sm font-medium text-gray-600">Provider Email Address</p>
                         <p className="text-lg font-semibold text-blue-600">
                           {packageData.providerId.email}
                         </p>
                       </div>
                     </div>
-                  )}*/}
-
+                  )}
                   {/* Provider Phone 
                   {packageData.providerId.mobile && (
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                      <div className="flex items-center justify-center w-12 h-12 bg-green-500 rounded-full">
                         <Phone className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 font-medium">Phone Number</p>
+                        <p className="text-sm font-medium text-gray-600">Phone Number</p>
                         <p className="text-lg font-semibold text-gray-900">
                           {packageData.providerId.mobile}
                         </p>
@@ -276,32 +289,32 @@ const PackageView = () => {
 */}
           {/* Right Column */}
           <div className="space-y-6">
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 sticky top-8">
+            <div className="sticky p-8 bg-white border border-gray-100 shadow-xl rounded-3xl top-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-xl">
                   <Package className="w-5 h-5 text-purple-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   Package Options
                 </h2>
               </div>
-              <div className="h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 mb-6"></div>
+              <div className="h-px mb-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
 
               {packageData.packages && packageData.packages.length > 0 ? (
                 <div className="space-y-4">
                   {packageData.packages.map((pkg, idx) => (
                     <div
                       key={idx}
-                      className="group p-5 rounded-2xl border-2 border-gray-200 hover:border-blue-400 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-300"
+                      className="p-5 transition-all duration-300 border-2 border-gray-200 group rounded-2xl hover:border-blue-400 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg"
                     >
-                      <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div
                             className={`w-3 h-3 rounded-full ${getPackageTypeColor(
                               pkg.packageType
                             )} shadow-lg`}
                           ></div>
-                          <span className="font-bold text-gray-900 text-lg">
+                          <span className="text-lg font-bold text-gray-900">
                             {pkg.packageType}
                           </span>
                         </div>
@@ -317,11 +330,11 @@ const PackageView = () => {
                           <Calendar className="w-4 h-4 text-blue-500" />
                           <span className="font-medium">{pkg.tourDays} Days Tour</span>
                         </div>
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-sm font-semibold text-gray-700 mb-2">
+                        <div className="pt-3 mt-3 border-t border-gray-200">
+                          <p className="mb-2 text-sm font-semibold text-gray-700">
                             Includes:
                           </p>
-                          <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                          <div className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
                             {pkg.services}
                           </div>
                         </div>
@@ -330,17 +343,27 @@ const PackageView = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-8">No packages available.</p>
+                <p className="py-8 text-center text-gray-500">No packages available.</p>
               )}
 
-              {/* Book Appointment Button */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              {/* Action Buttons */}
+              <div className="pt-6 mt-8 space-y-4 border-t border-gray-200">
+                {/* Book Appointment Button */}
                 <button
                   onClick={() => navigate(`/apform/${packageId}`)}
-                  className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                  className="flex items-center justify-center w-full gap-2 px-8 py-4 font-bold text-white transition-all duration-300 shadow-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl hover:shadow-2xl hover:scale-105"
                 >
                   <Calendar className="w-5 h-5" />
                   Book Now
+                </button>
+
+                {/* Add Review Button */}
+                <button
+                  onClick={() => navigate(`/reviewform/${packageId}`)}
+                  className="flex items-center justify-center w-full gap-2 px-8 py-4 font-bold text-white transition-all duration-300 shadow-lg bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl hover:shadow-2xl hover:scale-105"
+                >
+                  <Star className="w-5 h-5" />
+                  Add Review
                 </button>
               </div>
             </div>

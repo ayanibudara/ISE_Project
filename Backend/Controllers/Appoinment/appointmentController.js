@@ -1,12 +1,14 @@
 const Appointment = require('../../models/Appoiment/appointmentModel.js');
 const User = require('../../models/User.js');
+// Import Package model
+
 // Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
   try {
-    const { userId, userName, membersCount, packageType, note, startDate, endDate } = req.body;
+    const { userId, userName, membersCount, packageId, selectedTier, note, startDate, endDate } = req.body;
 
     // Check required fields
-    if (!userId || !userName || !membersCount || !packageType || !startDate || !endDate) {
+    if (!userId || !userName || !membersCount || !packageId || !selectedTier || !startDate || !endDate) {
       return res.status(400).json({ message: 'All required fields must be filled!' });
     }
 
@@ -15,12 +17,21 @@ exports.createAppointment = async (req, res) => {
       return res.status(400).json({ message: 'End date must be after start date!' });
     }
 
+    // Validate selectedTier
+    if (!['Standard', 'Premium', 'VIP'].includes(selectedTier)) {
+      return res.status(400).json({ message: 'Invalid tier selected!' });
+    }
+
+    // Optional: validate that package exists
+   
+
     // Create new appointment
     const appointment = await Appointment.create({
       userId,
       userName,
       membersCount,
-      packageType,
+      packageId,
+      selectedTier,
       note,
       startDate,
       endDate,
@@ -34,16 +45,15 @@ exports.createAppointment = async (req, res) => {
   }
 };
 
-
 // Get appointments for the logged-in user only
 exports.getUserAppointments = async (req, res) => {
   try {
     const now = new Date();
 
-    // Find appointments for the user from token
     const appointments = await Appointment.find({ userId: req.user._id })
       .sort({ startDate: 1 })
-      .populate('userId', 'firstName lastName email'); // optional: populate user info
+      .populate('userId', 'firstName lastName email')
+      .populate('packageId'); // populate package info
 
     const upcoming = appointments.filter(appt => new Date(appt.startDate) >= now);
     const past = appointments.filter(appt => new Date(appt.startDate) < now);
@@ -63,7 +73,8 @@ exports.getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
       .sort({ startDate: 1 })
-      .populate('userId', 'firstName lastName email'); // populate user info
+      .populate('userId', 'firstName lastName email')
+      .populate('packageId'); // populate package info
 
     res.status(200).json({
       totalAppointments: appointments.length,
@@ -74,11 +85,10 @@ exports.getAllAppointments = async (req, res) => {
   }
 };
 
-
 // Get a single appointment (owner or admin)
 exports.getAppointmentById = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(req.params.id).populate('packageId');
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
 
     if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
@@ -101,7 +111,19 @@ exports.updateAppointment = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    Object.assign(appointment, req.body);
+    // Only allow updates to certain fields
+    const updatableFields = ['membersCount', 'packageId', 'selectedTier', 'note', 'startDate', 'endDate', 'status'];
+    updatableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        appointment[field] = req.body[field];
+      }
+    });
+
+    // Validate endDate after startDate
+    if (appointment.startDate && appointment.endDate && new Date(appointment.endDate) <= new Date(appointment.startDate)) {
+      return res.status(400).json({ message: 'End date must be after start date!' });
+    }
+
     await appointment.save();
 
     res.json({ message: 'Appointment updated', appointment });
