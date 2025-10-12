@@ -1,9 +1,10 @@
 const Package = require('../../Models/Services/packageModel.js');
+const Appointment = require('../../models/Appoiment/appointmentModel.js'); // ✅ ADDED
 
 // Create a new package
 exports.createPackage = async (req, res) => {
   try {
-     console.log("📦 Received package data:", req.body);
+    console.log("📦 Received package data:", req.body);
     const newPackage = new Package(req.body);
     await newPackage.save();
     res.status(201).json(newPackage);
@@ -13,26 +14,52 @@ exports.createPackage = async (req, res) => {
   }
 };
 
+// Get all packages
 exports.getAllPackages = async (req, res) => {
   try {
-    // Fetch all packages from the database
     const packages = await Package.find();
-
     res.json(packages);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
-// Get package by ID
+// Get package by ID with booking count (overall + by tier)
 exports.getPackageById = async (req, res) => {
   try {
     const { packageId } = req.params;
-    const pkg = await Package.findById(packageId).populate('providerId', 'name email');;
-    if (!pkg) return res.status(404).json({ error: "Package not found" });
-    res.json(pkg);
+
+    // Find the package
+    const pkg = await Package.findById(packageId).populate('providerId', 'name email');
+    if (!pkg) {
+      return res.status(404).json({ error: "Package not found" });
+    }
+
+    // Count total valid bookings
+    const totalBookings = await Appointment.countDocuments({
+      packageId: packageId,
+      status: { $in: ['booked', 'completed'] }
+    });
+
+    // Count by tier
+    const tierCounts = {};
+    const tiers = ['Standard', 'Premium', 'VIP'];
+    for (const tier of tiers) {
+      tierCounts[tier] = await Appointment.countDocuments({
+        packageId: packageId,
+        selectedTier: tier,
+        status: { $in: ['booked', 'completed'] }
+      });
+    }
+
+    // Attach to response
+    const pkgWithCount = pkg.toObject();
+    pkgWithCount.bookingCount = totalBookings;
+    pkgWithCount.tierBookingCounts = tierCounts; // { Standard: 45, Premium: 62, VIP: 20 }
+
+    res.json(pkgWithCount);
   } catch (err) {
+    console.error("Error fetching package with tier booking counts:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -48,10 +75,6 @@ exports.getPackagesByProvider = async (req, res) => {
   }
 };
 
-
-
-
-
 // Update package by ID
 exports.updatePackage = async (req, res) => {
   try {
@@ -64,32 +87,19 @@ exports.updatePackage = async (req, res) => {
   }
 };
 
-/* Delete package by ID
-exports.deletePackage = async (req, res) => {
-  try {
-    const { packageId } = req.params;
-    const deletedPackage = await Package.findByIdAndDelete(packageId);
-    if (!deletedPackage) return res.status(404).json({ error: "Package not found" });
-    res.json({ message: "Package deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};*/
-
 // Delete package by ID
 exports.deletePackage = async (req, res) => {
   try {
-    console.log("Delete request by user:", req.user); // Add this line
+    console.log("Delete request by user:", req.user);
     const { packageId } = req.params;
     const deletedPackage = await Package.findByIdAndDelete(packageId);
     if (!deletedPackage) return res.status(404).json({ error: "Package not found" });
     res.json({ message: "Package deleted successfully" });
   } catch (err) {
-    console.error("Delete error:", err); // Add this line
+    console.error("Delete error:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 
 // Get packages by category (optional: filter by province too)
 exports.getPackagesByCategory = async (req, res) => {

@@ -11,6 +11,7 @@ import {
   Package,
   Info,
   MapPin,
+  Users,
 } from "lucide-react";
 import Reviews from "../Review/Reviews";
 
@@ -81,6 +82,19 @@ const PackageView = () => {
         return "bg-amber-500";
       default:
         return "bg-gray-500";
+    }
+  };
+
+  const getTierGradient = (tier) => {
+    switch (tier?.toLowerCase()) {
+      case "standard":
+        return "from-blue-500 to-blue-600";
+      case "premium":
+        return "from-purple-500 to-purple-600";
+      case "vip":
+        return "from-amber-500 to-orange-500";
+      default:
+        return "from-gray-500 to-gray-600";
     }
   };
 
@@ -206,6 +220,17 @@ const PackageView = () => {
                 <h1 className="text-3xl font-bold text-gray-900">
                   {packageData.packageName}
                 </h1>
+
+                {/* Total Booking Count (optional near title) */}
+                {packageData.bookingCount !== undefined && (
+                  <div className="mt-3 flex items-center gap-2 text-lg font-semibold text-blue-600">
+                    <Users className="w-5 h-5" />
+                    <span>
+                      {packageData.bookingCount}{" "}
+                      {packageData.bookingCount === 1 ? "booking" : "bookings"}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -229,6 +254,63 @@ const PackageView = () => {
             <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-3xl">
               <Reviews packageId={packageId} />
             </div>
+
+            {/* ✅ TIER BOOKING COUNTS + TOTAL */}
+            {(packageData.tierBookingCounts || packageData.bookingCount !== undefined) && (
+              <div className="relative p-8 overflow-hidden bg-white border border-gray-100 shadow-xl rounded-3xl">
+                {/* Background Decoration */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/50 to-purple-100/50 rounded-full blur-3xl -z-0"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                      <Package className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Booking Popularity By Tier
+                    </h3>
+                  </div>
+                  
+                  <div className="h-px mb-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+                  
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    {['Standard', 'Premium', 'VIP'].map((tier) => {
+                      const count = packageData.tierBookingCounts?.[tier] || 0;
+                      return (
+                        <div
+                          key={tier}
+                          className="relative flex flex-col items-center justify-center p-6 text-center transition-all duration-300 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 group rounded-2xl hover:shadow-xl hover:border-blue-300 hover:-translate-y-1"
+                        >
+                          <div
+                            className={`w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br ${getTierGradient(
+                              tier
+                            )} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                          >
+                            <Package className="w-8 h-8 text-white" />
+                          </div>
+                          <p className="mb-1 text-3xl font-bold text-gray-900">{count}</p>
+                          <p className="text-sm font-semibold tracking-wide text-gray-600 uppercase">{tier}</p>
+                          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${getTierGradient(tier)} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Total Booking Summary */}
+                  {packageData.bookingCount !== undefined && (
+                    <div className="mt-8 text-center">
+                      <div className="inline-flex items-center gap-3 px-6 py-3 text-base font-bold text-white shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl">
+                        <Users className="w-5 h-5" />
+                        <span>
+                          {packageData.bookingCount} total{" "}
+                          {packageData.bookingCount === 1 ? "booking" : "bookings"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column */}
