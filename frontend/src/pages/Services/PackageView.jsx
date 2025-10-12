@@ -11,9 +11,6 @@ import {
   Package,
   Info,
   MapPin,
-  User,
-  Mail,
-  Phone,
 } from "lucide-react";
 import Reviews from "../Review/Reviews";
 
@@ -161,7 +158,7 @@ const PackageView = () => {
                     alt={packageData.packageName}
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                   />
-                ) : ( // ✅ FIXED: Changed "else" to ":"
+                ) : (
                   <div
                     className={`w-full h-full bg-gradient-to-br ${getCategoryColor(
                       packageData.category
@@ -228,65 +225,12 @@ const PackageView = () => {
               </p>
             </div>
 
- </div>
-            {/* ✅ Provider Information 
-
-
             {/* REVIEWS SECTION */}
             <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-3xl">
-             
               <Reviews packageId={packageId} />
             </div>
-
-            {/* Provider Information
-            {packageData.providerId && (
-              <div className="p-8 border border-indigo-100 shadow-xl bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl">
-                <div className="h-px mb-6 bg-gradient-to-r from-indigo-200 via-blue-300 to-indigo-200"></div>
-
-                <div className="space-y-4">
-
-
-
-
-                  {/* Provider Name */}
-                  
-
-                  {/* Provider Email 
-
-                  {/* Provider Email */}
-
-                  {packageData.providerId.email && (
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 bg-blue-500 rounded-full">
-                        <Mail className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Provider Email Address</p>
-                        <p className="text-lg font-semibold text-blue-600">
-                          {packageData.providerId.email}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {/* Provider Phone 
-                  {packageData.providerId.mobile && (
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 bg-green-500 rounded-full">
-                        <Phone className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Phone Number</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {packageData.providerId.mobile}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-*/}
+
           {/* Right Column */}
           <div className="space-y-6">
             <div className="sticky p-8 bg-white border border-gray-100 shadow-xl rounded-3xl top-8">
