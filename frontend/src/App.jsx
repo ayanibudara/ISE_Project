@@ -30,7 +30,7 @@ import { useEffect } from "react";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
 import EditPackageForm from "./pages/Services/EditPackageForm";
-
+import UpdateAppointmentPage from "./pages/appointment/UpdateAppointmentPage"
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
@@ -102,7 +102,7 @@ const AuthenticatedRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/apform/:packageId" element={<AppointmentForm />} />
       <Route path="/appoiments" element={<AppointmentsPage />} />
-      
+      <Route path="/appointments/edit/:id" element={<UpdateAppointmentPage />} />
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
       <Route path="/packages/:packageId" element={<PackageView />} />
