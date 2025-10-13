@@ -26,7 +26,6 @@ const path = require('path');
 dotenv.config();
 
 // Import routes
-HEAD
 
 const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
@@ -41,14 +40,14 @@ const packageRoutes = require('./Routes/service/packageRoutes.js');
 
 
 
-const authRoutes = require("./Routes/auth");
-const adminRoutes = require("./Routes/admin");
-const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
-const guideRoutes = require("./Routes/Guide/guideRoute");
-const packageRoutes = require("./Routes/service/packageRoutes.js");
- main
+//const authRoutes = require("./Routes/auth");
+//const adminRoutes = require("./Routes/admin");
+//const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
+//const guideRoutes = require("./Routes/Guide/guideRoute");
+//const packageRoutes = require("./Routes/service/packageRoutes.js");
+ //main
 const advertisementRoutes = require("./Routes/advertisementRoutes");
-const review = require('./Routes/Review/reviewRoutes.js')
+//const review = require('./Routes/Review/reviewRoutes.js')
 
 
 // Initialize express app
@@ -130,7 +129,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/guides", guideRoutes);
- main
 app.use("/api", packageRoutes);
 app.use("/api/advertisements", advertisementRoutes);
 app.use("/api/review",review)

@@ -35,17 +35,15 @@ import ReviewList from "./pages/Review/ReviewList";
 
 
 import Chatbot from "./AI/chatbot";
-import { useEffect } from "react";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
 import EditPackageForm from "./pages/Services/EditPackageForm";
- main
+
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import RegisterGuide from "./pages/Guide/RegisterGuide";
 
-import Chatbot from "./AI/chatbot";
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
