@@ -12,7 +12,8 @@ import { ToastProvider } from "./contexts/ToastContext";
 import Home from "./pages/home";
 import AppointmentForm from "./pages/appointment/appointmentform";
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
-import Guideform from "./pages/Guide/GuideSchedulingForm";
+//import Guideform from "./pages/Guide/GuideSchedulingForm";
+import GuideAssignForm from "./pages/admin/GuideAssignForm"; // 🆕 ADD THIS
 import Guidedashboard from "./pages/Guide/Guidedashboard";
 
 import PackageForm from "./pages/Services/PackageForm";
@@ -104,7 +105,7 @@ const AuthenticatedRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/apform" element={<AppointmentForm />} />
       <Route path="/appointments" element={<AppointmentsPage />} />
-      <Route path="/guideform" element={<Guideform />} />
+      
       <Route path="/guideregister" element={<RegisterGuide />} />
       <Route path="/guidedashboard" element={<Guidedashboard />} />
       <Route path="/addpackage" element={<PackageForm />} />
@@ -209,6 +210,21 @@ const AuthenticatedRoutes = () => {
           ["Admin"]
         )}
       />
+
+{/* 🆕 ADD THIS NEW ROUTE */}
+<Route
+  path="/dashboard/admin/guide-scheduling"
+  element={renderProtectedRoute(
+    <DashboardLayout>
+      <GuideAssignForm />
+    </DashboardLayout>,
+    ["Admin"]
+  )}
+/>
+      
+
+
+
 
       <Route
         path="/dashboard/admin/advertising"
