@@ -16,6 +16,18 @@ exports.register = async (req, res) => {
       });
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     // Create new user
     const user = new User({
       firstName,
@@ -50,8 +62,11 @@ exports.register = async (req, res) => {
 
     console.log('Session user data:', req.session.user);
 
+    const token = generateToken(user);
+
     res.status(201).json({
       message: 'User registered successfully',
+      token, // <-- add this line!
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -263,6 +278,35 @@ exports.deleteProfile = async (req, res) => {
         fs.unlinkSync(imagePath);
       }
     }
+
+    exports.getPackageById = async (req, res) => {
+  try {
+    const { packageId } = req.params;
+
+    const pkg = await Package.findById(packageId)
+      .populate('providerId', 'firstName lastName email'); // <-- populate name fields
+
+    if (!pkg) return res.status(404).json({ error: "Package not found" });
+
+    res.json(pkg);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Delete user from database
     await User.findByIdAndDelete(userId);

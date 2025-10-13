@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const packageSchema = new mongoose.Schema(
   {
+    providerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     packageName: {
       type: String,
       required: [true, 'Package name is required'],

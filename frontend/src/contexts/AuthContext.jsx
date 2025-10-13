@@ -71,6 +71,11 @@ export const AuthProvider = ({ children }) => {
       
       const response = await api.post(endpoints.auth.login, credentials);
       
+    // Save the token to localStorage
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token);
+    }
+
       setAuthState({
         user: response.data.user,
         isAuthenticated: true,
@@ -108,7 +113,10 @@ export const AuthProvider = ({ children }) => {
       }
       
       const response = await api.post(endpoints.auth.register, data, config);
-      
+       // Save the token to localStorage
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token);
+    }
       setAuthState({
         user: response.data.user,
         isAuthenticated: true,
@@ -129,7 +137,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post(endpoints.auth.logout, {});
-      
+       localStorage.removeItem("token");
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -139,12 +147,15 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
       // Even if logout fails on server, clear local state
+      
       setAuthState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
         error: null
+        
       });
+      localStorage.removeItem("token");
     }
   };
 

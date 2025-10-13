@@ -37,34 +37,39 @@ export function Header() {
   }, []);
 
   return (
-    <header className="bg-white sticky top-0 z-50 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
       {/* Top Bar */}
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="container flex items-center justify-between px-4 py-4 mx-auto">
         {/* Logo */}
         <div className="flex items-center">
           <h1 className="text-2xl font-bold text-[#1E3A8A]">Pearl Pathways</h1>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex space-x-8">
+        <nav className="hidden space-x-8 md:flex">
           <a
             href="/"
             className="text-[#1E3A8A] font-medium hover:text-blue-900 transition-colors"
           >
             Home
           </a>
-          <a
+        {/*<a
             href="#"
             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
           >
             Destinations
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
-          >
-            Tour Guides
-          </a>
+          </a> */}
+
+
+           {/* connet the destination to packages */}
+            <Link
+            to="/packages"
+             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
+             >
+             Destinations
+             </Link>
+
+         
           <a
             href="#"
             className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
@@ -80,7 +85,7 @@ export function Header() {
         </nav>
 
         {/* Desktop Buttons */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="items-center hidden space-x-4 md:flex">
           {authState.isAuthenticated ? (
             <div className="relative" ref={profileMenuRef}>
               <button
@@ -101,7 +106,7 @@ export function Header() {
 
               {/* Profile Dropdown Menu */}
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 z-50 w-48 py-1 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">
                       {authState.user?.firstName} {authState.user?.lastName}
@@ -112,7 +117,7 @@ export function Header() {
                   </div>
                   <Link
                     to="/dashboard"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     onClick={() => setIsProfileMenuOpen(false)}
                   >
                     <User size={16} className="mr-2" />
@@ -120,7 +125,7 @@ export function Header() {
                   </Link>
                   <Link
                     to="/profile"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     onClick={() => setIsProfileMenuOpen(false)}
                   >
                     <User size={16} className="mr-2" />
@@ -128,7 +133,7 @@ export function Header() {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                   >
                     <LogOut size={16} className="mr-2" />
                     Logout
@@ -158,7 +163,7 @@ export function Header() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-gray-600 focus:outline-none"
+          className="text-gray-600 md:hidden focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-expanded={isMenuOpen}
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
@@ -169,8 +174,8 @@ export function Header() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white px-4 py-2 shadow-md">
-          <nav className="flex flex-col space-y-3 pb-3">
+        <div className="px-4 py-2 bg-white shadow-md md:hidden">
+          <nav className="flex flex-col pb-3 space-y-3">
             <a
               href="#"
               className="text-[#1E3A8A] font-medium py-2 hover:text-blue-900 transition-colors"
@@ -201,7 +206,7 @@ export function Header() {
             >
               Contact
             </a>
-            <div className="flex space-x-2 pt-2">
+            <div className="flex pt-2 space-x-2">
               {authState.isAuthenticated ? (
                 <>
                   <div className="flex-1 px-4 py-2 bg-blue-50 border border-[#1E3A8A] rounded-lg text-center">
@@ -235,7 +240,7 @@ export function Header() {
 
             {/* Mobile menu links when authenticated */}
             {authState.isAuthenticated && (
-              <div className="pt-3 border-t border-gray-200 space-y-2">
+              <div className="pt-3 space-y-2 border-t border-gray-200">
                 <Link
                   to="/dashboard"
                   className="flex items-center px-4 py-2 text-[#1E3A8A] font-medium hover:bg-blue-50 transition-colors rounded-lg"
@@ -246,7 +251,7 @@ export function Header() {
                 </Link>
                 <Link
                   to="/profile"
-                  className="flex items-center px-4 py-2 text-gray-600 font-medium hover:bg-gray-50 transition-colors rounded-lg"
+                  className="flex items-center px-4 py-2 font-medium text-gray-600 transition-colors rounded-lg hover:bg-gray-50"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <User size={16} className="mr-2" />
@@ -257,7 +262,7 @@ export function Header() {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center w-full px-4 py-2 text-red-600 font-medium hover:bg-red-50 transition-colors rounded-lg"
+                  className="flex items-center w-full px-4 py-2 font-medium text-red-600 transition-colors rounded-lg hover:bg-red-50"
                 >
                   <LogOut size={16} className="mr-2" />
                   Logout

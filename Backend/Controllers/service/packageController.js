@@ -3,35 +3,54 @@ const Package = require('../../Models/Services/packageModel.js');
 // Create a new package
 exports.createPackage = async (req, res) => {
   try {
+     console.log("📦 Received package data:", req.body);
     const newPackage = new Package(req.body);
     await newPackage.save();
     res.status(201).json(newPackage);
   } catch (err) {
+    console.error("❌ Error creating package:", err.message);
     res.status(400).json({ error: err.message });
   }
 };
 
-// Get all packages
 exports.getAllPackages = async (req, res) => {
   try {
+    // Fetch all packages from the database
     const packages = await Package.find();
+
     res.json(packages);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+
 // Get package by ID
 exports.getPackageById = async (req, res) => {
   try {
     const { packageId } = req.params;
-    const pkg = await Package.findById(packageId);
+    const pkg = await Package.findById(packageId).populate('providerId', 'name email');;
     if (!pkg) return res.status(404).json({ error: "Package not found" });
     res.json(pkg);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Get packages by provider ID
+exports.getPackagesByProvider = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    const packages = await Package.find({ providerId });
+    res.json(packages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
 
 // Update package by ID
 exports.updatePackage = async (req, res) => {
@@ -45,7 +64,7 @@ exports.updatePackage = async (req, res) => {
   }
 };
 
-// Delete package by ID
+/* Delete package by ID
 exports.deletePackage = async (req, res) => {
   try {
     const { packageId } = req.params;
@@ -55,7 +74,22 @@ exports.deletePackage = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};*/
+
+// Delete package by ID
+exports.deletePackage = async (req, res) => {
+  try {
+    console.log("Delete request by user:", req.user); // Add this line
+    const { packageId } = req.params;
+    const deletedPackage = await Package.findByIdAndDelete(packageId);
+    if (!deletedPackage) return res.status(404).json({ error: "Package not found" });
+    res.json({ message: "Package deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err); // Add this line
+    res.status(500).json({ error: err.message });
+  }
 };
+
 
 // Get packages by category (optional: filter by province too)
 exports.getPackagesByCategory = async (req, res) => {

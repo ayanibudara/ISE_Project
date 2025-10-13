@@ -33,6 +33,14 @@ import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
 
+
+import Chatbot from "./AI/chatbot";
+import { useEffect } from "react";
+//import ManagePackages from "./pages/Services/ManagePackage";
+import PackageView from "./pages/Services/PackageView";
+import EditPackageForm from "./pages/Services/EditPackageForm";
+ main
+
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import RegisterGuide from "./pages/Guide/RegisterGuide";
@@ -103,14 +111,23 @@ const AuthenticatedRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+
       <Route path="/apform" element={<AppointmentForm />} />
       <Route path="/appointments" element={<AppointmentsPage />} />
       
       <Route path="/guideregister" element={<RegisterGuide />} />
       <Route path="/guidedashboard" element={<Guidedashboard />} />
+
+      <Route path="/apform/:packageId" element={<AppointmentForm />} />
+      <Route path="/appoiments" element={<AppointmentsPage />} />
+      
+ main
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
-      <Route path="/reviewform" element={<ReviewForm />} />
+      <Route path="/packages/:packageId" element={<PackageView />} />
+      <Route path="/edit-package/:packageId" element={<EditPackageForm />} />
+
+      <Route path="/reviewform/:packageId" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
 
      
