@@ -1,5 +1,5 @@
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -8,10 +8,20 @@ const PackageProviderDashboard = () => {
   const { authState } = useAuth();
   const { user } = authState;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isDashboardActive, setIsDashboardActive] = useState(true);
+
+  // Set dashboard as active when component mounts or location changes
+  useEffect(() => {
+    if (location.pathname === '/package-provider-dashboard' || location.pathname === '/dashboard') {
+      setIsDashboardActive(true);
+    }
+  }, [location.pathname]);
 
   const fetchPackages = async (providerId) => {
     try {
@@ -75,27 +85,136 @@ const PackageProviderDashboard = () => {
     }
   };
 
+  const generateReport = () => {
+    const packagesWithCounts = packages.map(pkg => {
+      const vip = pkg.tierBookingCounts?.VIP || 0;
+      const premium = pkg.tierBookingCounts?.Premium || 0;
+      const standard = pkg.tierBookingCounts?.Standard || 0;
+      const total = vip + premium + standard;
+      return { ...pkg, vip, premium, standard, totalBookings: total };
+    });
+
+    const mostPopularPackage = packagesWithCounts.reduce(
+      (prev, current) => (prev.totalBookings > current.totalBookings ? prev : current),
+      { vip: 0, premium: 0, standard: 0, totalBookings: 0 }
+    );
+
+    const reportWindow = window.open("", "_blank");
+    const reportContent = `
+      <html>
+        <head>
+          <title>Package Report</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #f9fafb; color: #333; }
+            h1, h2, h3 { text-align: center; color: #1e40af; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
+            th { background: #2563eb; color: white; }
+            tr:nth-child(even) { background: #f3f4f6; }
+            .badge {
+              display: inline-block;
+              padding: 4px 10px;
+              border-radius: 12px;
+              font-size: 12px;
+              color: white;
+              font-weight: bold;
+              min-width: 50px;
+              text-align: center;
+            }
+            .vip { background-color: #b91c1c; }
+            .premium { background-color: #9333ea; }
+            .standard { background-color: #2563eb; }
+            .bar-container { width: 100%; background: #e5e7eb; border-radius: 8px; height: 12px; margin-top: 4px; overflow: hidden; }
+            .bar { height: 100%; border-radius: 8px; }
+            .bar-vip { background-color: #b91c1c; }
+            .bar-premium { background-color: #9333ea; }
+            .bar-standard { background-color: #2563eb; }
+            .popular-section { margin-top: 40px; padding: 20px; border: 2px solid #2563eb; background: #eff6ff; border-radius: 12px; }
+          </style>
+        </head>
+        <body>
+          <h1>Package Provider Report</h1>
+          <h3>Generated on: ${new Date().toLocaleString()}</h3>
+
+          <h2>All Packages</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Package Name</th>
+                <th>Category</th>
+                <th>Province</th>
+                <th>Description</th>
+                <th>VIP Bookings</th>
+                <th>Premium Bookings</th>
+                <th>Standard Bookings</th>
+                <th>Total Bookings</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${packagesWithCounts.map(pkg => {
+                const vipPercent = pkg.totalBookings ? (pkg.vip / pkg.totalBookings) * 100 : 0;
+                const premiumPercent = pkg.totalBookings ? (pkg.premium / pkg.totalBookings) * 100 : 0;
+                const standardPercent = pkg.totalBookings ? (pkg.standard / pkg.totalBookings) * 100 : 0;
+
+                return `
+                  <tr>
+                    <td>${pkg.packageName || "N/A"}</td>
+                    <td>${pkg.category || "N/A"}</td>
+                    <td>${pkg.province || "N/A"}</td>
+                    <td>${pkg.description || "N/A"}</td>
+                    <td>
+                      <span class="badge vip">${pkg.vip}</span>
+                      <div class="bar-container"><div class="bar bar-vip" style="width: ${vipPercent}%;"></div></div>
+                    </td>
+                    <td>
+                      <span class="badge premium">${pkg.premium}</span>
+                      <div class="bar-container"><div class="bar bar-premium" style="width: ${premiumPercent}%;"></div></div>
+                    </td>
+                    <td>
+                      <span class="badge standard">${pkg.standard}</span>
+                      <div class="bar-container"><div class="bar bar-standard" style="width: ${standardPercent}%;"></div></div>
+                    </td>
+                    <td>${pkg.totalBookings}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+
+          <div class="popular-section">
+            <h2>🌟 Most Popular Package</h2>
+            ${mostPopularPackage.packageName ? `
+              <p><strong>Name:</strong> ${mostPopularPackage.packageName}</p>
+              <p><strong>Category:</strong> ${mostPopularPackage.category}</p>
+              <p><strong>Province:</strong> ${mostPopularPackage.province}</p>
+              <p><strong>Description:</strong> ${mostPopularPackage.description}</p>
+              <p><strong>VIP Bookings:</strong> <span class="badge vip">${mostPopularPackage.vip}</span>
+                <div class="bar-container"><div class="bar bar-vip" style="width: ${(mostPopularPackage.vip / mostPopularPackage.totalBookings) * 100}%;"></div></div>
+              </p>
+              <p><strong>Premium Bookings:</strong> <span class="badge premium">${mostPopularPackage.premium}</span>
+                <div class="bar-container"><div class="bar bar-premium" style="width: ${(mostPopularPackage.premium / mostPopularPackage.totalBookings) * 100}%;"></div></div>
+              </p>
+              <p><strong>Standard Bookings:</strong> <span class="badge standard">${mostPopularPackage.standard}</span>
+                <div class="bar-container"><div class="bar bar-standard" style="width: ${(mostPopularPackage.standard / mostPopularPackage.totalBookings) * 100}%;"></div></div>
+              </p>
+              <p><strong>Total Bookings:</strong> ${mostPopularPackage.totalBookings}</p>
+            ` : "<p>No packages available.</p>"}
+          </div>
+        </body>
+      </html>
+    `;
+
+    reportWindow.document.write(reportContent);
+    reportWindow.document.close();
+    reportWindow.print();
+  };
+
   const handleGenerateReport = () => {
-    if (packages.length === 0) {
-      alert("No packages available to generate a report.");
-      return;
-    }
-
-    const BOM = "\uFEFF";
-    const csvHeader = "ID,Package Name,Category,Province,Options & Prices\n";
-    const csvRows = packages.map((pkg, idx) => {
-      const options = pkg.packages?.map(p => `${p.packageType}: Rs.${p.price}`).join("; ");
-      return `${idx + 1},"${pkg.packageName}","${pkg.category}","${pkg.province}","${options}"`;
-    }).join("\n");
-
-    const csvContent = BOM + csvHeader + csvRows;
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "packages_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setIsGeneratingReport(true);
+    setTimeout(() => {
+      generateReport();
+      setIsGeneratingReport(false);
+    }, 500);
   };
 
   if (loading) {
@@ -124,24 +243,45 @@ const PackageProviderDashboard = () => {
       </div>
 
       <div className="relative px-6 py-8 sm:px-8 lg:px-12 max-w-7xl mx-auto">
-        {/* Header Section */}
+        {/* Header Section with Active Indicator */}
         <div className="mb-12">
           <div className="inline-block mb-4">
-            <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md px-6 py-3 rounded-2xl shadow-lg border border-white/20">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-lg border transition-all duration-300 cursor-pointer ${
+              isDashboardActive 
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-600 shadow-indigo-500/50' 
+                : 'bg-white/80 backdrop-blur-md border-white/20'
+            }`}
+            onClick={() => setIsDashboardActive(!isDashboardActive)}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 ${
+                isDashboardActive 
+                  ? 'bg-white/20 backdrop-blur-sm' 
+                  : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+              }`}>
+                <svg className={`w-5 h-5 transition-colors ${isDashboardActive ? 'text-white' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-slate-500 font-medium">Welcome back</p>
-                <p className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <p className={`text-sm font-medium transition-colors ${isDashboardActive ? 'text-indigo-100' : 'text-slate-500'}`}>
+                  Dashboard
+                </p>
+                <p className={`text-lg font-bold transition-colors ${
+                  isDashboardActive 
+                    ? 'text-white' 
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
+                }`}>
                   {user?.businessName || user?.firstName}
                 </p>
               </div>
+              {isDashboardActive && (
+                <div className="ml-2 flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-semibold text-white/90">Active</span>
+                </div>
+              )}
             </div>
           </div>
-          <p className="text-slate-600 text-lg">Manage your services and bookings with ease.</p>
+          <p className="text-slate-600 text-lg">Welcome to PackageProviderDashboard, Manage your Package ease.</p>
         </div>
 
         {/* Stats & Actions Section */}
@@ -186,17 +326,43 @@ const PackageProviderDashboard = () => {
                     <span className="text-lg">Add Package</span>
                   </div>
                 </button>
+                
                 <button
                   onClick={handleGenerateReport}
-                  className="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-500/50"
+                  disabled={isGeneratingReport}
+                  className="group relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-violet-500/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-700 via-purple-700 to-fuchsia-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  {/* Animated shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  
                   <div className="relative flex items-center gap-3">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span className="text-lg">Generate Report</span>
+                    {isGeneratingReport ? (
+                      <>
+                        <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="text-lg">Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="text-lg">Generate Report</span>
+                        <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </>
+                    )}
                   </div>
+
+                  {/* Pulse effect when generating */}
+                  {isGeneratingReport && (
+                    <div className="absolute inset-0 rounded-2xl bg-white/20 animate-ping"></div>
+                  )}
                 </button>
               </div>
             </div>

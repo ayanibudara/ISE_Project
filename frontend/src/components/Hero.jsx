@@ -1,9 +1,12 @@
+// Hero.jsx
 import React, { useState, useEffect } from "react";
 import { SearchIcon, MapPinIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function Hero() {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const navigate = useNavigate();
 
   const provinces = [
     "Northern Province",
@@ -17,7 +20,7 @@ export function Hero() {
     "Eastern Province",
   ];
 
-  // 👇 Add multiple background images for slideshow
+  // ✅ Fixed: Removed trailing spaces in URLs
   const images = [
     "https://i.postimg.cc/tJ2JRStb/ramith-bhasuka-jco-O6i1o-Dn-Q-unsplash.jpg",
     "https://i.postimg.cc/X71qTPYc/dinuka-lankaloka-idu-Eae-BB-r-Q-unsplash.jpg",
@@ -25,7 +28,6 @@ export function Hero() {
     "https://i.postimg.cc/XNHnJC6n/amal-prasad-zt-Fkvm-LKTc-Y-unsplash.jpg"
   ];
 
-  // Auto-change images every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
@@ -33,6 +35,17 @@ export function Hero() {
 
     return () => clearInterval(interval);
   }, [images.length]);
+
+  const handleSearch = () => {
+    const cleanProvince = selectedProvince.trim();
+    if (cleanProvince) {
+      // Navigate with province as a query parameter
+      navigate(`/packages?province=${encodeURIComponent(cleanProvince)}`);
+    } else {
+      // Show all packages
+      navigate("/packages");
+    }
+  };
 
   return (
     <section className="relative w-full">
@@ -88,6 +101,7 @@ export function Hero() {
             {/* Search Button */}
             <button
               type="button"
+              onClick={handleSearch}
               className="w-full md:w-1/4 bg-[#1E3A8A] text-white py-3 px-6 rounded-md flex items-center justify-center hover:bg-blue-900 transition-colors"
             >
               <SearchIcon size={20} className="mr-2" aria-hidden="true" />

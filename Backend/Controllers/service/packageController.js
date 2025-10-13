@@ -65,15 +65,67 @@ exports.getPackageById = async (req, res) => {
 };
 
 // Get packages by provider ID
+//exports.getPackagesByProvider = async (req, res) => {
+  //try {
+   // const { providerId } = req.params;
+   // const packages = await Package.find({ providerId });
+   // res.json(packages);
+ // } catch (err) {
+  //  res.status(500).json({ error: err.message });
+ // }
+//};
+
+// In your backend controller file
 exports.getPackagesByProvider = async (req, res) => {
   try {
     const { providerId } = req.params;
+
+    // Fetch all packages for this provider
     const packages = await Package.find({ providerId });
-    res.json(packages);
+
+    // Enhance each package with booking counts
+    const packagesWithCounts = await Promise.all(
+      packages.map(async (pkg) => {
+        const pkgId = pkg._id; // Keep as ObjectId if Appointment uses ObjectId
+
+        // Count total valid bookings
+        const totalBookings = await Appointment.countDocuments({
+          packageId: pkgId,
+          status: { $in: ['booked', 'completed'] }
+        });
+
+        // Count by tier
+        const tierCounts = {};
+        const tiers = ['Standard', 'Premium', 'VIP'];
+        for (const tier of tiers) {
+          tierCounts[tier] = await Appointment.countDocuments({
+            packageId: pkgId,
+            selectedTier: tier,
+            status: { $in: ['booked', 'completed'] }
+          });
+        }
+
+        // Convert to plain object and attach counts
+        const pkgObj = pkg.toObject();
+        pkgObj.bookingCount = totalBookings;
+        pkgObj.tierBookingCounts = tierCounts;
+
+        return pkgObj;
+      })
+    );
+
+    res.json(packagesWithCounts);
   } catch (err) {
+    console.error("Error in getPackagesByProvider with counts:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
+
+
+
+
+
 
 // Update package by ID
 exports.updatePackage = async (req, res) => {
