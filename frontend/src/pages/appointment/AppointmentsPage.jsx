@@ -20,6 +20,8 @@ import {
   List,
   TrendingUp,
   Activity,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -43,6 +45,8 @@ const AppointmentsPage = () => {
   const isPackageProvider = authState.user?.role === 'PackageProvider';
   const isGuide = authState.user?.role === 'Guide';
   const isAdmin = authState.user?.role === 'Admin';
+  const isTourist = authState.user?.role === 'Tourist';
+  const canManage = isAdmin || isPackageProvider;
 
   const formatDate = (isoDate) => {
     if (!isoDate) return { date: 'N/A', time: 'N/A', fullDate: '' };
@@ -69,20 +73,16 @@ const AppointmentsPage = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         let response;
-
         if (isGuide) {
           response = await api.get('api/appointments');
         } else {
           response = await api.get('api/appointments/my');
         }
-
         const data = response.data;
         let rawAppointments = [];
-
         if (Array.isArray(data)) {
           rawAppointments = data;
         } else if (data && typeof data === 'object') {
@@ -95,25 +95,28 @@ const AppointmentsPage = () => {
             ];
           }
         }
-
         const processedAppointments = rawAppointments
-          .map((app) => ({
-            id: app._id,
-            userName: app.userName || `${app.userId?.firstName || ''} ${app.userId?.lastName || ''}`.trim() || 'Unknown User',
-            membersCount: app.membersCount || 1,
-            packageType: app.selectedTier || app.packageType || 'Standard',
-            note: app.note || '',
-            startDate: app.startDate,
-            endDate: app.endDate,
-            status: app.status || 'booked',
-            createdAt: app.createdAt,
-            needsGuide: app.needsGuide || false,
-            guideId: app.guideId || null,
-            formattedDate: formatDate(app.startDate),
-            createdDate: formatDate(app.createdAt),
-          }))
+          .map((app) => {
+            const isOwn = app.userId?._id === authState.user?._id;
+            return {
+              id: app._id,
+              userName: app.userName || `${app.userId?.firstName || ''} ${app.userId?.lastName || ''}`.trim() || 'Unknown User',
+              membersCount: app.membersCount || 1,
+              packageType: app.selectedTier || app.packageType || 'Standard',
+              packageName: app.packageId?.packageName || 'N/A',
+              note: app.note || '',
+              startDate: app.startDate,
+              endDate: app.endDate,
+              status: app.status || 'booked',
+              createdAt: app.createdAt,
+              needsGuide: app.needsGuide || false,
+              guideId: app.guideId || null,
+              formattedDate: formatDate(app.startDate),
+              createdDate: formatDate(app.createdAt),
+              isOwn,
+            };
+          })
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-
         setAppointments(processedAppointments);
         setFilteredAppointments(processedAppointments);
         setError(null);
@@ -124,31 +127,27 @@ const AppointmentsPage = () => {
         setLoading(false);
       }
     };
-
     fetchAppointments();
   }, [authState.isAuthenticated, isGuide]);
 
   useEffect(() => {
     let result = [...appointments];
-
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (app) =>
           app.userName.toLowerCase().includes(term) ||
           app.packageType.toLowerCase().includes(term) ||
+          app.packageName.toLowerCase().includes(term) ||
           app.id.toLowerCase().includes(term)
       );
     }
-
     if (filterStatus !== 'all') {
       result = result.filter((app) => app.status === filterStatus);
     }
-
     if (filterDate) {
       result = result.filter((app) => app.formattedDate.fullDate === filterDate);
     }
-
     setFilteredAppointments(result);
   }, [searchTerm, filterStatus, filterDate, appointments]);
 
@@ -173,6 +172,22 @@ const AppointmentsPage = () => {
     } catch (err) {
       console.error('Failed to reject appointment:', err);
       setError(err.response?.data?.message || 'Failed to reject appointment');
+    }
+  };
+
+  const handleUpdate = (id) => {
+    navigate(`/appointments/edit/${id}`);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+    try {
+      await api.delete(`/api/appointments/${id}`);
+      setAppointments((prev) => prev.filter((app) => app.id !== id));
+      setFilteredAppointments((prev) => prev.filter((app) => app.id !== id));
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError(err.response?.data?.message || 'Failed to delete appointment');
     }
   };
 
@@ -323,14 +338,14 @@ const AppointmentsPage = () => {
             </div>
             <div class="report-info">Total Appointments: ${filteredAppointments.length}</div>
           </div>
-          
           <table>
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Customer Name</th>
-                <th>Members</th>
                 <th>Package</th>
+                <th>Package Name</th>
+                <th>Members</th>
                 <th>Date</th>
                 <th>Time</th>
                 <th>Status</th>
@@ -344,8 +359,9 @@ const AppointmentsPage = () => {
                 <tr>
                   <td>${app.id.slice(-6)}</td>
                   <td><strong>${app.userName}</strong></td>
-                  <td>${app.membersCount}</td>
                   <td><span class="package-${app.packageType.toLowerCase()}">${app.packageType}</span></td>
+                  <td>${app.packageName}</td>
+                  <td>${app.membersCount}</td>
                   <td>${app.formattedDate.date}</td>
                   <td>${app.formattedDate.time}</td>
                   <td><span class="status-${app.status}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span></td>
@@ -356,7 +372,6 @@ const AppointmentsPage = () => {
               `).join('')}
             </tbody>
           </table>
-          
           <div class="footer">
             <p><strong>Summary:</strong> 
               Confirmed: ${filteredAppointments.filter(a => a.status === 'confirmed').length} | 
@@ -367,12 +382,10 @@ const AppointmentsPage = () => {
         </body>
       </html>
     `;
-
     const printWindow = window.open('', '_blank');
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    
     setTimeout(() => {
       printWindow.print();
     }, 250);
@@ -471,7 +484,6 @@ const AppointmentsPage = () => {
           <div className="relative p-8 overflow-hidden bg-white shadow-xl rounded-3xl">
             <div className="absolute top-0 right-0 w-64 h-64 transform translate-x-32 -translate-y-32 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 transform -translate-x-24 translate-y-24 rounded-full bg-gradient-to-tr from-indigo-400/20 to-pink-400/20 blur-3xl"></div>
-            
             <div className="relative">
               <div className="flex items-start justify-between">
                 <div>
@@ -484,8 +496,6 @@ const AppointmentsPage = () => {
                       : 'View and manage your booking appointments'}
                   </p>
                 </div>
-                
-                {/* View Toggle */}
                 <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-100">
                   <button
                     onClick={() => setViewMode('grid')}
@@ -509,8 +519,6 @@ const AppointmentsPage = () => {
                   </button>
                 </div>
               </div>
-
-              {/* Stats Cards */}
               <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-4">
                 <div className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
                   <div className="flex items-center justify-between">
@@ -523,7 +531,6 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="p-4 border bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl border-emerald-200">
                   <div className="flex items-center justify-between">
                     <div>
@@ -535,7 +542,6 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="p-4 border bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl border-amber-200">
                   <div className="flex items-center justify-between">
                     <div>
@@ -547,7 +553,6 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="p-4 border bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl border-rose-200">
                   <div className="flex items-center justify-between">
                     <div>
@@ -577,7 +582,6 @@ const AppointmentsPage = () => {
                 className="w-full py-3 pr-4 transition-all border-2 pl-11 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400"
               />
             </div>
-
             <div className="relative">
               <Filter className="absolute w-5 h-5 text-slate-400 left-3.5 top-3.5" />
               <select
@@ -591,7 +595,6 @@ const AppointmentsPage = () => {
                 <option value="rejected">Rejected</option>
               </select>
             </div>
-
             <div className="relative">
               <Calendar className="absolute w-5 h-5 text-slate-400 left-3.5 top-3.5" />
               <input
@@ -601,7 +604,6 @@ const AppointmentsPage = () => {
                 className="w-full py-3 pr-4 transition-all border-2 pl-11 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400"
               />
             </div>
-
             <button
               onClick={generateReport}
               className="flex items-center justify-center gap-2 px-6 py-3 font-semibold text-white transition-all duration-300 transform rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-xl hover:scale-105 active:scale-95"
@@ -628,11 +630,8 @@ const AppointmentsPage = () => {
                 key={appointment.id}
                 className="relative overflow-hidden transition-all duration-300 bg-white shadow-lg group rounded-2xl hover:shadow-2xl hover:-translate-y-1"
               >
-                {/* Card Header with Package Badge */}
                 <div className={`h-2 ${getPackageColor(appointment.packageType)}`}></div>
-                
                 <div className="p-6">
-                  {/* Top Section */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-4">
                       <div className={`p-3 rounded-xl ${getPackageColor(appointment.packageType)} text-white shadow-lg`}>
@@ -641,9 +640,11 @@ const AppointmentsPage = () => {
                       <div>
                         <h3 className="text-xl font-bold text-slate-900">{appointment.userName}</h3>
                         <p className="text-sm text-slate-500">ID: #{appointment.id.slice(-6)}</p>
+                        <p className="mt-1 text-sm font-medium text-slate-700">
+                          <span className="font-bold">Package:</span> {appointment.packageName}
+                        </p>
                       </div>
                     </div>
-                    
                     <button 
                       className="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                       onClick={() => setExpandedCard(expandedCard === appointment.id ? null : appointment.id)}
@@ -652,7 +653,6 @@ const AppointmentsPage = () => {
                     </button>
                   </div>
 
-                  {/* Package and Status Badges */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white ${getPackageColor(appointment.packageType)} shadow-md`}>
                       <Package className="w-3.5 h-3.5" />
@@ -663,7 +663,6 @@ const AppointmentsPage = () => {
                     </span>
                   </div>
 
-                  {/* Date and Time */}
                   <div className="grid grid-cols-2 gap-3 p-4 mb-4 rounded-xl bg-slate-50">
                     <div className="flex items-center gap-2">
                       <div className="p-2 bg-white rounded-lg shadow-sm">
@@ -685,7 +684,6 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
 
-                  {/* Members and Guide Status */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50">
                       <Users className="w-4 h-4 text-slate-600" />
@@ -696,7 +694,6 @@ const AppointmentsPage = () => {
                     {getGuideStatus(appointment)}
                   </div>
 
-                  {/* Note */}
                   {appointment.note && (
                     <div className="p-3 mb-4 border-l-4 border-blue-400 rounded-r-lg bg-blue-50">
                       <div className="flex items-start gap-2">
@@ -706,7 +703,6 @@ const AppointmentsPage = () => {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-100">
                     {isAdmin && (
                       <button
@@ -717,7 +713,6 @@ const AppointmentsPage = () => {
                         Assign Guide
                       </button>
                     )}
-
                     <button
                       onClick={() => openDetailsModal(appointment)}
                       className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-300 bg-slate-100 rounded-xl hover:bg-slate-200"
@@ -725,7 +720,6 @@ const AppointmentsPage = () => {
                       <Eye className="w-4 h-4" />
                       Details
                     </button>
-
                     {isPackageProvider && appointment.status === 'booked' && (
                       <>
                         <button
@@ -744,10 +738,26 @@ const AppointmentsPage = () => {
                         </button>
                       </>
                     )}
+                    {(canManage || (isTourist && appointment.isOwn)) && (
+                      <>
+                        <button
+                          onClick={() => handleUpdate(appointment.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-100 rounded-xl hover:bg-indigo-200"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(appointment.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-100 rounded-xl hover:bg-rose-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-
-                {/* Hover Effect Gradient */}
                 <div className="absolute bottom-0 left-0 right-0 h-1 transition-all duration-300 transform scale-x-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 group-hover:scale-x-100"></div>
               </div>
             ))}
@@ -759,7 +769,6 @@ const AppointmentsPage = () => {
       {showDetailsModal && selectedAppointment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-2xl overflow-hidden transition-all duration-300 transform bg-white shadow-2xl rounded-3xl animate-in">
-            {/* Modal Header */}
             <div className={`${getPackageColor(selectedAppointment.packageType)} p-6 text-white`}>
               <div className="flex items-start justify-between">
                 <div>
@@ -774,11 +783,8 @@ const AppointmentsPage = () => {
                 </button>
               </div>
             </div>
-
-            {/* Modal Content */}
             <div className="max-h-[70vh] overflow-y-auto p-6">
               <div className="space-y-6">
-                {/* Customer Info */}
                 <div className="p-5 border-2 border-slate-200 rounded-2xl">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
                     <User className="w-5 h-5 text-blue-600" />
@@ -796,13 +802,16 @@ const AppointmentsPage = () => {
                   </div>
                 </div>
 
-                {/* Booking Details */}
                 <div className="p-5 border-2 border-slate-200 rounded-2xl">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
                     <Package className="w-5 h-5 text-purple-600" />
                     Booking Details
                   </h3>
                   <div className="grid gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                      <span className="font-medium text-slate-600">Package Name</span>
+                      <span className="font-bold text-slate-900">{selectedAppointment.packageName}</span>
+                    </div>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
                       <span className="font-medium text-slate-600">Package Type</span>
                       <span className={`px-3 py-1.5 rounded-full text-xs font-bold text-white ${getPackageColor(selectedAppointment.packageType)} shadow-md`}>
@@ -822,7 +831,6 @@ const AppointmentsPage = () => {
                   </div>
                 </div>
 
-                {/* Schedule */}
                 <div className="p-5 border-2 border-slate-200 rounded-2xl">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
                     <Calendar className="w-5 h-5 text-indigo-600" />
@@ -844,7 +852,6 @@ const AppointmentsPage = () => {
                   </div>
                 </div>
 
-                {/* Guide Status */}
                 <div className="p-5 border-2 border-slate-200 rounded-2xl">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
                     <UserCheck className="w-5 h-5 text-emerald-600" />
@@ -869,7 +876,6 @@ const AppointmentsPage = () => {
                   </div>
                 </div>
 
-                {/* Note */}
                 {selectedAppointment.note && (
                   <div className="p-5 border-2 border-blue-200 rounded-2xl bg-blue-50">
                     <h3 className="flex items-center gap-2 mb-3 text-lg font-bold text-blue-900">
@@ -881,8 +887,6 @@ const AppointmentsPage = () => {
                 )}
               </div>
             </div>
-
-            {/* Modal Footer */}
             <div className="flex gap-3 p-6 border-t bg-slate-50 border-slate-200">
               {isAdmin && (
                 <button
@@ -896,7 +900,6 @@ const AppointmentsPage = () => {
                   Assign Guide
                 </button>
               )}
-              
               {isPackageProvider && selectedAppointment.status === 'booked' && (
                 <>
                   <button
@@ -921,7 +924,30 @@ const AppointmentsPage = () => {
                   </button>
                 </>
               )}
-              
+              {(canManage || (isTourist && selectedAppointment.isOwn)) && (
+                <>
+                  <button
+                    onClick={() => {
+                      closeDetailsModal();
+                      handleUpdate(selectedAppointment.id);
+                    }}
+                    className="flex items-center justify-center gap-2 px-6 py-3 font-semibold text-indigo-700 bg-indigo-100 rounded-xl hover:bg-indigo-200"
+                  >
+                    <Edit className="w-5 h-5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      closeDetailsModal();
+                      handleDelete(selectedAppointment.id);
+                    }}
+                    className="flex items-center justify-center gap-2 px-6 py-3 font-semibold text-rose-700 bg-rose-100 rounded-xl hover:bg-rose-200"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Delete
+                  </button>
+                </>
+              )}
               <button
                 onClick={closeDetailsModal}
                 className="px-6 py-3 font-semibold transition-all duration-300 rounded-xl text-slate-700 bg-slate-200 hover:bg-slate-300"
