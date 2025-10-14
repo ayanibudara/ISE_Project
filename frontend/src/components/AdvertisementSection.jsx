@@ -4,12 +4,13 @@ import api from "../utils/api";
 const AdvertisementSection = () => {
   const [advertisements, setAdvertisements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [fade, setFade] = useState(true); // 🔹 Controls fade animation
 
   // Fetch active advertisements
   const fetchAdvertisements = async () => {
     try {
       const response = await api.get("/api/advertisements/active");
-
       if (response.data.success && response.data.data.length > 0) {
         setAdvertisements(response.data.data);
       }
@@ -23,6 +24,26 @@ const AdvertisementSection = () => {
   useEffect(() => {
     fetchAdvertisements();
   }, []);
+
+  // 🔹 Auto-slide every 3 seconds with fade effect
+  useEffect(() => {
+    if (advertisements.length === 0) return;
+
+    const interval = setInterval(() => {
+      // Start fade out
+      setFade(false);
+
+      // After fade-out (400ms), change ad and fade in
+      setTimeout(() => {
+        setCurrentIndex((prevIndex) =>
+          prevIndex === advertisements.length - 1 ? 0 : prevIndex + 1
+        );
+        setFade(true);
+      }, 400);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [advertisements]);
 
   // Don't render if no advertisements or loading
   if (loading || advertisements.length === 0) {
@@ -41,47 +62,49 @@ const AdvertisementSection = () => {
           </p>
         </div>
 
-        {/* Cards Grid Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {advertisements.map((ad, index) => (
+        {/* 🔹 Auto-sliding ad with fade/blur transition */}
+        {advertisements.length > 0 && (
+          <div className="relative max-w-6xl mx-auto">
             <div
-              key={ad._id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+              key={advertisements[currentIndex]?._id}
+              className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-700 ${
+                fade ? "opacity-100 blur-0" : "opacity-0 blur-sm"
+              }`}
             >
-              {/* Image Container */}
-              <div className="relative aspect-w-16 aspect-h-10">
+              {/* Image */}
+              <div className="relative aspect-w-16 aspect-h-9">
                 <img
-                  src={`${api.defaults.baseURL}/uploads/${ad.image}`}
-                  alt={ad.title}
-                  className="w-full h-48 object-cover"
+                  src={`${api.defaults.baseURL}/uploads/${advertisements[currentIndex].image}`}
+                  alt={advertisements[currentIndex].title}
+                  className="w-full h-96 object-cover transition-all duration-700"
                 />
-                {/* Overlay for better text visibility */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
               </div>
 
-              {/* Card Content */}
-              <div className="p-4">
-                {ad.title && ad.title !== "Advertisement" && (
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {ad.title}
+              {/* Content */}
+              <div className="p-6">
+                {advertisements[currentIndex].title && (
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    {advertisements[currentIndex].title}
                   </h3>
                 )}
 
-                {/* Advertisement Badge */}
                 <div className="flex justify-between items-center">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     Advertisement
                   </span>
                   <span className="text-xs text-gray-500">
-                    {new Date(ad.createdAt).toLocaleDateString()}
+                    {new Date(
+                      advertisements[currentIndex].createdAt
+                    ).toLocaleDateString()}
                   </span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
 
-        {/* Show more button if there are many advertisements */}
+        {/* Optional: View More */}
         {advertisements.length > 8 && (
           <div className="text-center mt-10">
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
