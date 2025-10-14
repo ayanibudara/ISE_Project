@@ -46,6 +46,10 @@ const appointmentSchema = new mongoose.Schema(
         message: 'End date must be after start date.',
       },
     },
+    needsGuide: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: ['booked', 'completed', 'cancelled'],
@@ -58,3 +62,4 @@ const appointmentSchema = new mongoose.Schema(
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 
 module.exports = Appointment;
+

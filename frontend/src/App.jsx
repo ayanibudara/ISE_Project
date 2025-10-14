@@ -38,7 +38,7 @@ import Chatbot from "./AI/chatbot";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
 import EditPackageForm from "./pages/Services/EditPackageForm";
-
+import UpdateAppointmentPage from "./pages/appointment/UpdateAppointmentPage"
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -118,7 +118,11 @@ const AuthenticatedRoutes = () => {
 
       <Route path="/apform/:packageId" element={<AppointmentForm />} />
       <Route path="/appoiments" element={<AppointmentsPage />} />
+
       
+ main
+
+      <Route path="/appointments/edit/:id" element={<UpdateAppointmentPage />} />
  main
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
