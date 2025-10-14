@@ -5,7 +5,17 @@ const User = require('../../models/User.js');
 // Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
   try {
-    const { userId, userName, membersCount, packageId, selectedTier, note, startDate, endDate } = req.body;
+    const { 
+      userId, 
+      userName, 
+      membersCount, 
+      packageId, 
+      selectedTier, 
+      note, 
+      startDate, 
+      endDate,
+      needsGuide // 🟢 new field added
+    } = req.body;
 
     // Check required fields
     if (!userId || !userName || !membersCount || !packageId || !selectedTier || !startDate || !endDate) {
@@ -22,9 +32,6 @@ exports.createAppointment = async (req, res) => {
       return res.status(400).json({ message: 'Invalid tier selected!' });
     }
 
-    // Optional: validate that package exists
-   
-
     // Create new appointment
     const appointment = await Appointment.create({
       userId,
@@ -35,6 +42,7 @@ exports.createAppointment = async (req, res) => {
       note,
       startDate,
       endDate,
+      needsGuide: needsGuide || false, // 🟢 default false if not provided
       status: 'booked',
     });
 
@@ -52,7 +60,7 @@ exports.getUserAppointments = async (req, res) => {
 
     const appointments = await Appointment.find({ userId: req.user._id })
       .sort({ startDate: 1 })
-      .populate('userId', 'firstName lastName email')
+      .populate('userId', 'firstName lastName email role')
       .populate('packageId'); // populate package info
 
     const upcoming = appointments.filter(appt => new Date(appt.startDate) >= now);
@@ -86,20 +94,30 @@ exports.getAllAppointments = async (req, res) => {
 };
 
 // Get a single appointment (owner or admin)
+
 exports.getAppointmentById = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id).populate('packageId');
-    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+    const { id } = req.params;
 
-    if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
+    // Fetch appointment and populate packageId + userId
+    const appointment = await Appointment.findById(id)
+      .populate('packageId', 'packageName packages') // ← critical line
+      .populate('userId', '_id name email'); // optional, but good for safety
+
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
     }
 
-    res.json({ appointment });
+    // Optional: Add ownership check here (more secure than frontend-only)
+  
+
+    return res.status(200).json(appointment);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching appointment:', error);
+    return res.status(500).json({ message: 'Server error while fetching appointment' });
   }
 };
+
 
 // Update appointment (owner or admin)
 exports.updateAppointment = async (req, res) => {
@@ -107,12 +125,10 @@ exports.updateAppointment = async (req, res) => {
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
 
-    if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
+ 
 
     // Only allow updates to certain fields
-    const updatableFields = ['membersCount', 'packageId', 'selectedTier', 'note', 'startDate', 'endDate', 'status'];
+    const updatableFields = ['membersCount', 'packageId', 'selectedTier', 'note', 'startDate', 'endDate', 'status','needsGuide'];
     updatableFields.forEach(field => {
       if (req.body[field] !== undefined) {
         appointment[field] = req.body[field];
@@ -123,7 +139,6 @@ exports.updateAppointment = async (req, res) => {
     if (appointment.startDate && appointment.endDate && new Date(appointment.endDate) <= new Date(appointment.startDate)) {
       return res.status(400).json({ message: 'End date must be after start date!' });
     }
-
     await appointment.save();
 
     res.json({ message: 'Appointment updated', appointment });
