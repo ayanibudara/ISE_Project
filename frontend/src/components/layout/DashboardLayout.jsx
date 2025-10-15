@@ -133,7 +133,7 @@ const DashboardLayout = ({ children }) => {
     navigation[0].href = "/dashboard/admin";
 
     //navigation.push(
-      {
+      
         //name: "User Management",
         //href: "/dashboard/admin",
         //icon: (
@@ -153,7 +153,7 @@ const DashboardLayout = ({ children }) => {
          // </svg>
        // ),
        // current: false,
-      }
+      
       navigation.push(
       {
         name: "Advertising",

@@ -72,12 +72,13 @@ const AdvertisementSection = () => {
               }`}
             >
               {/* Image */}
-              <div className="relative aspect-w-16 aspect-h-9">
+              <div className="relative w-full rounded-xl overflow-hidden">
                 <img
                   src={`${api.defaults.baseURL}/uploads/${advertisements[currentIndex].image}`}
                   alt={advertisements[currentIndex].title}
-                  className="w-full h-96 object-cover transition-all duration-700"
+                  className="w-full h-auto max-h-[500px] object-contain transition-all duration-700"
                 />
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
               </div>
 
