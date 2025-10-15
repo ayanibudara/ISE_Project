@@ -28,6 +28,8 @@ const GuideDashboard = () => {
 
         // If guide data exists, set it
         if (response.data?._id) {
+          console.log("✅ Guide data loaded:", response.data);
+          console.log("🆔 Guide ID:", response.data._id);
           setGuideData(response.data);
         } else {
           setGuideData(null);
@@ -104,18 +106,10 @@ const GuideDashboard = () => {
 
           {/* ✅ Upcoming Tours Section */}
           <div>
-            <h2 className="mb-4 text-xl font-semibold text-gray-800">
-              Upcoming Tours
-            </h2>
-            <div className="p-4 bg-white rounded-lg shadow">
-              <UpcomingTours
-                userId={user._id} // ✅ Pass userId instead of guideId
-                tours={guideData.upcomingTours || []}
-                onToursUpdated={(updated) =>
-                  setGuideData((prev) => ({ ...prev, upcomingTours: updated }))
-                }
-              />
-            </div>
+            <UpcomingTours
+              userId={user._id}
+              guideId={guideData._id} // Pass the guide's MongoDB _id
+            />
           </div>
         </>
       ) : (

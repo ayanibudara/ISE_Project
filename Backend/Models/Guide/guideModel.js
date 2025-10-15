@@ -9,6 +9,11 @@ const guideSchema = new mongoose.Schema(
       required: true,
     },
 
+    
+
+
+
+
     // Basic personal information
     firstName: {
       type: String,

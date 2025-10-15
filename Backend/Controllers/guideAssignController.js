@@ -5,38 +5,72 @@ const GuideAssign = require("../Models/guideAssignModel");
 exports.createGuideAssign = async (req, res) => {
   try {
     console.log("📩 Incoming:", req.body);
-
-    // If no packageId/guideId sent, use dummy ObjectIds
-   // if (!req.body.packageId) {
-     // req.body.packageId = new mongoose.Types.ObjectId();
-   // }
-    if (!req.body.guideId) {
-      req.body.guideId = new mongoose.Types.ObjectId();
+// ✅ Validate required fields
+    const { guideId, touristId, startDate, endDate, totalDays, paymentPerDay, totalPayment } = req.body;
+    
+    if (!guideId || !touristId || !startDate || !endDate) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Missing required fields" 
+      });
     }
 
     const newAssign = new GuideAssign(req.body);
     const savedAssign = await newAssign.save();
 
-    res.status(201).json(savedAssign);
-  } catch (err) {
+    // ✅ Populate before sending response
+    await savedAssign.populate('guideId', 'firstName lastName email');
+    await savedAssign.populate('touristId', 'firstName lastName email');
+
+    res.status(201).json({
+      success: true,
+      data: savedAssign
+    });
+    } catch (err) {
     console.error("❌ Error saving:", err.message);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ 
+      success: false,
+      message: err.message 
+    });
   }
 };
+
 
 
 // Get all assignments
+// Get all assignments - FIXED VERSION
+
 exports.getAssignments = async (req, res) => {
   try {
+    console.log("🟢 Fetching guide assignments...");
+    
     const assignments = await GuideAssign.find()
-     // .populate("packageId", "packageName")
-      .populate("guideId", "name");
-    res.status(200).json(assignments);
+      .populate({
+        path: "guideId",
+        select: "firstName lastName email",
+        strictPopulate: false
+      })
+      .populate({
+        path: "touristId", 
+        select: "firstName lastName email",
+        strictPopulate: false
+      })
+      .lean();
+
+    console.log(`📋 Found ${assignments.length} assignments`);
+    
+    res.status(200).json(assignments || []);
+    
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch assignments", details: err.message });
+    console.error("❌ FULL ERROR:", err);
+    console.error("❌ ERROR STACK:", err.stack);
+    
+    res.status(500).json({ 
+      error: "Failed to fetch assignments",
+      message: err.message 
+    });
   }
 };
-
 // Get one assignment
 exports.getAssignmentById = async (req, res) => {
   try {

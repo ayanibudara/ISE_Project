@@ -1,9 +1,18 @@
 const mongoose = require('mongoose');
 
 const guideAssignSchema = new mongoose.Schema({
+
+// ✅ Link to appointment
+  appointmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Appointment'
+  },
+
+
+
   guideId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Guide',
     required: true
   },
   touristId: {
@@ -19,18 +28,37 @@ const guideAssignSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+
+// ✅ Add these fields that your frontend sends
+  totalDays: {
+    type: Number,
+    required: true
+  },
+  paymentPerDay: {
+    type: Number,
+    required: true
+  },
+  totalPayment: {
+    type: Number,
+    required: true
+  },
+  
+
   location: {
     type: String,
-    required: true
+    required: false
   },
   status: {
     type: String,
-    enum: ['assigned', 'completed', 'cancelled'],
-    default: 'assigned'
+    enum: ['Assigned', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'],
+    default: 'Assigned'
   },
   specialRequirements: {
     type: String
   },
+
+
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -52,7 +80,7 @@ guideAssignSchema.statics.findAvailableGuides = async function(startDate, endDat
   try {
     // Find guides who have overlapping assignments
     const overlappingAssignments = await this.find({
-      status: 'assigned', // Only consider active assignments
+      status: { $in: ['Assigned', 'Confirmed', 'In Progress'] }, // Only consider active assignments
       $or: [
         // Case 1: New assignment starts during existing assignment
         { startDate: { $lte: new Date(endDate) }, endDate: { $gte: new Date(startDate) } },
@@ -81,4 +109,5 @@ guideAssignSchema.statics.findAvailableGuides = async function(startDate, endDat
   }
 };
 
-module.exports = mongoose.model('GuideAssign', guideAssignSchema);
+// Avoid OverwriteModelError by checking if model exists
+module.exports = mongoose.models.GuideAssign || mongoose.model('GuideAssign', guideAssignSchema);

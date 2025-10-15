@@ -1,19 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-
-// Mongoose Schema & Model
-const guideAssignSchema = new mongoose.Schema({
-  guideId: String,
-  startDate: Date,
-  endDate: Date,
-  totalDays: Number,
-  paymentPerDay: Number,
-  totalPayment: Number,
-  status: String,
-});
-
-const GuideAssign = mongoose.model('GuideAssign', guideAssignSchema);
+const GuideAssign = require('../Models/guideAssignModel');
 
 // POST route to create a new assignment
 router.post('/', async (req, res) => {
@@ -38,6 +25,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET guide assignments by guideId
+router.get('/guide/:guideId', async (req, res) => {
+  try {
+    const { guideId } = req.params;
+    const assignments = await GuideAssign.find({ 
+      guideId: guideId,
+      status: { $in: ['Assigned', 'Confirmed', 'In Progress'] } // Only active assignments
+    })
+      .populate({
+        path: 'appointmentId',
+        populate: {
+          path: 'packageId',
+          select: 'packageName province category'
+        }
+      })
+      .populate('touristId', 'firstName lastName email')
+      .sort({ startDate: 1 }); // Sort by start date ascending
+    
+    res.status(200).json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch guide assignments', error: error.message });
+  }
+});
 
 module.exports = router;
 
