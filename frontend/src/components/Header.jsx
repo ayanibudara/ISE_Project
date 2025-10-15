@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MenuIcon, XIcon as CloseIcon } from "lucide-react";
-import { Instagram, Twitter, ChevronDown, User, LogOut } from "lucide-react"; //
-import { Link } from "react-router-dom";
+import { Instagram, Twitter, ChevronDown, User, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom"; // ✅ Changed: use NavLink + useNavigate
 import { useAuth } from "../contexts/AuthContext";
 
 export function Header() {
@@ -9,11 +9,14 @@ export function Header() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { authState, logout } = useAuth();
   const profileMenuRef = useRef(null);
+  const navigate = useNavigate(); // ✅ For logout redirect (optional but clean)
 
   const handleLogout = async () => {
     try {
       await logout();
       setIsProfileMenuOpen(false);
+      setIsMenuOpen(false); // ✅ Also close mobile menu on logout
+      navigate("/"); // ✅ Optional: redirect to home after logout
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -29,58 +32,45 @@ export function Header() {
         setIsProfileMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  // ✅ NavLink styling function
+  const navLinkClass = ({ isActive }) =>
+    `font-medium transition-colors ${
+      isActive ? "text-[#1E3A8A]" : "text-gray-600 hover:text-[#1E3A8A]"
+    }`;
+
   return (
-    <header className="bg-white sticky top-0 z-50 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
       {/* Top Bar */}
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="container flex items-center justify-between px-4 py-4 mx-auto">
         {/* Logo */}
         <div className="flex items-center">
           <h1 className="text-2xl font-bold text-[#1E3A8A]">Pearl Pathways</h1>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex space-x-8">
-          <a
-            href="/"
-            className="text-[#1E3A8A] font-medium hover:text-blue-900 transition-colors"
-          >
+        <nav className="hidden space-x-8 md:flex">
+          <NavLink to="/" className={navLinkClass}>
             Home
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
-          >
+          </NavLink>
+          <NavLink to="/packages" className={navLinkClass}>
             Destinations
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
-          >
-            Tour Guides
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
-          >
+          </NavLink>
+          <NavLink to="/about" className={navLinkClass}>
             About Us
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 font-medium hover:text-[#1E3A8A] transition-colors"
-          >
+          </NavLink>
+          <NavLink to="/contact" className={navLinkClass}>
             Contact
-          </a>
+          </NavLink>
         </nav>
 
         {/* Desktop Buttons */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="items-center hidden space-x-4 md:flex">
           {authState.isAuthenticated ? (
             <div className="relative" ref={profileMenuRef}>
               <button
@@ -98,10 +88,9 @@ export function Header() {
                   }`}
                 />
               </button>
-
               {/* Profile Dropdown Menu */}
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 z-50 w-48 py-1 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">
                       {authState.user?.firstName} {authState.user?.lastName}
@@ -110,55 +99,52 @@ export function Header() {
                       {authState.user?.role}
                     </p>
                   </div>
-                  <Link
+                  <NavLink
                     to="/dashboard"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     onClick={() => setIsProfileMenuOpen(false)}
                   >
-                    <User size={16} className="mr-2" />
-                    Dashboard
-                  </Link>
-                  <Link
+                    <User size={16} className="mr-2" /> Dashboard
+                  </NavLink>
+                  <NavLink
                     to="/profile"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     onClick={() => setIsProfileMenuOpen(false)}
                   >
-                    <User size={16} className="mr-2" />
-                    Profile Settings
-                  </Link>
+                    <User size={16} className="mr-2" /> Profile Settings
+                  </NavLink>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                   >
-                    <LogOut size={16} className="mr-2" />
-                    Logout
+                    <LogOut size={16} className="mr-2" /> Logout
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <>
-              <Link
+              <NavLink
                 to="/login"
                 className="px-4 py-2 text-[#1E3A8A] font-medium border border-[#1E3A8A] rounded-lg hover:bg-blue-50 transition-colors"
                 aria-label="Login"
               >
                 Login
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/register"
                 className="px-4 py-2 bg-[#1E3A8A] text-white font-medium rounded-lg hover:bg-blue-900 transition-colors"
                 aria-label="Sign Up"
               >
                 Sign Up
-              </Link>
+              </NavLink>
             </>
           )}
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-gray-600 focus:outline-none"
+          className="text-gray-600 md:hidden focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-expanded={isMenuOpen}
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
@@ -169,39 +155,65 @@ export function Header() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white px-4 py-2 shadow-md">
-          <nav className="flex flex-col space-y-3 pb-3">
-            <a
-              href="#"
-              className="text-[#1E3A8A] font-medium py-2 hover:text-blue-900 transition-colors"
+        <div className="px-4 py-2 bg-white shadow-md md:hidden">
+          <nav className="flex flex-col pb-3 space-y-3">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                `font-medium py-2 transition-colors ${
+                  isActive ? "text-[#1E3A8A]" : "text-gray-600 hover:text-[#1E3A8A]"
+                }`
+              }
+              onClick={() => setIsMenuOpen(false)}
             >
               Home
-            </a>
-            <a
-              href="#"
-              className="text-gray-600 font-medium py-2 hover:text-[#1E3A8A] transition-colors"
+            </NavLink>
+            <NavLink
+              to="/packages"
+              className={({ isActive }) =>
+                `font-medium py-2 transition-colors ${
+                  isActive ? "text-[#1E3A8A]" : "text-gray-600 hover:text-[#1E3A8A]"
+                }`
+              }
+              onClick={() => setIsMenuOpen(false)}
             >
               Destinations
-            </a>
-            <a
-              href="#"
-              className="text-gray-600 font-medium py-2 hover:text-[#1E3A8A] transition-colors"
+            </NavLink>
+            <NavLink
+              to="/guides"
+              className={({ isActive }) =>
+                `font-medium py-2 transition-colors ${
+                  isActive ? "text-[#1E3A8A]" : "text-gray-600 hover:text-[#1E3A8A]"
+                }`
+              }
+              onClick={() => setIsMenuOpen(false)}
             >
               Tour Guides
-            </a>
-            <a
-              href="#"
-              className="text-gray-600 font-medium py-2 hover:text-[#1E3A8A] transition-colors"
+            </NavLink>
+            <NavLink
+              to="/about"
+              className={({ isActive }) =>
+                `font-medium py-2 transition-colors ${
+                  isActive ? "text-[#1E3A8A]" : "text-gray-600 hover:text-[#1E3A8A]"
+                }`
+              }
+              onClick={() => setIsMenuOpen(false)}
             >
               About Us
-            </a>
-            <a
-              href="#"
-              className="text-gray-600 font-medium py-2 hover:text-[#1E3A8A] transition-colors"
+            </NavLink>
+            <NavLink
+              to="/contact"
+              className={({ isActive }) =>
+                `font-medium py-2 transition-colors ${
+                  isActive ? "text-[#1E3A8A]" : "text-gray-600 hover:text-[#1E3A8A]"
+                }`
+              }
+              onClick={() => setIsMenuOpen(false)}
             >
               Contact
-            </a>
-            <div className="flex space-x-2 pt-2">
+            </NavLink>
+
+            <div className="flex pt-2 space-x-2">
               {authState.isAuthenticated ? (
                 <>
                   <div className="flex-1 px-4 py-2 bg-blue-50 border border-[#1E3A8A] rounded-lg text-center">
@@ -215,52 +227,51 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <Link
+                  <NavLink
                     to="/login"
                     className="flex-1 px-4 py-2 text-[#1E3A8A] font-medium border border-[#1E3A8A] rounded-lg hover:bg-blue-50 transition-colors text-center"
                     aria-label="Login"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     Login
-                  </Link>
-                  <Link
+                  </NavLink>
+                  <NavLink
                     to="/register"
                     className="flex-1 px-4 py-2 bg-[#1E3A8A] text-white font-medium rounded-lg hover:bg-blue-900 transition-colors text-center"
                     aria-label="Sign Up"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     Sign Up
-                  </Link>
+                  </NavLink>
                 </>
               )}
             </div>
 
             {/* Mobile menu links when authenticated */}
             {authState.isAuthenticated && (
-              <div className="pt-3 border-t border-gray-200 space-y-2">
-                <Link
+              <div className="pt-3 space-y-2 border-t border-gray-200">
+                <NavLink
                   to="/dashboard"
                   className="flex items-center px-4 py-2 text-[#1E3A8A] font-medium hover:bg-blue-50 transition-colors rounded-lg"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <User size={16} className="mr-2" />
-                  Dashboard
-                </Link>
-                <Link
+                  <User size={16} className="mr-2" /> Dashboard
+                </NavLink>
+                <NavLink
                   to="/profile"
-                  className="flex items-center px-4 py-2 text-gray-600 font-medium hover:bg-gray-50 transition-colors rounded-lg"
+                  className="flex items-center px-4 py-2 font-medium text-gray-600 transition-colors rounded-lg hover:bg-gray-50"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <User size={16} className="mr-2" />
-                  Profile Settings
-                </Link>
+                  <User size={16} className="mr-2" /> Profile Settings
+                </NavLink>
                 <button
                   onClick={() => {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center w-full px-4 py-2 text-red-600 font-medium hover:bg-red-50 transition-colors rounded-lg"
+                  className="flex items-center w-full px-4 py-2 font-medium text-red-600 transition-colors rounded-lg hover:bg-red-50"
                 >
-                  <LogOut size={16} className="mr-2" />
-                  Logout
+                  <LogOut size={16} className="mr-2" /> Logout
                 </button>
               </div>
             )}

@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User', // assumes you have a User model
+      required: true,
+    },
     userName: {
       type: String,
       required: true,
@@ -12,10 +17,16 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
-    packageType: {
+    // Reference to the selected package
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Package', // references the Package model
+      required: true,
+    },
+    selectedTier: {
       type: String,
       required: true,
-      enum: ['Standard', 'Premium', 'VIP'], // customize as you want
+      enum: ['Standard', 'Premium', 'VIP'], // which tier from the package
     },
     note: {
       type: String,
@@ -25,6 +36,25 @@ const appointmentSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    endDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (value) {
+          return !this.startDate || value > this.startDate;
+        },
+        message: 'End date must be after start date.',
+      },
+    },
+    needsGuide: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ['booked', 'completed', 'cancelled'],
+      default: 'booked',
+    },
   },
   { timestamps: true }
 );
@@ -32,3 +62,4 @@ const appointmentSchema = new mongoose.Schema(
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 
 module.exports = Appointment;
+

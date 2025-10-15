@@ -1,79 +1,163 @@
-const Appointment = require('../../Models/Appoiment/appointmentModel.js');
+const Appointment = require('../../models/Appoiment/appointmentModel.js');
+const User = require('../../models/User.js');
+// Import Package model
 
-// @desc Create new appointment
-// @route POST /api/appointments
+// Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
   try {
-    const { userName, membersCount, packageType, note, startDate } = req.body;
+    const { 
+      userId, 
+      userName, 
+      membersCount, 
+      packageId, 
+      selectedTier, 
+      note, 
+      startDate, 
+      endDate,
+      needsGuide // 🟢 new field added
+    } = req.body;
 
-    if (!userName || !membersCount || !packageType || !startDate) {
+    // Check required fields
+    if (!userId || !userName || !membersCount || !packageId || !selectedTier || !startDate || !endDate) {
       return res.status(400).json({ message: 'All required fields must be filled!' });
     }
 
+    // Validate that endDate is after startDate
+    if (new Date(endDate) <= new Date(startDate)) {
+      return res.status(400).json({ message: 'End date must be after start date!' });
+    }
+
+    // Validate selectedTier
+    if (!['Standard', 'Premium', 'VIP'].includes(selectedTier)) {
+      return res.status(400).json({ message: 'Invalid tier selected!' });
+    }
+
+    // Create new appointment
     const appointment = await Appointment.create({
+      userId,
       userName,
       membersCount,
-      packageType,
+      packageId,
+      selectedTier,
       note,
       startDate,
+      endDate,
+      needsGuide: needsGuide || false, // 🟢 default false if not provided
+      status: 'booked',
     });
 
-    res.status(201).json(appointment);
+    res.status(201).json({ message: 'Appointment created successfully', appointment });
   } catch (error) {
+    console.error("Error creating appointment:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Get all appointments
-// @route GET /api/appointments
-exports.getAppointments = async (req, res) => {
+// Get appointments for the logged-in user only
+exports.getUserAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find().sort({ startDate: 1 });
-    res.json(appointments);
+    const now = new Date();
+
+    const appointments = await Appointment.find({ userId: req.user._id })
+      .sort({ startDate: 1 })
+      .populate('userId', 'firstName lastName email role')
+      .populate('packageId'); // populate package info
+
+    const upcoming = appointments.filter(appt => new Date(appt.startDate) >= now);
+    const past = appointments.filter(appt => new Date(appt.startDate) < now);
+
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      upcoming,
+      past,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error fetching appointments', error: error.message });
   }
 };
 
-// @desc Get single appointment
-// @route GET /api/appointments/:id
+// Admin: get all appointments
+exports.getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find()
+      .sort({ startDate: 1 })
+      .populate('userId', 'firstName lastName email')
+      .populate('packageId'); // populate package info
+
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      appointments,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching all appointments', error: error.message });
+  }
+};
+
+// Get a single appointment (owner or admin)
+
 exports.getAppointmentById = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    const { id } = req.params;
+
+    // Fetch appointment and populate packageId + userId
+    const appointment = await Appointment.findById(id)
+      .populate('packageId', 'packageName packages') // ← critical line
+      .populate('userId', '_id name email'); // optional, but good for safety
+
     if (!appointment) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
-    res.json(appointment);
+
+    // Optional: Add ownership check here (more secure than frontend-only)
+  
+
+    return res.status(200).json(appointment);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching appointment:', error);
+    return res.status(500).json({ message: 'Server error while fetching appointment' });
   }
 };
 
-// @desc Update appointment
-// @route PUT /api/appointments/:id
+
+// Update appointment (owner or admin)
 exports.updateAppointment = async (req, res) => {
   try {
-    const updated = await Appointment.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+ 
+
+    // Only allow updates to certain fields
+    const updatableFields = ['membersCount', 'packageId', 'selectedTier', 'note', 'startDate', 'endDate', 'status','needsGuide'];
+    updatableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        appointment[field] = req.body[field];
+      }
     });
-    if (!updated) {
-      return res.status(404).json({ message: 'Appointment not found' });
+
+    // Validate endDate after startDate
+    if (appointment.startDate && appointment.endDate && new Date(appointment.endDate) <= new Date(appointment.startDate)) {
+      return res.status(400).json({ message: 'End date must be after start date!' });
     }
-    res.json(updated);
+    await appointment.save();
+
+    res.json({ message: 'Appointment updated', appointment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Delete appointment
-// @route DELETE /api/appointments/:id
+// Delete appointment (owner or admin)
 exports.deleteAppointment = async (req, res) => {
   try {
-    const deleted = await Appointment.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Appointment not found' });
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
+
+    await Appointment.findByIdAndDelete(req.params.id);
     res.json({ message: 'Appointment deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

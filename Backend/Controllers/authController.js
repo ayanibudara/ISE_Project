@@ -16,6 +16,18 @@ exports.register = async (req, res) => {
       });
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     // Create new user
     const user = new User({
       firstName,
@@ -50,8 +62,11 @@ exports.register = async (req, res) => {
 
     console.log('Session user data:', req.session.user);
 
+    const token = generateToken(user);
+
     res.status(201).json({
       message: 'User registered successfully',
+      token, // <-- add this line!
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -89,18 +104,15 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login user
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check for user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -108,7 +120,6 @@ exports.login = async (req, res) => {
 
     const token = generateToken(user);
 
-    // Store user info in session
     req.session.userId = user._id;
     req.session.userRole = user.role;
     req.session.user = {
@@ -119,21 +130,19 @@ exports.login = async (req, res) => {
       mobile: user.mobile,
       role: user.role,
       profilePicture: user.profilePicture,
-      
     };
 
-    // Set HttpOnly cookie with the token for browser clients
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      maxAge: 1000 * 60 * 60 * 24,
     };
     res.cookie('jwt', token, cookieOptions);
 
-    // Also send user data (token is in cookie)
     res.json({
       message: 'Login successful',
+      token, // <--- explicitly return token in response
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -141,8 +150,8 @@ exports.login = async (req, res) => {
         email: user.email,
         mobile: user.mobile,
         role: user.role,
-        profilePicture: user.profilePicture
-      }
+        profilePicture: user.profilePicture,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -269,6 +278,35 @@ exports.deleteProfile = async (req, res) => {
         fs.unlinkSync(imagePath);
       }
     }
+
+    exports.getPackageById = async (req, res) => {
+  try {
+    const { packageId } = req.params;
+
+    const pkg = await Package.findById(packageId)
+      .populate('providerId', 'firstName lastName email'); // <-- populate name fields
+
+    if (!pkg) return res.status(404).json({ error: "Package not found" });
+
+    res.json(pkg);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Delete user from database
     await User.findByIdAndDelete(userId);
