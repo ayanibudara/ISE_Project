@@ -26,4 +26,29 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET all guide assignments
+router.get('/', async (req, res) => {
+  try {
+    const assignments = await GuideAssign.find()
+      .populate('guideId', 'name')
+      .populate('touristId', 'firstName lastName');
+    res.status(200).json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch assignments', error: error.message });
+  }
+});
+
+
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+

@@ -13,8 +13,13 @@ import Home from "./pages/home";
 import AppointmentForm from "./pages/appointment/appointmentform";
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
 //import Guideform from "./pages/Guide/GuideSchedulingForm";
-import GuideAssignForm from "./pages/admin/GuideAssignForm"; // 🆕 ADD THIS
+//import GuideAssignForm from "./pages/admin/GuideAssignForm"; // 🆕 ADD THIS
 import Guidedashboard from "./pages/Guide/Guidedashboard";
+import GuideRequestsTable from "./pages/admin/GuideRequestsTable";
+import GuideAssignmentForm from "./pages/admin/GuideAssignmentForm";
+
+
+
 
 import PackageForm from "./pages/Services/PackageForm";
 import Packages from "./pages/Services/PackagePage";
@@ -231,16 +236,30 @@ const AuthenticatedRoutes = () => {
       />
 
 {/* 🆕 ADD THIS NEW ROUTE */}
+
 <Route
   path="/dashboard/admin/guide-scheduling"
   element={renderProtectedRoute(
     <DashboardLayout>
-      <GuideAssignForm />
+      <GuideRequestsTable />
     </DashboardLayout>,
     ["Admin"]
   )}
 />
-      
+
+<Route
+  path="/dashboard/admin/assign-guide"
+  element={renderProtectedRoute(
+    <DashboardLayout>
+      <GuideAssignmentForm />
+    </DashboardLayout>,
+    ["Admin"]
+  )}
+/>
+
+
+
+
 
 
 
