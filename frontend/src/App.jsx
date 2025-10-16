@@ -1,36 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
+
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
+
 import Home from "./pages/home";
 import AppointmentForm from "./pages/appointment/appointmentform";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
+//import Guideform from "./pages/Guide/GuideSchedulingForm";
+//import GuideAssignForm from "./pages/admin/GuideAssignForm"; // 🆕 ADD THIS
+import Guidedashboard from "./pages/Guide/Guidedashboard";
+import GuideRequestsTable from "./pages/admin/GuideRequestsTable";
+import GuideAssignmentForm from "./pages/admin/GuideAssignmentForm";
+
+
+
+
 import PackageForm from "./pages/Services/PackageForm";
 import Packages from "./pages/Services/PackagePage";
+
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+
 import TouristDashboard from "./pages/dashboard/TouristDashboard";
 import GuideDashboard from "./pages/dashboard/GuideDashboard";
 import PackageProviderDashboard from "./pages/dashboard/PackageProviderDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import AdvertisementManagement from "./pages/dashboard/AdvertisementManagement";
+
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfileEdit from "./components/ProfileEdit";
 import ReviewForm from "./pages/Review/ReviewForm";
 import ReviewList from "./pages/Review/ReviewList";
+
+
 import Chatbot from "./AI/chatbot";
-import { useEffect } from "react";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
 import EditPackageForm from "./pages/Services/EditPackageForm";
 import UpdateAppointmentPage from "./pages/appointment/UpdateAppointmentPage"
+
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import RegisterGuide from "./pages/Guide/RegisterGuide";
+//import RegisterGuide from "./components/RegisterGuide";
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
@@ -59,7 +77,7 @@ const AuthenticatedRoutes = () => {
     );
   }
 
-  // Helper function to render dashboard based on user role
+  // Redirect based on role
   const renderDashboard = () => {
     if (!authState.isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -79,10 +97,7 @@ const AuthenticatedRoutes = () => {
     }
   };
 
- 
-
-
-  // Helper function to check authentication and role permissions
+  // Protected routes with role check
   const renderProtectedRoute = (element, allowedRoles) => {
     if (!authState.isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -96,13 +111,25 @@ const AuthenticatedRoutes = () => {
   };
 
   return (
-    
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+
+      <Route path="/apform" element={<AppointmentForm />} />
+      <Route path="/appointments" element={<AppointmentsPage />} />
+      
+      <Route path="/guideregister" element={<RegisterGuide />} />
+      <Route path="/guidedashboard" element={<Guidedashboard />} />
+
       <Route path="/apform/:packageId" element={<AppointmentForm />} />
       <Route path="/appoiments" element={<AppointmentsPage />} />
+      // In your App.js or routing file
+      <Route path="/register-guide" element={<RegisterGuide />} />
+      
+ main
+
       <Route path="/appointments/edit/:id" element={<UpdateAppointmentPage />} />
+ main
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
       <Route path="/packages/:packageId" element={<PackageView />} />
@@ -110,10 +137,8 @@ const AuthenticatedRoutes = () => {
 
       <Route path="/reviewform/:packageId" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
-      <Route path="/dashboad" element={<TouristDashboard />} />
-      
-      
 
+     
 
       {/* Auth Routes */}
       <Route
@@ -137,9 +162,10 @@ const AuthenticatedRoutes = () => {
         }
       />
 
-      {/* Dashboard Routes */}
+      {/* Dashboard Redirect */}
       <Route path="/dashboard" element={renderDashboard()} />
 
+      {/* Role-based Dashboards */}
       <Route
         path="/dashboard/tourist"
         element={renderProtectedRoute(
@@ -210,6 +236,35 @@ const AuthenticatedRoutes = () => {
         )}
       />
 
+{/* 🆕 ADD THIS NEW ROUTE */}
+
+<Route
+  path="/dashboard/admin/guide-scheduling"
+  element={renderProtectedRoute(
+    <DashboardLayout>
+      <GuideRequestsTable />
+    </DashboardLayout>,
+    ["Admin"]
+  )}
+/>
+
+<Route
+  path="/dashboard/admin/assign-guide"
+  element={renderProtectedRoute(
+    <DashboardLayout>
+      <GuideAssignmentForm />
+    </DashboardLayout>,
+    ["Admin"]
+  )}
+/>
+
+
+
+
+
+
+
+
       <Route
         path="/dashboard/admin/advertising"
         element={renderProtectedRoute(
@@ -220,7 +275,7 @@ const AuthenticatedRoutes = () => {
         )}
       />
 
-      {/* General profile route for any authenticated user */}
+      {/* Generic Profile for All Roles */}
       <Route
         path="/profile"
         element={renderProtectedRoute(
@@ -238,11 +293,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        
         <ToastProvider>
           <Header />
           <AuthenticatedRoutes />
-          <Chatbot/>
+          <Chatbot />
           <Footer />
         </ToastProvider>
       </AuthProvider>

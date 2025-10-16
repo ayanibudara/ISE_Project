@@ -6,6 +6,11 @@ const { requireAuth, restrictTo, attachToken } = require('../../middleware/authM
 // Create a new appointment (any authenticated user)
 router.post('/add', requireAuth, attachToken, appointmentController.createAppointment);
 
+// 🆕 NEW: Get pending guide requests (MUST be before '/:id')
+router.get('/pending', appointmentController.getPendingAppointments);
+
+
+
 // Get all appointments (admin only)
 router.get('/', appointmentController.getAllAppointments);
 
@@ -14,6 +19,11 @@ router.get('/my', requireAuth, attachToken, appointmentController.getUserAppoint
 
 // Get a single appointment (owner or admin)
 router.get('/:id', requireAuth, attachToken, appointmentController.getAppointmentById);
+
+
+// 🆕 NEW: Update appointment (for guide assignment)
+router.patch('/:id', appointmentController.updateAppointmentStatus);
+
 
 // Update an appointment (owner or admin)
 router.put('/:id', requireAuth, attachToken, appointmentController.updateAppointment);

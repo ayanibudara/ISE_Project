@@ -115,6 +115,32 @@ const DashboardLayout = ({ children }) => {
     );
   } else if (user?.role === "Admin") {
     // Update Dashboard href for admins
+
+    navigation[0].href = '/dashboard/admin';
+    
+    navigation.push(
+      { name: 'User Management', href: '/dashboard/admin', icon: (
+        <svg className="mr-4 h-6 w-6 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+        </svg>
+      ), current: false },
+
+
+
+      { name: 'Guide Scheduling', href: '/dashboard/admin/guide-scheduling', icon: (
+      <svg className="mr-4 h-6 w-6 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ), current: false },
+
+
+
+      { name: 'Advertising', href: '/dashboard/admin/advertising', icon: (
+        <svg className="mr-4 h-6 w-6 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+        </svg>
+      ), current: false }
+
     navigation[0].href = "/dashboard/admin";
 
     //navigation.push(
@@ -161,6 +187,7 @@ const DashboardLayout = ({ children }) => {
         ),
         current: false,
       }
+
     );
   }
 

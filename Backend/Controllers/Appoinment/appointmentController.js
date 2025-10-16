@@ -163,3 +163,55 @@ exports.deleteAppointment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+// At the end of your appointmentController.js file, add:
+
+// 🆕 Get pending appointments that need guide assignment
+exports.getPendingAppointments = async (req, res) => {
+  try {
+    const pendingAppointments = await Appointment.find({ 
+      needsGuide: true,
+      status: 'booked'
+    })
+    .populate('userId', 'firstName lastName email mobile')
+    .populate('packageId', 'packageName category')
+    .sort({ createdAt: -1 });
+
+    res.status(200).json(pendingAppointments);
+  } catch (error) {
+    console.error('Error fetching pending appointments:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch pending appointments', 
+      error: error.message 
+    });
+  }
+};
+
+// 🆕 Update appointment status (for guide assignment)
+exports.updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    )
+    .populate('userId', 'firstName lastName email mobile')
+    .populate('packageId', 'packageName');
+
+    if (!updatedAppointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    res.status(200).json(updatedAppointment);
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    res.status(500).json({ 
+      message: 'Failed to update appointment', 
+      error: error.message 
+    });
+  }
+};

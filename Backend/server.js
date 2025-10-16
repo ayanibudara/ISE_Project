@@ -1,24 +1,66 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const session = require("express-session");
-const path = require("path");
 
-// Load environment variables
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+
+//const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
+
+const guideAssignRoutes = require('./Routes/guideAssignRoutes.js');
+//newly addedd
+
+const router = express.Router();
+
+const dotenv = require('dotenv');
+const session = require('express-session');
+const path = require('path');
+//const express = require("express");
+//const cors = require("cors");
+//const mongoose = require("mongoose");
+//const dotenv = require("dotenv");
+//const session = require("express-session");
+//const path = require("path");
+
+
+
+// Load environment variables/
 dotenv.config();
 
 // Import routes
-const authRoutes = require("./Routes/auth");
-const adminRoutes = require("./Routes/admin");
-const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
-const guideRoutes = require("./Routes/Guide/guideRoute");
-const packageRoutes = require("./Routes/service/packageRoutes.js");
+
+const authRoutes = require('./Routes/auth');
+const adminRoutes = require('./Routes/admin');
+const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
+const guideRoutes = require('./Routes/Guide/guideRoute');
+
+
+
+const review = require('./Routes/Review/reviewRoutes.js');
+
+const packageRoutes = require('./Routes/service/packageRoutes.js');
+
+
+
+//const authRoutes = require("./Routes/auth");
+//const adminRoutes = require("./Routes/admin");
+//const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
+//const guideRoutes = require("./Routes/Guide/guideRoute");
+//const packageRoutes = require("./Routes/service/packageRoutes.js");
+ //main
 const advertisementRoutes = require("./Routes/advertisementRoutes");
-const review = require('./Routes/Review/reviewRoutes.js')
+//const review = require('./Routes/Review/reviewRoutes.js')
+
 
 // Initialize express app
 const app = express();
+
+
+//app.use("/guideassign", assignroutes);
+// Middleware (example)
+app.use(express.json());
+//newly addedd
+
+//MongoDB connect
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myDatabase';
 
 // Middleware
 app.use(
@@ -38,6 +80,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // Session configuration
 app.use(
@@ -63,6 +106,25 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
+
+
+ 
+app.use('/api/guideassign', guideAssignRoutes);
+
+
+
+app.use('/api/auth', authRoutes);
+//app.use('/api/admin', adminRoute);
+app.use('/api/appointments', appointmentRoutes);
+
+app.use('/api/guides', guideRoutes);
+app.use('/api/review', review);
+
+
+app.use('/api/guides', guideRoutes);    
+app.use('/api', packageRoutes);     
+
+
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/appointments", appointmentRoutes);
@@ -89,3 +151,10 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+const guideAssignRoute = require('./Routes/guideAssignRoutes.js');
+
+app.post('/api/guideassign',guideAssignRoutes);
+
+
