@@ -143,9 +143,13 @@ const Register = () => {
       // Show success toast message
       showSuccess("Registration successful! Welcome to our platform.");
 
-      // Navigate to dashboard after a short delay to let user see the toast
+      // Navigate based on user role
       setTimeout(() => {
-        navigate("/dashboard");
+        if (formData.role === "Guide") {
+          navigate("/register-guide");
+        } else {
+          navigate("/dashboard");
+        }
       }, 1000);
     } catch (err) {
       console.error("Registration error:", err);
@@ -187,7 +191,7 @@ const Register = () => {
   const getRoleDescription = (role) => {
     switch (role) {
       case "Guide":
-        return "Lead tours and share local expertise";
+        return "Lead tours and share local expertise - Complete your guide profile after registration";
       case "Tourist":
         return "Explore new destinations and experiences";
       case "PackageProvider":
