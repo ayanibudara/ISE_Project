@@ -48,7 +48,7 @@ import UpdateAppointmentPage from "./pages/appointment/UpdateAppointmentPage"
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import RegisterGuide from "./pages/Guide/RegisterGuide";
-
+//import RegisterGuide from "./components/RegisterGuide";
 
 // Component to handle authenticated routes
 const AuthenticatedRoutes = () => {
@@ -123,7 +123,8 @@ const AuthenticatedRoutes = () => {
 
       <Route path="/apform/:packageId" element={<AppointmentForm />} />
       <Route path="/appoiments" element={<AppointmentsPage />} />
-
+      // In your App.js or routing file
+      <Route path="/register-guide" element={<RegisterGuide />} />
       
  main
 
