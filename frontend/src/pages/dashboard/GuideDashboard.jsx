@@ -4,7 +4,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AvailabilityCalendar } from "../../components/ui/AvailabilityCalendar";
 import { UpcomingTours } from "../../components/ui/guideUpcomingTours";
-import { Calendar, MapPin, AlertCircle, CheckCircle } from "lucide-react";
+import { Calendar, MapPin, AlertCircle, CheckCircle, Download } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const GuideDashboard = () => {
   const { authState } = useAuth();
@@ -13,6 +15,7 @@ const GuideDashboard = () => {
 
   const [guideData, setGuideData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   // ✅ Fetch guide details by userId
   useEffect(() => {
@@ -51,6 +54,155 @@ const GuideDashboard = () => {
 
   const handleRegisterClick = () => {
     navigate("/register-guide");
+  };
+
+  // ✅ Fetch assignments for report
+  const fetchAssignmentsForReport = async () => {
+    if (!guideData?._id) {
+      alert("No guide data available");
+      return null;
+    }
+
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/guideassign/guide/${guideData._id}`
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Error fetching assignments:", error);
+      alert("Error fetching tour data");
+      return null;
+    }
+  };
+
+  // ✅ Format date helper
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    const d = new Date(date);
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // ✅ Generate PDF Report for Upcoming Tours
+  const generateToursReport = async () => {
+    setGeneratingReport(true);
+
+    try {
+      const assignments = await fetchAssignmentsForReport();
+
+      if (!assignments || assignments.length === 0) {
+        alert("No upcoming tours to generate report");
+        setGeneratingReport(false);
+        return;
+      }
+
+      const doc = new jsPDF();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let currentY = 20;
+
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(30, 58, 138);
+      doc.text("Upcoming Tours Report", 14, currentY);
+      currentY += 10;
+
+      // Guide Info
+      doc.setFontSize(11);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Guide: ${user?.firstName} ${user?.lastName || ""}`, 14, currentY);
+      currentY += 6;
+      doc.text(`Email: ${user?.email || "N/A"}`, 14, currentY);
+      currentY += 6;
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, currentY);
+      currentY += 12;
+
+      // Prepare table data matching dashboard columns: Title, Place, Date
+      const tableData = assignments.map((assignment) => {
+        // Extract Title
+        let title = "Tour Assignment";
+        if (assignment.touristId?.firstName && assignment.touristId?.lastName) {
+          const touristName = `${assignment.touristId.firstName} ${assignment.touristId.lastName}`;
+          title = `Tour with ${touristName}`;
+        } else if (assignment.appointmentId?.packageId?.packageName) {
+          title = assignment.appointmentId.packageId.packageName;
+        }
+
+        // Extract Place
+        let place = "N/A";
+        if (assignment.location) {
+          place = assignment.location;
+        } else if (assignment.appointmentId?.packageId?.province) {
+          place = assignment.appointmentId.packageId.province;
+        }
+
+        // Extract Date
+        const date = assignment.startDate ? formatDate(assignment.startDate) : "N/A";
+
+        return [title, place, date];
+      });
+
+      // Generate Table with autoTable
+      autoTable(doc, {
+        head: [["Title", "Place", "Date"]],
+        body: tableData,
+        startY: currentY,
+        theme: "grid",
+        headerStyles: {
+          fillColor: [30, 58, 138],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          halign: "center",
+          padding: 3,
+        },
+        bodyStyles: {
+          textColor: [60, 60, 60],
+          padding: 3,
+          fontSize: 10,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 248, 255],
+        },
+        columnStyles: {
+          0: { halign: "left", cellWidth: 60 },
+          1: { halign: "left", cellWidth: 50 },
+          2: { halign: "center", cellWidth: 40 },
+        },
+        margin: { top: 10, right: 14, bottom: 25, left: 14 },
+        didDrawPage: (data) => {
+          // Footer on each page
+          doc.setFontSize(9);
+          doc.setTextColor(150, 150, 150);
+          doc.text(
+            `Page ${data.pageNumber}`,
+            pageWidth / 2,
+            pageHeight - 10,
+            { align: "center" }
+          );
+        },
+      });
+
+      // Summary Section
+      const finalY = doc.lastAutoTable.finalY + 15;
+      doc.setFontSize(12);
+      doc.setTextColor(30, 58, 138);
+      doc.text("Summary", 14, finalY);
+
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Total Tours: ${assignments.length}`, 14, finalY + 8);
+
+      // Download PDF
+      doc.save(`Upcoming_Tours_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+      setGeneratingReport(false);
+    } catch (error) {
+      console.error("❌ Error generating report:", error);
+      alert("Error generating report");
+      setGeneratingReport(false);
+    }
   };
 
   if (loading) {
@@ -150,12 +302,24 @@ const GuideDashboard = () => {
 
             {/* ✅ Upcoming Tours Section */}
             <div>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                  <MapPin size={28} className="text-purple-600" />
-                  Upcoming Tours
-                </h2>
-                <p className="text-slate-600 mt-2">Manage your scheduled tours</p>
+              <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <MapPin size={28} className="text-purple-600" />
+                    Upcoming Tours
+                  </h2>
+                  <p className="text-slate-600 mt-2">Manage your scheduled tours</p>
+                </div>
+                {guideData?.upcomingTours?.length > 0 && (
+                  <button
+                    onClick={generateToursReport}
+                    disabled={generatingReport}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Download size={18} />
+                    {generatingReport ? "Generating..." : "Download Report"}
+                  </button>
+                )}
               </div>
               <div className="bg-white rounded-2xl p-8 shadow-md border border-purple-200 hover:shadow-lg transition-shadow">
                 <UpcomingTours
