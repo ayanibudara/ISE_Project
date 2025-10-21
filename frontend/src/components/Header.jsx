@@ -61,10 +61,10 @@ export function Header() {
           <NavLink to="/packages" className={navLinkClass}>
             Destinations
           </NavLink>
-          <NavLink to="/about" className={navLinkClass}>
+          <NavLink to="/aboutus" className={navLinkClass}>
             About Us
           </NavLink>
-          <NavLink to="/contact" className={navLinkClass}>
+          <NavLink to="/contactus" className={navLinkClass}>
             Contact
           </NavLink>
         </nav>

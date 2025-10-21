@@ -531,7 +531,7 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl border-emerald-200">
+               {/* <div className="p-4 border bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl border-emerald-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-emerald-600">Confirmed</p>
@@ -541,7 +541,7 @@ const AppointmentsPage = () => {
                       <Check className="w-6 h-6 text-emerald-700" />
                     </div>
                   </div>
-                </div>
+                </div>*/}
                 <div className="p-4 border bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl border-amber-200">
                   <div className="flex items-center justify-between">
                     <div>
@@ -553,7 +553,7 @@ const AppointmentsPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl border-rose-200">
+              {/*}  <div className="p-4 border bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl border-rose-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-rose-600">Rejected</p>
@@ -563,7 +563,7 @@ const AppointmentsPage = () => {
                       <X className="w-6 h-6 text-rose-700" />
                     </div>
                   </div>
-                </div>
+                </div>*/}
               </div>
             </div>
           </div>
