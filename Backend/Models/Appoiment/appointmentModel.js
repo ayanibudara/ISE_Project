@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const Package = require('../../Models/Services/packageModel.js');
+
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -52,7 +54,7 @@ const appointmentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['booked', 'completed', 'cancelled'],
+      enum: ['booked', 'confirmed', 'rejected', 'completed', 'cancelled'],
       default: 'booked',
     },
   },
