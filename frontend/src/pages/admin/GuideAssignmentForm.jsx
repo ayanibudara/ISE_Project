@@ -17,7 +17,6 @@ export default function GuideAssignmentForm() {
   const [guides, setGuides] = useState([]);
   const [assignedGuides, setAssignedGuides] = useState([]); // ✅ Always an array
   const [totalDays, setTotalDays] = useState(0);
-  const [totalPayment, setTotalPayment] = useState(0);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     appointmentId: requestData?._id || "",
@@ -35,7 +34,6 @@ export default function GuideAssignmentForm() {
       ? new Date(requestData.endDate).toLocaleDateString("en-CA")
       : "",
     guideId: "",
-    paymentPerDay: 150,
   });
   const [errors, setErrors] = useState({});
 
@@ -84,16 +82,15 @@ export default function GuideAssignmentForm() {
     Promise.all([fetchGuides(), fetchAssignedGuides()]);
   }, []);
 
-  // Calculate total days and payment
+  // Calculate total days
   useEffect(() => {
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
       const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       setTotalDays(days > 0 ? days : 0);
-      setTotalPayment(days * formData.paymentPerDay);
     }
-  }, [formData.startDate, formData.endDate, formData.paymentPerDay]);
+  }, [formData.startDate, formData.endDate]);
 
   // Get all dates between start and end
   const getDatesInRange = (start, end) => {
@@ -188,9 +185,6 @@ export default function GuideAssignmentForm() {
     if (!formData.guideId) {
       newErrors.guideId = "Please select a guide";
     }
-    if (!formData.paymentPerDay || formData.paymentPerDay < 1) {
-      newErrors.paymentPerDay = "Payment must be greater than 0";
-    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -216,8 +210,6 @@ export default function GuideAssignmentForm() {
           startDate: formData.startDate,
           endDate: formData.endDate,
           totalDays,
-          paymentPerDay: formData.paymentPerDay,
-          totalPayment,
           location: requestData?.packageId?.province || requestData?.packageId?.category || "",
           status: "Assigned",
         }),
@@ -341,42 +333,6 @@ export default function GuideAssignmentForm() {
           </div>
         </div>
 
-        {/* Payment Configuration */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <DollarSign className="mr-3 text-green-600" size={24} />
-            Payment Configuration
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Per Day ($)
-              </label>
-              <input
-                type="number"
-                value={formData.paymentPerDay}
-                onChange={(e) => setFormData({ ...formData, paymentPerDay: Number(e.target.value) })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                min="1"
-              />
-              {errors.paymentPerDay && (
-                <p className="text-red-500 text-sm mt-1">{errors.paymentPerDay}</p>
-              )}
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl flex flex-col justify-center">
-              <p className="text-sm text-gray-600 mb-1">Total Days</p>
-              <p className="text-2xl font-bold text-gray-900">{totalDays}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl flex flex-col justify-center">
-              <p className="text-sm text-gray-600 mb-1">Total Payment</p>
-              <p className="text-2xl font-bold text-blue-600">${totalPayment.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Guide Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
@@ -474,12 +430,6 @@ export default function GuideAssignmentForm() {
                       <Star className="h-4 w-4 mr-2 text-yellow-500" />
                       <span className="font-medium">Experience:</span>
                       <span className="ml-2">{guide.experience || "N/A"} years</span>
-                    </div>
-
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-                      <span className="font-medium">Rate:</span>
-                      <span className="ml-2">${guide.ratePerDay || formData.paymentPerDay}/day</span>
                     </div>
                   </div>
 
