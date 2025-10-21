@@ -22,6 +22,7 @@ import {
   Activity,
   Edit,
   Trash2,
+  DollarSign,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -66,6 +67,38 @@ const AppointmentsPage = () => {
     };
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-LK', {
+      style: 'currency',
+      currency: 'LKR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getPackagePrice = (appointment) => {
+    if (!appointment.packageId || !appointment.packageId.packages) return 0;
+    
+    const selectedPackage = appointment.packageId.packages.find(
+      pkg => pkg.packageType === appointment.selectedTier
+    );
+    
+    return selectedPackage ? selectedPackage.price : 0;
+  };
+
+  const getPackageDetails = (appointment) => {
+    if (!appointment.packageId || !appointment.packageId.packages) return null;
+    
+    return appointment.packageId.packages.find(
+      pkg => pkg.packageType === appointment.selectedTier
+    );
+  };
+
+  const getTotalPrice = (appointment) => {
+    const price = getPackagePrice(appointment);
+    return price * (appointment.membersCount || 1);
+  };
+
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!authState.isAuthenticated) {
@@ -76,28 +109,47 @@ const AppointmentsPage = () => {
       try {
         setLoading(true);
         let response;
-        if (isGuide) {
+        
+        // Determine which endpoint to call based on user role
+        if (isPackageProvider) {
+          // Package providers see their own packages
+          response = await api.get('api/appointments/provider');
+        } else if (isGuide) {
+          // Guides see all appointments they can be assigned to
           response = await api.get('api/appointments');
         } else {
+          // Tourists and Admins see their own appointments
           response = await api.get('api/appointments/my');
         }
+        
         const data = response.data;
         let rawAppointments = [];
+        
+        // Handle different response structures
         if (Array.isArray(data)) {
           rawAppointments = data;
         } else if (data && typeof data === 'object') {
           if (Array.isArray(data.appointments)) {
             rawAppointments = data.appointments;
+          } else if (Array.isArray(data.data)) {
+            rawAppointments = data.data;
           } else {
             rawAppointments = [
               ...(Array.isArray(data.upcoming) ? data.upcoming : []),
               ...(Array.isArray(data.past) ? data.past : []),
+              ...(Array.isArray(data.pending) ? data.pending : []),
+              ...(Array.isArray(data.confirmed) ? data.confirmed : []),
             ];
           }
         }
+        
         const processedAppointments = rawAppointments
           .map((app) => {
             const isOwn = app.userId?._id === authState.user?._id;
+            const packagePrice = getPackagePrice(app);
+            const totalPrice = packagePrice * (app.membersCount || 1);
+            const packageDetails = getPackageDetails(app);
+            
             return {
               id: app._id,
               userName: app.userName || `${app.userId?.firstName || ''} ${app.userId?.lastName || ''}`.trim() || 'Unknown User',
@@ -111,12 +163,18 @@ const AppointmentsPage = () => {
               createdAt: app.createdAt,
               needsGuide: app.needsGuide || false,
               guideId: app.guideId || null,
+              packageId: app.packageId,
+              selectedTier: app.selectedTier,
+              packagePrice: packagePrice,
+              totalPrice: totalPrice,
+              packageDetails: packageDetails,
               formattedDate: formatDate(app.startDate),
               createdDate: formatDate(app.createdAt),
               isOwn,
             };
           })
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+        
         setAppointments(processedAppointments);
         setFilteredAppointments(processedAppointments);
         setError(null);
@@ -128,7 +186,7 @@ const AppointmentsPage = () => {
       }
     };
     fetchAppointments();
-  }, [authState.isAuthenticated, isGuide]);
+  }, [authState.isAuthenticated, isGuide, isPackageProvider]);
 
   useEffect(() => {
     let result = [...appointments];
@@ -153,10 +211,18 @@ const AppointmentsPage = () => {
 
   const handleConfirm = async (id) => {
     try {
-      await api.put(`/api/appointments/${id}/confirm`, { status: 'confirmed' });
+      // Use PATCH request to confirm appointment
+      await api.patch(`/api/appointments/${id}/confirm`);
+      
+      // Update local state
       setAppointments((prev) =>
-        prev.map((app) => (app.id === id ? { ...app, status: 'confirmed' } : app))
+        prev.map((app) => 
+          app.id === id ? { ...app, status: 'confirmed' } : app
+        )
       );
+      
+      // Show success message
+      setError(null);
     } catch (err) {
       console.error('Failed to confirm appointment:', err);
       setError(err.response?.data?.message || 'Failed to confirm appointment');
@@ -165,10 +231,18 @@ const AppointmentsPage = () => {
 
   const handleReject = async (id) => {
     try {
-      await api.put(`/api/appointments/${id}/reject`, { status: 'rejected' });
+      // Use PATCH request to reject appointment
+      await api.patch(`/api/appointments/${id}/reject`);
+      
+      // Update local state
       setAppointments((prev) =>
-        prev.map((app) => (app.id === id ? { ...app, status: 'rejected' } : app))
+        prev.map((app) => 
+          app.id === id ? { ...app, status: 'rejected' } : app
+        )
       );
+      
+      // Show success message
+      setError(null);
     } catch (err) {
       console.error('Failed to reject appointment:', err);
       setError(err.response?.data?.message || 'Failed to reject appointment');
@@ -308,6 +382,10 @@ const AppointmentsPage = () => {
               color: #ea580c;
               font-weight: 600;
             }
+            .price {
+              font-weight: bold;
+              color: #059669;
+            }
             .footer {
               margin-top: 30px;
               text-align: center;
@@ -346,6 +424,8 @@ const AppointmentsPage = () => {
                 <th>Package</th>
                 <th>Package Name</th>
                 <th>Members</th>
+                <th>Price</th>
+                <th>Total</th>
                 <th>Date</th>
                 <th>Time</th>
                 <th>Status</th>
@@ -362,6 +442,8 @@ const AppointmentsPage = () => {
                   <td><span class="package-${app.packageType.toLowerCase()}">${app.packageType}</span></td>
                   <td>${app.packageName}</td>
                   <td>${app.membersCount}</td>
+                  <td class="price">${formatCurrency(app.packagePrice)}</td>
+                  <td class="price">${formatCurrency(app.totalPrice)}</td>
                   <td>${app.formattedDate.date}</td>
                   <td>${app.formattedDate.time}</td>
                   <td><span class="status-${app.status}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span></td>
@@ -376,7 +458,8 @@ const AppointmentsPage = () => {
             <p><strong>Summary:</strong> 
               Confirmed: ${filteredAppointments.filter(a => a.status === 'confirmed').length} | 
               Booked: ${filteredAppointments.filter(a => a.status === 'booked').length} | 
-              Rejected: ${filteredAppointments.filter(a => a.status === 'rejected').length}
+              Rejected: ${filteredAppointments.filter(a => a.status === 'rejected').length} |
+              Total Revenue: ${formatCurrency(filteredAppointments.reduce((sum, app) => sum + app.totalPrice, 0))}
             </p>
           </div>
         </body>
@@ -438,12 +521,14 @@ const AppointmentsPage = () => {
   };
 
   const getStats = () => {
-    return {
+    const stats = {
       total: filteredAppointments.length,
       confirmed: filteredAppointments.filter(a => a.status === 'confirmed').length,
       booked: filteredAppointments.filter(a => a.status === 'booked').length,
       rejected: filteredAppointments.filter(a => a.status === 'rejected').length,
+      totalRevenue: filteredAppointments.reduce((sum, app) => sum + app.totalPrice, 0),
     };
+    return stats;
   };
 
   if (loading) {
@@ -488,10 +573,14 @@ const AppointmentsPage = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h1 className="mb-3 text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text">
-                    {isGuide ? 'All Appointments' : 'My Appointments'}
+                    {isPackageProvider ? 'My Package Bookings' : 
+                     isGuide ? 'All Appointments' : 
+                     'My Appointments'}
                   </h1>
                   <p className="text-lg text-slate-600">
-                    {isGuide
+                    {isPackageProvider
+                      ? 'Manage bookings for your tour packages'
+                      : isGuide
                       ? 'Manage and track all tour appointments'
                       : 'View and manage your booking appointments'}
                   </p>
@@ -519,7 +608,7 @@ const AppointmentsPage = () => {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-4 lg:grid-cols-5">
                 <div className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
                   <div className="flex items-center justify-between">
                     <div>
@@ -561,6 +650,17 @@ const AppointmentsPage = () => {
                     </div>
                     <div className="p-3 bg-rose-200 rounded-xl">
                       <X className="w-6 h-6 text-rose-700" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border border-green-200 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Total Revenue</p>
+                      <p className="mt-1 text-xl font-bold text-green-700">{formatCurrency(stats.totalRevenue)}</p>
+                    </div>
+                    <div className="p-3 bg-green-200 rounded-xl">
+                      <DollarSign className="w-6 h-6 text-green-700" />
                     </div>
                   </div>
                 </div>
@@ -620,8 +720,14 @@ const AppointmentsPage = () => {
             <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-100 to-slate-200">
               <Calendar className="w-12 h-12 text-slate-400" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-slate-900">No appointments found</h3>
-            <p className="text-lg text-slate-500">Try adjusting your filters to see more results.</p>
+            <h3 className="mb-2 text-2xl font-bold text-slate-900">
+              {isPackageProvider ? 'No bookings found' : 'No appointments found'}
+            </h3>
+            <p className="text-lg text-slate-500">
+              {isPackageProvider 
+                ? 'You don\'t have any package bookings yet.' 
+                : 'Try adjusting your filters to see more results.'}
+            </p>
           </div>
         ) : (
           <div className={viewMode === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'space-y-6'}>
@@ -661,6 +767,26 @@ const AppointmentsPage = () => {
                     <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border-2 ${getStatusColor(appointment.status)}`}>
                       {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                     </span>
+                  </div>
+
+                  {/* Price Information */}
+                  <div className="p-4 mb-4 border border-green-200 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-700">Package Price</span>
+                        </div>
+                        <p className="text-lg font-bold text-green-800">{formatCurrency(appointment.packagePrice)}</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Users className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm font-medium text-emerald-700">Total ({appointment.membersCount} {appointment.membersCount === 1 ? 'person' : 'people'})</span>
+                        </div>
+                        <p className="text-lg font-bold text-emerald-800">{formatCurrency(appointment.totalPrice)}</p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 p-4 mb-4 rounded-xl bg-slate-50">
@@ -831,6 +957,37 @@ const AppointmentsPage = () => {
                   </div>
                 </div>
 
+                {/* Price Information in Modal */}
+                <div className="p-5 border-2 border-green-200 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50">
+                  <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-green-900">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                    Pricing Information
+                  </h3>
+                  <div className="grid gap-4">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/80">
+                      <div>
+                        <p className="font-medium text-green-700">Package Price ({selectedAppointment.packageType})</p>
+                        <p className="text-sm text-green-600">Per person</p>
+                      </div>
+                      <span className="text-xl font-bold text-green-800">{formatCurrency(selectedAppointment.packagePrice)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/80">
+                      <div>
+                        <p className="font-medium text-emerald-700">Number of People</p>
+                        <p className="text-sm text-emerald-600">Total members</p>
+                      </div>
+                      <span className="text-xl font-bold text-emerald-800">{selectedAppointment.membersCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 border border-green-300 rounded-xl bg-gradient-to-r from-green-100 to-emerald-100">
+                      <div>
+                        <p className="font-bold text-green-900">Total Amount</p>
+                        <p className="text-sm font-medium text-green-700">Package price × members</p>
+                      </div>
+                      <span className="text-2xl font-bold text-green-900">{formatCurrency(selectedAppointment.totalPrice)}</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-5 border-2 border-slate-200 rounded-2xl">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-900">
                     <Calendar className="w-5 h-5 text-indigo-600" />
@@ -883,6 +1040,25 @@ const AppointmentsPage = () => {
                       Special Notes
                     </h3>
                     <p className="text-slate-700">{selectedAppointment.note}</p>
+                  </div>
+                )}
+
+                {/* Package Services in Modal */}
+                {selectedAppointment.packageDetails && (
+                  <div className="p-5 border-2 border-purple-200 rounded-2xl bg-purple-50">
+                    <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-purple-900">
+                      <Package className="w-5 h-5 text-purple-600" />
+                      Package Services
+                    </h3>
+                    <div className="p-4 rounded-xl bg-white/80">
+                      <h4 className="mb-3 font-bold text-purple-800">Included Services:</h4>
+                      <div className="text-sm whitespace-pre-line text-slate-700">
+                        {selectedAppointment.packageDetails.services}
+                      </div>
+                      <div className="flex items-center gap-4 mt-4 text-xs text-purple-700">
+                        <span className="font-medium">Duration: {selectedAppointment.packageDetails.tourDays} days</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

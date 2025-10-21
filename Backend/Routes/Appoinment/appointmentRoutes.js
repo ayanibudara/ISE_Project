@@ -9,7 +9,7 @@ router.post('/add', requireAuth, attachToken, appointmentController.createAppoin
 // 🆕 NEW: Get pending guide requests (MUST be before '/:id')
 router.get('/pending', appointmentController.getPendingAppointments);
 
-
+router.get('/provider', requireAuth, attachToken, appointmentController.getProviderAppointments);
 
 // Get all appointments (admin only)
 router.get('/', appointmentController.getAllAppointments);
@@ -30,5 +30,10 @@ router.put('/:id', requireAuth, attachToken, appointmentController.updateAppoint
 
 // Delete an appointment (owner or admin)
 router.delete('/:id', requireAuth, attachToken, appointmentController.deleteAppointment);
+
+// Confirm or reject appointment (for provider/admin)
+router.patch('/:id/confirm', requireAuth, attachToken, appointmentController.confirmAppointment);
+router.patch('/:id/reject', requireAuth, attachToken, appointmentController.rejectAppointment);
+
 
 module.exports = router;

@@ -1,8 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 const PackageProviderDashboard = () => {
   const { authState } = useAuth();
@@ -56,6 +54,10 @@ const PackageProviderDashboard = () => {
     navigate(`/edit-package/${packageId}`);
   };
 
+  const handleViewAppointments = () => {
+    navigate('/appointments');
+  };
+
   const handleDeletePackage = async (packageId, packageName) => {
     if (!window.confirm(`Are you sure you want to delete "${packageName}"? This action cannot be undone.`)) {
       return;
@@ -85,136 +87,32 @@ const PackageProviderDashboard = () => {
     }
   };
 
-  const generateReport = () => {
-    const packagesWithCounts = packages.map(pkg => {
-      const vip = pkg.tierBookingCounts?.VIP || 0;
-      const premium = pkg.tierBookingCounts?.Premium || 0;
-      const standard = pkg.tierBookingCounts?.Standard || 0;
-      const total = vip + premium + standard;
-      return { ...pkg, vip, premium, standard, totalBookings: total };
-    });
-
-    const mostPopularPackage = packagesWithCounts.reduce(
-      (prev, current) => (prev.totalBookings > current.totalBookings ? prev : current),
-      { vip: 0, premium: 0, standard: 0, totalBookings: 0 }
-    );
-
-    const reportWindow = window.open("", "_blank");
-    const reportContent = `
-      <html>
-        <head>
-          <title>Package Report</title>
-          <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #f9fafb; color: #333; }
-            h1, h2, h3 { text-align: center; color: #1e40af; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
-            th { background: #2563eb; color: white; }
-            tr:nth-child(even) { background: #f3f4f6; }
-            .badge {
-              display: inline-block;
-              padding: 4px 10px;
-              border-radius: 12px;
-              font-size: 12px;
-              color: white;
-              font-weight: bold;
-              min-width: 50px;
-              text-align: center;
-            }
-            .vip { background-color: #b91c1c; }
-            .premium { background-color: #9333ea; }
-            .standard { background-color: #2563eb; }
-            .bar-container { width: 100%; background: #e5e7eb; border-radius: 8px; height: 12px; margin-top: 4px; overflow: hidden; }
-            .bar { height: 100%; border-radius: 8px; }
-            .bar-vip { background-color: #b91c1c; }
-            .bar-premium { background-color: #9333ea; }
-            .bar-standard { background-color: #2563eb; }
-            .popular-section { margin-top: 40px; padding: 20px; border: 2px solid #2563eb; background: #eff6ff; border-radius: 12px; }
-          </style>
-        </head>
-        <body>
-          <h1>Package Provider Report</h1>
-          <h3>Generated on: ${new Date().toLocaleString()}</h3>
-
-          <h2>All Packages</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Package Name</th>
-                <th>Category</th>
-                <th>Province</th>
-                <th>Description</th>
-                <th>VIP Bookings</th>
-                <th>Premium Bookings</th>
-                <th>Standard Bookings</th>
-                <th>Total Bookings</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${packagesWithCounts.map(pkg => {
-                const vipPercent = pkg.totalBookings ? (pkg.vip / pkg.totalBookings) * 100 : 0;
-                const premiumPercent = pkg.totalBookings ? (pkg.premium / pkg.totalBookings) * 100 : 0;
-                const standardPercent = pkg.totalBookings ? (pkg.standard / pkg.totalBookings) * 100 : 0;
-
-                return `
-                  <tr>
-                    <td>${pkg.packageName || "N/A"}</td>
-                    <td>${pkg.category || "N/A"}</td>
-                    <td>${pkg.province || "N/A"}</td>
-                    <td>${pkg.description || "N/A"}</td>
-                    <td>
-                      <span class="badge vip">${pkg.vip}</span>
-                      <div class="bar-container"><div class="bar bar-vip" style="width: ${vipPercent}%;"></div></div>
-                    </td>
-                    <td>
-                      <span class="badge premium">${pkg.premium}</span>
-                      <div class="bar-container"><div class="bar bar-premium" style="width: ${premiumPercent}%;"></div></div>
-                    </td>
-                    <td>
-                      <span class="badge standard">${pkg.standard}</span>
-                      <div class="bar-container"><div class="bar bar-standard" style="width: ${standardPercent}%;"></div></div>
-                    </td>
-                    <td>${pkg.totalBookings}</td>
-                  </tr>
-                `;
-              }).join("")}
-            </tbody>
-          </table>
-
-          <div class="popular-section">
-            <h2>🌟 Most Popular Package</h2>
-            ${mostPopularPackage.packageName ? `
-              <p><strong>Name:</strong> ${mostPopularPackage.packageName}</p>
-              <p><strong>Category:</strong> ${mostPopularPackage.category}</p>
-              <p><strong>Province:</strong> ${mostPopularPackage.province}</p>
-              <p><strong>Description:</strong> ${mostPopularPackage.description}</p>
-              <p><strong>VIP Bookings:</strong> <span class="badge vip">${mostPopularPackage.vip}</span>
-                <div class="bar-container"><div class="bar bar-vip" style="width: ${(mostPopularPackage.vip / mostPopularPackage.totalBookings) * 100}%;"></div></div>
-              </p>
-              <p><strong>Premium Bookings:</strong> <span class="badge premium">${mostPopularPackage.premium}</span>
-                <div class="bar-container"><div class="bar bar-premium" style="width: ${(mostPopularPackage.premium / mostPopularPackage.totalBookings) * 100}%;"></div></div>
-              </p>
-              <p><strong>Standard Bookings:</strong> <span class="badge standard">${mostPopularPackage.standard}</span>
-                <div class="bar-container"><div class="bar bar-standard" style="width: ${(mostPopularPackage.standard / mostPopularPackage.totalBookings) * 100}%;"></div></div>
-              </p>
-              <p><strong>Total Bookings:</strong> ${mostPopularPackage.totalBookings}</p>
-            ` : "<p>No packages available.</p>"}
-          </div>
-        </body>
-      </html>
-    `;
-
-    reportWindow.document.write(reportContent);
-    reportWindow.document.close();
-    reportWindow.print();
-  };
-
   const handleGenerateReport = () => {
+    if (packages.length === 0) {
+      alert("No packages available to generate a report.");
+      return;
+    }
+
     setIsGeneratingReport(true);
-    setTimeout(() => {
-      generateReport();
-      setIsGeneratingReport(false);
-    }, 500);
+
+    // BOM character to fix Excel UTF-8 issue
+    const BOM = "\uFEFF";
+    const csvHeader = "ID,Package Name,Category,Province,Options & Prices\n";
+    const csvRows = packages.map((pkg, idx) => {
+      const options = pkg.packages?.map(p => `${p.packageType}: Rs.${p.price}`).join("; ") || "";
+      return `${idx + 1},"${(pkg.packageName || "").replace(/"/g, '""')}","${(pkg.category || "").replace(/"/g, '""')}","${(pkg.province || "").replace(/"/g, '""')}","${options.replace(/"/g, '""')}"`;
+    }).join("\n");
+
+    const csvContent = BOM + csvHeader + csvRows;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "packages_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setIsGeneratingReport(false);
   };
 
   if (loading) {
@@ -246,30 +144,50 @@ const PackageProviderDashboard = () => {
         {/* Header Section with Active Indicator */}
         <div className="mb-12">
           <div className="inline-block mb-4">
-            <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-lg border transition-all duration-300 cursor-pointer ${
-              isDashboardActive 
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-600 shadow-indigo-500/50' 
-                : 'bg-white/80 backdrop-blur-md border-white/20'
-            }`}
-            onClick={() => setIsDashboardActive(!isDashboardActive)}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 ${
-                isDashboardActive 
-                  ? 'bg-white/20 backdrop-blur-sm' 
-                  : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-              }`}>
-                <svg className={`w-5 h-5 transition-colors ${isDashboardActive ? 'text-white' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            <div
+              className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-lg border transition-all duration-300 cursor-pointer ${
+                isDashboardActive
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-600 shadow-indigo-500/50'
+                  : 'bg-white/80 backdrop-blur-md border-white/20'
+              }`}
+              onClick={() => setIsDashboardActive(!isDashboardActive)}
+            >
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 ${
+                  isDashboardActive
+                    ? 'bg-white/20 backdrop-blur-sm'
+                    : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                }`}
+              >
+                <svg
+                  className={`w-5 h-5 transition-colors ${isDashboardActive ? 'text-white' : 'text-white'}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
                 </svg>
               </div>
               <div>
-                <p className={`text-sm font-medium transition-colors ${isDashboardActive ? 'text-indigo-100' : 'text-slate-500'}`}>
+                <p
+                  className={`text-sm font-medium transition-colors ${
+                    isDashboardActive ? 'text-indigo-100' : 'text-slate-500'
+                  }`}
+                >
                   Dashboard
                 </p>
-                <p className={`text-lg font-bold transition-colors ${
-                  isDashboardActive 
-                    ? 'text-white' 
-                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
-                }`}>
+                <p
+                  className={`text-lg font-bold transition-colors ${
+                    isDashboardActive
+                      ? 'text-white'
+                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
+                  }`}
+                >
                   {user?.businessName || user?.firstName}
                 </p>
               </div>
@@ -281,7 +199,9 @@ const PackageProviderDashboard = () => {
               )}
             </div>
           </div>
-          <p className="text-slate-600 text-lg">Welcome to PackageProviderDashboard, Manage your Package ease.</p>
+          <p className="text-slate-600 text-lg">
+            Welcome to PackageProviderDashboard, Manage your Package ease.
+          </p>
         </div>
 
         {/* Stats & Actions Section */}
@@ -293,7 +213,12 @@ const PackageProviderDashboard = () => {
               <div className="relative">
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform duration-500">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-base font-semibold text-slate-600 mb-2">Total Packages</h3>
@@ -321,45 +246,87 @@ const PackageProviderDashboard = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center gap-3">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
                     </svg>
                     <span className="text-lg">Add Package</span>
                   </div>
                 </button>
-                
+
+                <button
+                  onClick={handleViewAppointments}
+                  className="group relative overflow-hidden bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-500/50"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-700 via-orange-700 to-red-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative flex items-center gap-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <span className="text-lg">View Appointments</span>
+                  </div>
+                </button>
+
                 <button
                   onClick={handleGenerateReport}
                   disabled={isGeneratingReport}
                   className="group relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-violet-500/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-violet-700 via-purple-700 to-fuchsia-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  {/* Animated shine effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                  
                   <div className="relative flex items-center gap-3">
                     {isGeneratingReport ? (
                       <>
                         <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         <span className="text-lg">Generating...</span>
                       </>
                     ) : (
                       <>
-                        <svg className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <svg
+                          className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
                         </svg>
                         <span className="text-lg">Generate Report</span>
-                        <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        <svg
+                          className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
                         </svg>
                       </>
                     )}
                   </div>
-
-                  {/* Pulse effect when generating */}
                   {isGeneratingReport && (
                     <div className="absolute inset-0 rounded-2xl bg-white/20 animate-ping"></div>
                   )}
@@ -374,7 +341,12 @@ const PackageProviderDashboard = () => {
           <div className="mb-8 bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-xl shadow-lg backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span className="font-medium">{error}</span>
             </div>
@@ -391,7 +363,12 @@ const PackageProviderDashboard = () => {
           <div className="bg-white/90 backdrop-blur-md border border-white/20 rounded-3xl p-16 text-center shadow-xl">
             <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
               <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
               </svg>
             </div>
             <h3 className="text-2xl font-bold text-slate-800 mb-3">No packages yet</h3>
@@ -403,7 +380,12 @@ const PackageProviderDashboard = () => {
               className="inline-flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               Create Your First Package
             </button>
@@ -411,22 +393,27 @@ const PackageProviderDashboard = () => {
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {packages.map((pkg) => (
-              <div key={pkg._id} className="group bg-white/90 backdrop-blur-md border border-white/20 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+              <div
+                key={pkg._id}
+                className="group bg-white/90 backdrop-blur-md border border-white/20 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+              >
                 {/* Image Section */}
-                <div className="relative overflow-hidden">
+                <div className="relative overflow-hidden h-52">
                   {pkg.image ? (
-                    <div className="relative h-52 overflow-hidden">
-                      <img
-                        src={pkg.image}
-                        alt={pkg.packageName}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
+                    <img
+                      src={pkg.image}
+                      alt={pkg.packageName}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
                   ) : (
-                    <div className="h-52 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center group-hover:from-indigo-200 group-hover:via-purple-200 group-hover:to-pink-200 transition-all duration-700">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center group-hover:from-indigo-200 group-hover:via-purple-200 group-hover:to-pink-200 transition-all duration-700">
                       <svg className="w-16 h-16 text-slate-500 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
                   )}
@@ -437,7 +424,7 @@ const PackageProviderDashboard = () => {
                   <h3 className="text-xl font-bold text-slate-800 mb-3 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                     {pkg.packageName}
                   </h3>
-                  
+
                   <div className="flex items-center gap-2 mb-4 flex-wrap">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 text-sm font-semibold rounded-full shadow-sm">
                       <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -447,7 +434,11 @@ const PackageProviderDashboard = () => {
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 text-sm font-semibold rounded-full shadow-sm">
                       <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                       {pkg.province}
                     </span>
@@ -457,13 +448,21 @@ const PackageProviderDashboard = () => {
                   <div className="mb-5 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-4">
                     <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
                       </svg>
                       Package Options
                     </p>
                     <div className="space-y-2">
                       {pkg.packages?.slice(0, 2).map((p, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-sm bg-white rounded-lg px-3 py-2 shadow-sm">
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center text-sm bg-white rounded-lg px-3 py-2 shadow-sm"
+                        >
                           <span className="text-slate-700 font-medium">{p.packageType}</span>
                           <span className="font-bold text-emerald-600">Rs.{p.price}</span>
                         </div>
@@ -471,7 +470,11 @@ const PackageProviderDashboard = () => {
                       {pkg.packages?.length > 2 && (
                         <p className="text-xs text-slate-500 font-medium pt-1 flex items-center gap-1">
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                           {pkg.packages.length - 2} more options
                         </p>
@@ -486,7 +489,12 @@ const PackageProviderDashboard = () => {
                       className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white py-3 px-4 rounded-xl font-semibold text-sm hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
                       </svg>
                       Edit
                     </button>
@@ -495,7 +503,12 @@ const PackageProviderDashboard = () => {
                       className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white py-3 px-4 rounded-xl font-semibold text-sm hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                       Delete
                     </button>

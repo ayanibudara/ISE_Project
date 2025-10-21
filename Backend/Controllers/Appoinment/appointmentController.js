@@ -1,6 +1,6 @@
 const Appointment = require('../../models/Appoiment/appointmentModel.js');
 const User = require('../../models/User.js');
-// Import Package model
+const Package = require('../../Models/Services/packageModel.js');
 
 // Create new appointment (any authenticated user)
 exports.createAppointment = async (req, res) => {
@@ -213,5 +213,97 @@ exports.updateAppointmentStatus = async (req, res) => {
       message: 'Failed to update appointment', 
       error: error.message 
     });
+  }
+};
+
+exports.getProviderAppointments = async (req, res) => {
+  try {
+    const providerId = req.user._id;
+
+    // 1️⃣ Find all packages by this provider
+    const providerPackages = await Package.find({ providerId }).select('_id packageName category province description image packages');
+
+    if (!providerPackages.length) {
+      return res.status(200).json({ message: 'No packages found for this provider', appointments: [] });
+    }
+
+    const packageIds = providerPackages.map(pkg => pkg._id);
+
+    // 2️⃣ Find all appointments linked to these packages, populate user and package
+    const appointments = await Appointment.find({ packageId: { $in: packageIds } })
+      .populate('userId', 'firstName lastName email role') // user info
+      .populate('packageId', 'packageName category province description image packages') // package info
+      .sort({ startDate: 1 });
+
+    // 3️⃣ Return results
+    res.status(200).json({
+      totalAppointments: appointments.length,
+      providerId,
+      appointments,
+    });
+  } catch (error) {
+    console.error('Error fetching provider appointments:', error);
+    res.status(500).json({
+      message: 'Failed to fetch provider appointments',
+      error: error.message,
+    });
+  }
+
+};
+
+// 🟢 Confirm an appointment (by provider or admin)
+exports.confirmAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    // Ensure the provider owns the package
+    const pkg = await Package.findById(appointment.packageId);
+    if (!pkg || pkg.providerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to confirm this appointment' });
+    }
+
+    appointment.status = 'confirmed';
+    await appointment.save();
+
+    res.status(200).json({
+      message: 'Appointment confirmed successfully',
+      appointment,
+    });
+  } catch (error) {
+    console.error('Error confirming appointment:', error);
+    res.status(500).json({ message: 'Failed to confirm appointment', error: error.message });
+  }
+};
+// 🔴 Reject an appointment (status only, no payload required)
+exports.rejectAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    // Ensure the provider owns the package
+    const pkg = await Package.findById(appointment.packageId);
+    if (!pkg || pkg.providerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to reject this appointment' });
+    }
+
+    appointment.status = 'rejected'; 
+    await appointment.save();
+
+    res.status(200).json({
+      message: 'Appointment rejected successfully',
+      appointment,
+    });
+  } catch (error) {
+    console.error('Error rejecting appointment:', error);
+    res.status(500).json({ message: 'Failed to reject appointment', error: error.message });
   }
 };

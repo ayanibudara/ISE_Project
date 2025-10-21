@@ -10,6 +10,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 
 import Home from "./pages/home";
+import  AboutUs  from "./pages/aboutus";
+import Contact  from "./pages/contactus";
 import AppointmentForm from "./pages/appointment/appointmentform";
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
 //import Guideform from "./pages/Guide/GuideSchedulingForm";
@@ -114,6 +116,8 @@ const AuthenticatedRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+      <Route path="/aboutus" element={<AboutUs />} />
+      <Route path="/contactus" element={<Contact />} />
 
       <Route path="/apform" element={<AppointmentForm />} />
       <Route path="/appointments" element={<AppointmentsPage />} />
