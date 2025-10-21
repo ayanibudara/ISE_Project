@@ -272,18 +272,24 @@ const DashboardLayout = ({ children }) => {
                   </button>
                 </div>
               </Transition.Child>
-              <div className="flex flex-shrink-0 items-center justify-center px-6 pb-2">
-                <div className="flex flex-col items-center">
-                  <img
-                    src={tmsLogo}
-                    alt="TMS Logo"
-                    className="h-12 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
-                  />
-                  <p className="text-sm font-medium text-slate-300 mt-2">
-                    Tourist Management System
+
+              {/* Updated Mobile Logo Section */}
+              <div className="flex flex-shrink-0 items-center justify-center px-6 pb-4">
+                <div className="flex flex-col items-center space-y-3 py-4">
+                  <div className="relative group">
+                    <img
+                      src={tmsLogo}
+                      alt="Pearl Path Ways Logo"
+                      className="h-16 w-16 object-contain rounded-full shadow-lg bg-white p-2 border border-slate-200 transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-200 tracking-wide text-center">
+                    Pearl Path Ways
                   </p>
                 </div>
               </div>
+
               <div className="mt-8 h-0 flex-1 overflow-y-auto px-3">
                 <nav className="space-y-2">
                   {navigation.map((item) => (
@@ -337,14 +343,18 @@ const DashboardLayout = ({ children }) => {
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex w-72 flex-col">
           <div className="flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
+            {/* Updated Desktop Logo Section */}
             <div className="flex h-150 flex-shrink-0 items-center justify-center px-6 border-b border-slate-700/50">
-              <div className="flex flex-col items-center">
-                <img
-                  src={tmsLogo}
-                  alt="TMS Logo"
-                  className="h-20 w-auto object-contain rounded-lg shadow-lg bg-white p-1"
-                />
-                <p className="text-sm font-medium text-slate-300 mt-2">
+              <div className="flex flex-col items-center space-y-3 py-6">
+                <div className="relative group">
+                  <img
+                    src={tmsLogo}
+                    alt="Pearl Path Ways Logo"
+                    className="h-24 w-24 object-contain rounded-full shadow-xl bg-white p-3 border border-slate-200 transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <p className="text-base font-bold text-slate-200 tracking-wide text-center">
                   Pearl Path Ways
                 </p>
               </div>

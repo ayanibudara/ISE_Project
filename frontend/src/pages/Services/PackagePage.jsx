@@ -8,7 +8,7 @@ const PackageList = () => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProvinceFilter, setSelectedProvinceFilter] = useState("");
-  const [appliedProvince, setAppliedProvince] = useState(""); // Only filter when "Search" is clicked
+  const [appliedProvince, setAppliedProvince] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,7 +24,6 @@ const PackageList = () => {
     "Eastern Province",
   ];
 
-  // Fetch all packages on mount
   useEffect(() => {
     const fetchPackages = async () => {
       setLoading(true);
@@ -42,7 +41,6 @@ const PackageList = () => {
     fetchPackages();
   }, []);
 
-  // Sync URL on initial load
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const provinceFromUrl = params.get("province") || "";
@@ -50,7 +48,6 @@ const PackageList = () => {
     setAppliedProvince(provinceFromUrl);
   }, [location.search]);
 
-  // Handle Search button click
   const handleSearch = () => {
     const clean = selectedProvinceFilter.trim();
     setAppliedProvince(clean);
@@ -61,7 +58,6 @@ const PackageList = () => {
     }
   };
 
-  // 🔥 Filter based on appliedProvince (only after "Search" is clicked)
   const filteredPackages = useMemo(() => {
     if (!appliedProvince) return packages;
 
@@ -72,7 +68,6 @@ const PackageList = () => {
     });
   }, [packages, appliedProvince]);
 
-  // Helper functions (unchanged)
   const getCategoryIcon = (category) => {
     switch (category?.toLowerCase()) {
       case 'cultural': return <Star className="w-4 h-4" />;
@@ -100,7 +95,6 @@ const PackageList = () => {
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="container px-4 py-20 mx-auto text-center">
@@ -111,17 +105,22 @@ const PackageList = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-full h-full rounded-full -top-1/2 -left-1/2 bg-gradient-to-r from-blue-100/30 to-purple-100/30 blur-3xl animate-pulse"></div>
         <div className="absolute w-full h-full delay-1000 rounded-full -bottom-1/2 -right-1/2 bg-gradient-to-l from-emerald-100/30 to-teal-100/30 blur-3xl animate-pulse"></div>
       </div>
 
       <div className="container relative z-10 px-4 py-8 mx-auto lg:py-12">
-        {/* Header */}
         <div className="mb-8 text-center lg:mb-10">
           <h1 className="mb-6 text-4xl font-bold leading-tight text-transparent lg:text-6xl xl:text-7xl bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text">
-            {appliedProvince ? `Packages in ${appliedProvince}` : "Travel Packages"}
+           {appliedProvince ? (
+              `Packages in ${appliedProvince}`
+            ) : (
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700">
+                Travel Packages
+              </span>
+            )}
+             
           </h1>
           <p className="text-lg font-medium text-gray-600 lg:text-xl">
             {appliedProvince
@@ -130,10 +129,8 @@ const PackageList = () => {
           </p>
         </div>
 
-        {/* 🔍 NEW: Province Filter with SEARCH BUTTON */}
         <div className="w-full max-w-3xl mx-auto mb-12 bg-white p-4 rounded-lg shadow-lg">
           <div className="flex flex-col md:flex-row items-center">
-            {/* Province Dropdown */}
             <div className="flex items-center w-full md:w-3/4 mb-4 md:mb-0 md:mr-4">
               <MapPin className="text-[#1E3A8A] mr-2" size={24} aria-hidden="true" />
               <select
@@ -151,7 +148,6 @@ const PackageList = () => {
               </select>
             </div>
 
-            {/* 🔎 SEARCH BUTTON */}
             <button
               type="button"
               onClick={handleSearch}
@@ -163,7 +159,6 @@ const PackageList = () => {
           </div>
         </div>
 
-        {/* No results or empty */}
         {filteredPackages.length === 0 ? (
           <div className="py-20 text-center">
             <div className="max-w-md p-12 mx-auto border border-gray-200 shadow-xl bg-white/90 backdrop-blur-md rounded-3xl">
@@ -176,7 +171,6 @@ const PackageList = () => {
             </div>
           </div>
         ) : (
-          /* Package Grid */
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:gap-8">
             {filteredPackages.map((pkg, index) => (
               <div
@@ -202,7 +196,6 @@ const PackageList = () => {
                     </div>
                   )}
                   
-                  {/* Category Badge */}
                   <div className="absolute top-4 left-4">
                     <div className={`inline-flex items-center gap-2 bg-gradient-to-r ${getCategoryColor(pkg.category)} rounded-full px-3 py-1 shadow-lg`}>
                       {getCategoryIcon(pkg.category)}
@@ -210,7 +203,6 @@ const PackageList = () => {
                     </div>
                   </div>
 
-                  {/* Province Badge */}
                   <div className="absolute top-4 right-4">
                     <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white/90">
                       <MapPin className="w-3 h-3" />
@@ -245,9 +237,13 @@ const PackageList = () => {
                     ))}
                   </div>
 
+                  {/* 🔵 Updated "View More" button with Deep Blue gradient (#1E40AF → #2563EB) */}
                   <button
                     onClick={() => navigate(`/packages/${pkg._id}`)}
-                    className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl hover:shadow-lg hover:shadow-blue-500/25"
+                    style={{
+                      background: 'linear-gradient(to right, #1E40AF, #2563EB)',
+                    }}
+                    className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition-all duration-300 rounded-xl hover:shadow-lg hover:shadow-blue-500/30"
                   >
                     <Eye className="w-4 h-4" />
                     <span>View More</span>
