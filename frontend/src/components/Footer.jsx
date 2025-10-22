@@ -47,22 +47,22 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-blue-200">
+                <a href="/packages" className="hover:text-blue-200">
                   Destinations
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-blue-200">
+                {/*<a href="#" className="hover:text-blue-200">
                   Tour Guides
-                </a>
+                </a>*/}
               </li>
               <li>
-                <a href="#" className="hover:text-blue-200">
+                <a href="/aboutus" className="hover:text-blue-200">
                   About Us
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-blue-200">
+                <a href="/contactus" className="hover:text-blue-200">
                   Contact
                 </a>
               </li>

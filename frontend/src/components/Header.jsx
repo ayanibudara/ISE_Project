@@ -1,22 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MenuIcon, XIcon as CloseIcon } from "lucide-react";
 import { Instagram, Twitter, ChevronDown, User, LogOut } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom"; // ✅ Changed: use NavLink + useNavigate
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import tmsLogo from "../assets/1000006181.jpg"; // ✅ Make sure path is correct
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { authState, logout } = useAuth();
   const profileMenuRef = useRef(null);
-  const navigate = useNavigate(); // ✅ For logout redirect (optional but clean)
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await logout();
       setIsProfileMenuOpen(false);
-      setIsMenuOpen(false); // ✅ Also close mobile menu on logout
-      navigate("/"); // ✅ Optional: redirect to home after logout
+      setIsMenuOpen(false);
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -47,10 +48,19 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
       {/* Top Bar */}
-      <div className="container flex items-center justify-between px-4 py-4 mx-auto">
-        {/* Logo */}
-        <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-[#1E3A8A]">Pearl Pathways</h1>
+      <div className="container flex items-center justify-between px-2 py-4 mx-auto"> {/* ✅ Reduced px-4 → px-2 for more left space */}
+        {/* Logo Section - Updated: Moved Left, Bigger Image & Text */}
+        <div className="flex items-center space-x-2">
+          <NavLink to="/" className="flex items-center space-x-2 group">
+            <img
+              src={tmsLogo}
+              alt="Pearl Path Ways Logo"
+              className="h-12 w-12 object-contain rounded-full shadow-md border border-gray-200 transition-transform duration-200 group-hover:scale-105"
+            />
+            <h1 className="text-2xl font-bold text-[#1E3A8A] group-hover:text-blue-700 transition-colors">
+              Pearl Path Ways
+            </h1>
+          </NavLink>
         </div>
 
         {/* Desktop Navigation */}

@@ -5,8 +5,11 @@ import {
   CalendarIcon,
   HeartIcon,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // ✅ Added
 
 export function Services() {
+  const navigate = useNavigate(); // ✅ Added
+
   const services = [
     {
       id: 1,
@@ -72,6 +75,7 @@ export function Services() {
           </p>
           <button
             type="button"
+            onClick={() => navigate("/packages")} // ✅ Updated: Navigate to booking form
             className="px-6 py-3 bg-white text-[#1E3A8A] font-medium rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-colors"
           >
             Book Your Tour Now
