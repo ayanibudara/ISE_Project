@@ -377,12 +377,12 @@ const handleGenerateReport = () => {
                 </div>
               </div>
               <div className="flex gap-4 flex-wrap">
-                {/* Add Package - Pearl Blue */}
+                {/* Add Package - Blue */}
                 <button
                   onClick={handleAddPackage}
-                  className="group relative overflow-hidden bg-gradient-to-r from-blue-400/90 via-blue-500/90 to-cyan-500/90 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400/50"
+                  className="group relative overflow-hidden bg-gradient-to-r from-blue-500/90 via-blue-600/90 to-indigo-600/90 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400/50"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/90 via-blue-600/90 to-cyan-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 via-blue-700/90 to-indigo-700/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center gap-3">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -396,29 +396,27 @@ const handleGenerateReport = () => {
                   </div>
                 </button>
 
-                {/* View Appointments - Pearl Blue */}
-  <button
-  onClick={handleViewAppointments}
-  className="group relative overflow-hidden bg-gradient-to-r from-blue-400/90 via-blue-500/90 to-cyan-500/90 text-white px-8 py-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-white/50"
->
-  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/90 via-blue-600/90 to-cyan-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-  <div className="relative flex items-center gap-3">
-    {/* 🔁 Replaced icon: Calendar Check */}
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 6l-6-6-6 6" />
-    </svg>
-    <span className="text-lg">View Appointments</span>
-  </div>
-</button>
+                {/* View Appointments - Blue */}
+                <button
+                  onClick={handleViewAppointments}
+                  className="group relative overflow-hidden bg-gradient-to-r from-sky-500/90 via-blue-500/90 to-cyan-500/90 text-white px-8 py-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-white/50"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-sky-600/90 via-blue-600/90 to-cyan-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative flex items-center gap-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-lg">View Appointments</span>
+                  </div>
+                </button>
 
-                {/* Generate Report - Pearl Blue, smaller size */}
+                {/* Generate Report - Green */}
                 <button
                   onClick={handleGenerateReport}
                   disabled={isGeneratingReport}
-                  className="group relative overflow-hidden bg-gradient-to-r from-blue-400/90 via-blue-500/90 to-cyan-500/90 text-white px-6 py-3 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="group relative overflow-hidden bg-gradient-to-r from-emerald-500/90 via-green-500/90 to-teal-500/90 text-white px-6 py-3 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-400/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/90 via-blue-600/90 to-cyan-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/90 via-green-600/90 to-teal-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                   <div className="relative flex items-center gap-2">
                     {isGeneratingReport ? (
@@ -431,7 +429,7 @@ const handleGenerateReport = () => {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           ></path>
                         </svg>
-                        <span className="text-sm">Gen...</span>
+                        <span className="text-sm">Generating...</span>
                       </>
                     ) : (
                       <>
@@ -445,10 +443,10 @@ const handleGenerateReport = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2.5}
-                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <span className="text-sm">Report</span>
+                        <span className="text-sm">Generate Report</span>
                       </>
                     )}
                   </div>

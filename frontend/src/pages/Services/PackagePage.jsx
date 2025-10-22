@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Eye, MapPin, Star, Sparkles, Mountain, Waves, SearchIcon } from "lucide-react";
+import { Eye, MapPin, Star, Sparkles, Mountain, Waves, Search } from "lucide-react";
 
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
@@ -153,7 +153,7 @@ const PackageList = () => {
               onClick={handleSearch}
               className="w-full md:w-1/4 bg-[#1E3A8A] text-white py-3 px-6 rounded-md flex items-center justify-center hover:bg-blue-900 transition-colors"
             >
-              <SearchIcon size={20} className="mr-2" aria-hidden="true" />
+              <Search size={20} className="mr-2" aria-hidden="true" />
               <span>Search</span>
             </button>
           </div>
@@ -175,20 +175,23 @@ const PackageList = () => {
             {filteredPackages.map((pkg, index) => (
               <div
                 key={pkg._id}
-                className="overflow-hidden transition-all duration-500 border border-gray-200 shadow-lg group bg-white/90 backdrop-blur-xl rounded-3xl hover:bg-white hover:border-gray-300 hover:transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-gray-300/50"
+                className="relative overflow-hidden transition-all duration-500 bg-white border border-gray-100 shadow-md group rounded-2xl hover:shadow-2xl hover:border-gray-200"
                 style={{ 
                   animationDelay: `${index * 150}ms`,
                   animation: 'fadeInUp 0.8s ease-out forwards'
                 }}
               >
-                <div className="relative h-48 overflow-hidden lg:h-56">
+                <div className="relative h-56 overflow-hidden lg:h-64">
                   {pkg.image ? (
-                    <img 
-                      src={pkg.image} 
-                      alt={pkg.packageName}
-                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
-                    />
+                    <>
+                      <img 
+                        src={pkg.image} 
+                        alt={pkg.packageName}
+                        className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 transition-opacity duration-300 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80"></div>
+                    </>
                   ) : (
                     <div className={`w-full h-full bg-gradient-to-br ${getCategoryColor(pkg.category)} flex items-center justify-center`}>
                       {getCategoryIcon(pkg.category)}
@@ -196,61 +199,64 @@ const PackageList = () => {
                     </div>
                   )}
                   
-                  <div className="absolute top-4 left-4">
-                    <div className={`inline-flex items-center gap-2 bg-gradient-to-r ${getCategoryColor(pkg.category)} rounded-full px-3 py-1 shadow-lg`}>
+                  <div className="absolute top-3 left-3">
+                    <div className={`inline-flex items-center gap-1.5 bg-gradient-to-r ${getCategoryColor(pkg.category)} rounded-full px-3 py-1.5 shadow-lg backdrop-blur-sm`}>
                       {getCategoryIcon(pkg.category)}
-                      <span className="text-xs font-semibold text-white">{pkg.category}</span>
+                      <span className="text-xs font-bold tracking-wide text-white uppercase">{pkg.category}</span>
                     </div>
                   </div>
 
-                  <div className="absolute top-4 right-4">
-                    <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white/90">
-                      <MapPin className="w-3 h-3" />
-                      <span className="text-xs font-medium">{pkg.province}</span>
+                  <div className="absolute top-3 right-3">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md shadow-lg">
+                      <MapPin className="w-3.5 h-3.5 text-gray-700" />
+                      <span className="text-xs font-semibold text-gray-800">{pkg.province}</span>
                     </div>
                   </div>
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                 </div>
 
-                <div className="p-6">
-                  <h3 className="mb-3 text-xl font-bold text-gray-900 transition-colors duration-300 lg:text-2xl group-hover:text-gray-700 line-clamp-2">
+                <div className="p-5">
+                  <h3 className="mb-2 text-xl font-bold leading-tight text-gray-900 transition-colors duration-300 lg:text-2xl group-hover:text-blue-700 line-clamp-2">
                     {pkg.packageName}
                   </h3>
                   
-                  <p className="mb-6 text-sm leading-relaxed text-gray-600 lg:text-base line-clamp-3">
+                  <p className="mb-5 text-sm leading-relaxed text-gray-600 lg:text-base line-clamp-3">
                     {pkg.description}
                   </p>
 
-                  <div className="mb-6 space-y-3">
+                  <div className="mb-5 space-y-2.5">
                     {pkg.subPackages?.map((sub, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 transition-all duration-300 border border-gray-200 bg-gray-50/80 backdrop-blur-sm rounded-xl hover:bg-gray-100/80"
+                        className="relative flex items-center justify-between p-3.5 overflow-hidden transition-all duration-300 border border-gray-100 rounded-xl hover:border-gray-200 hover:shadow-md group/sub"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 bg-gradient-to-r ${getSubPackageColor(sub.packageType)} rounded-full shadow-lg`}></div>
-                          <span className="text-sm font-medium text-gray-800">{sub.packageType}</span>
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${getSubPackageColor(sub.packageType)}`}></div>
+                        <div className="flex items-center gap-2.5 pl-2">
+                          <div className={`w-8 h-8 bg-gradient-to-br ${getSubPackageColor(sub.packageType)} rounded-lg flex items-center justify-center shadow-sm`}>
+                            <Star className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-800">{sub.packageType}</span>
                         </div>
-                        <span className="text-sm font-bold text-green-600">Rs.{sub.price}</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-medium text-gray-500">Starting from</span>
+                          <span className="text-base font-bold text-green-600">Rs.{sub.price}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* 🔵 Updated "View More" button with Deep Blue gradient (#1E40AF → #2563EB) */}
                   <button
                     onClick={() => navigate(`/packages/${pkg._id}`)}
                     style={{
                       background: 'linear-gradient(to right, #1E40AF, #2563EB)',
                     }}
-                    className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition-all duration-300 rounded-xl hover:shadow-lg hover:shadow-blue-500/30"
+                    className="flex items-center justify-center w-full gap-2 px-4 py-3.5 font-semibold text-white transition-all duration-300 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02]"
                   >
                     <Eye className="w-4 h-4" />
                     <span>View More</span>
                   </button>
                 </div>
 
-                <div className="absolute inset-0 transition-all duration-500 pointer-events-none bg-gradient-to-r from-blue-100/0 via-purple-100/0 to-pink-100/0 group-hover:from-blue-100/10 group-hover:via-purple-100/10 group-hover:to-pink-100/10 rounded-3xl"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 transition-all duration-500 rounded-full opacity-0 -mt-16 -mr-16 bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl group-hover:opacity-100"></div>
               </div>
             ))}
           </div>
