@@ -11,9 +11,8 @@ import {
   Package,
   Info,
   MapPin,
-  User,
-  Mail,
-  Phone,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 import Reviews from "../Review/Reviews";
 
@@ -84,6 +83,19 @@ const PackageView = () => {
         return "bg-amber-500";
       default:
         return "bg-gray-500";
+    }
+  };
+
+  const getTierGradient = (tier) => {
+    switch (tier?.toLowerCase()) {
+      case "standard":
+        return "from-blue-500 to-blue-600";
+      case "premium":
+        return "from-purple-500 to-purple-600";
+      case "vip":
+        return "from-amber-500 to-orange-500";
+      default:
+        return "from-gray-500 to-gray-600";
     }
   };
 
@@ -161,7 +173,7 @@ const PackageView = () => {
                     alt={packageData.packageName}
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                   />
-                ) : ( // ✅ FIXED: Changed "else" to ":"
+                ) : (
                   <div
                     className={`w-full h-full bg-gradient-to-br ${getCategoryColor(
                       packageData.category
@@ -230,42 +242,74 @@ const PackageView = () => {
 
             {/* REVIEWS SECTION */}
             <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-3xl">
-             
               <Reviews packageId={packageId} />
             </div>
 
-            {/* Provider Information */}
-            {packageData.providerId && (
-              <div className="p-8 border border-indigo-100 shadow-xl bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl">
-                <div className="h-px mb-6 bg-gradient-to-r from-indigo-200 via-blue-300 to-indigo-200"></div>
-
-                <div className="space-y-4">
-                  {/* Provider Email */}
-                  {packageData.providerId.email && (
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 bg-blue-500 rounded-full">
-                        <Mail className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Provider Email Address</p>
-                        <p className="text-lg font-semibold text-blue-600">
-                          {packageData.providerId.email}
-                        </p>
-                      </div>
+            {/* TIER BOOKING COUNTS + TOTAL */}
+            {(packageData.tierBookingCounts || packageData.bookingCount !== undefined) && (
+              <div className="relative p-8 overflow-hidden bg-white border border-gray-100 shadow-xl rounded-3xl">
+                {/* Background Decoration */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/50 to-purple-100/50 rounded-full blur-3xl -z-0"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                      <TrendingUp className="w-5 h-5 text-white" />
                     </div>
-                  )}
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Booking Popularity By Tier
+                    </h3>
+                  </div>
+                  
+                  <div className="h-px mb-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+                  
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    {['Standard', 'Premium', 'VIP'].map((tier) => {
+                      const count = packageData.tierBookingCounts?.[tier] || 0;
+                      return (
+                        <div
+                          key={tier}
+                          className="relative flex flex-col items-center justify-center p-6 text-center transition-all duration-300 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 group rounded-2xl hover:shadow-xl hover:border-blue-300 hover:-translate-y-1"
+                        >
+                          <div
+                            className={`w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br ${getTierGradient(
+                              tier
+                            )} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                          >
+                            <Package className="w-8 h-8 text-white" />
+                          </div>
+                          <p className="mb-1 text-3xl font-bold text-gray-900">{count}</p>
+                          <p className="text-sm font-semibold tracking-wide text-gray-600 uppercase">{tier}</p>
+                          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${getTierGradient(tier)} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                        </div>
+                      );
+                    })}
+                  </div>
 
-                  {/* Provider Phone */}
-                  {packageData.providerId.mobile && (
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 bg-green-500 rounded-full">
-                        <Phone className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Phone Number</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {packageData.providerId.mobile}
-                        </p>
+                  {/* Total Booking Summary - Redesigned */}
+                  {packageData.bookingCount !== undefined && (
+                    <div className="relative mt-8 overflow-hidden bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200/50 rounded-2xl">
+                      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+                      <div className="relative p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg">
+                              <Users className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Bookings</p>
+                              <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                {packageData.bookingCount}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-xl border border-blue-200/30">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-gray-700">
+                              {packageData.bookingCount === 1 ? "booking" : "bookings"} made
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
