@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Calendar, User, DollarSign, MapPin, Clock } from "lucide-react";
 
-export function UpcomingTours({ userId, guideId }) {
+export function UpcomingTours({ userId, guideId, onToursCountUpdate }) {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,6 +14,11 @@ export function UpcomingTours({ userId, guideId }) {
       if (!guideId) {
         console.log("⚠️ No guideId provided");
         setLoading(false);
+        
+        // ✅ Update parent component when no guideId (count = 0)
+        if (onToursCountUpdate) {
+          onToursCountUpdate(0);
+        }
         return;
       }
 
@@ -23,19 +28,30 @@ export function UpcomingTours({ userId, guideId }) {
           `http://localhost:5000/api/guideassign/guide/${guideId}`
         );
         console.log("✅ Assignments fetched:", response.data);
-        setAssignments(response.data || []);
+        const fetchedAssignments = response.data || [];
+        setAssignments(fetchedAssignments);
         setError(null);
+        
+        // ✅ Update parent component with the count
+        if (onToursCountUpdate) {
+          onToursCountUpdate(fetchedAssignments.length);
+        }
       } catch (err) {
         console.error("❌ Error fetching assignments:", err);
         setError("Failed to load upcoming tours");
         setAssignments([]);
+        
+        // ✅ Update parent component even on error (count = 0)
+        if (onToursCountUpdate) {
+          onToursCountUpdate(0);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAssignments();
-  }, [guideId]);
+  }, [guideId, onToursCountUpdate]);
 
   const formatDate = (date) => {
     if (!date) return "N/A";
