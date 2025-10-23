@@ -34,14 +34,14 @@ const guideAssignSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  //paymentPerDay: {
-    //type: Number,
-    //required: true
- // },
- // totalPayment: {
-    //type: Number,
-   // required: true
- // },
+  paymentPerDay: {
+    type: Number,
+    required: true
+  },
+  totalPayment: {
+    type: Number,
+    required: true
+  },
   
 
   location: {

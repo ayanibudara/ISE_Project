@@ -16,7 +16,6 @@ const GuideDashboard = () => {
   const [guideData, setGuideData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
-  const [upcomingToursCount, setUpcomingToursCount] = useState(0);
 
   // ✅ Fetch guide details by userId
   useEffect(() => {
@@ -270,7 +269,7 @@ const GuideDashboard = () => {
                   </div>
                   <div className="flex items-center gap-2 text-slate-700">
                     <MapPin size={18} className="text-purple-600" />
-                    <span className="text-sm">{upcomingToursCount} upcoming tours</span>
+                    <span className="text-sm">{guideData?.upcomingTours?.length || 0} upcoming tours</span>
                   </div>
                 </div>
               </div>
@@ -311,7 +310,7 @@ const GuideDashboard = () => {
                   </h2>
                   <p className="text-slate-600 mt-2">Manage your scheduled tours</p>
                 </div>
-                {upcomingToursCount > 0 && (
+                {guideData?.upcomingTours?.length > 0 && (
                   <button
                     onClick={generateToursReport}
                     disabled={generatingReport}
@@ -326,7 +325,6 @@ const GuideDashboard = () => {
                 <UpcomingTours
                   userId={user._id}
                   guideId={guideData._id}
-                  onToursCountUpdate={setUpcomingToursCount}
                 />
               </div>
             </div>
