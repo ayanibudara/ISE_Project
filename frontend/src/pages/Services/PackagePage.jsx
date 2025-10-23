@@ -23,7 +23,7 @@ const PackageList = () => {
     "Central Province",
     "Eastern Province",
   ];
-
+//Fetching data from backend
   useEffect(() => {
     const fetchPackages = async () => {
       setLoading(true);
@@ -48,6 +48,7 @@ const PackageList = () => {
     setAppliedProvince(provinceFromUrl);
   }, [location.search]);
 
+  //Search button function
   const handleSearch = () => {
     const clean = selectedProvinceFilter.trim();
     setAppliedProvince(clean);
@@ -58,6 +59,7 @@ const PackageList = () => {
     }
   };
 
+  //Filtering packages based on province
   const filteredPackages = useMemo(() => {
     if (!appliedProvince) return packages;
 
@@ -113,14 +115,14 @@ const PackageList = () => {
       <div className="container relative z-10 px-4 py-8 mx-auto lg:py-12">
         <div className="mb-8 text-center lg:mb-10">
           <h1 className="mb-6 text-4xl font-bold leading-tight text-transparent lg:text-6xl xl:text-7xl bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text">
-           {appliedProvince ? (
+            {appliedProvince ? (
               `Packages in ${appliedProvince}`
             ) : (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700">
                 Travel Packages
               </span>
             )}
-             
+
           </h1>
           <p className="text-lg font-medium text-gray-600 lg:text-xl">
             {appliedProvince
@@ -176,7 +178,7 @@ const PackageList = () => {
               <div
                 key={pkg._id}
                 className="relative overflow-hidden transition-all duration-500 bg-white border border-gray-100 shadow-md group rounded-2xl hover:shadow-2xl hover:border-gray-200"
-                style={{ 
+                style={{
                   animationDelay: `${index * 150}ms`,
                   animation: 'fadeInUp 0.8s ease-out forwards'
                 }}
@@ -184,8 +186,8 @@ const PackageList = () => {
                 <div className="relative h-56 overflow-hidden lg:h-64">
                   {pkg.image ? (
                     <>
-                      <img 
-                        src={pkg.image} 
+                      <img
+                        src={pkg.image}
                         alt={pkg.packageName}
                         className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
                         loading="lazy"
@@ -198,7 +200,7 @@ const PackageList = () => {
                       <span className="ml-2 font-medium text-white">{pkg.category}</span>
                     </div>
                   )}
-                  
+
                   <div className="absolute top-3 left-3">
                     <div className={`inline-flex items-center gap-1.5 bg-gradient-to-r ${getCategoryColor(pkg.category)} rounded-full px-3 py-1.5 shadow-lg backdrop-blur-sm`}>
                       {getCategoryIcon(pkg.category)}
@@ -218,7 +220,7 @@ const PackageList = () => {
                   <h3 className="mb-2 text-xl font-bold leading-tight text-gray-900 transition-colors duration-300 lg:text-2xl group-hover:text-blue-700 line-clamp-2">
                     {pkg.packageName}
                   </h3>
-                  
+
                   <p className="mb-5 text-sm leading-relaxed text-gray-600 lg:text-base line-clamp-3">
                     {pkg.description}
                   </p>

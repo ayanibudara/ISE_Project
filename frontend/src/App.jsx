@@ -10,8 +10,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 
 import Home from "./pages/home";
-import  AboutUs  from "./pages/aboutus";
-import Contact  from "./pages/contactus";
+import AboutUs from "./pages/aboutus";
+import Contact from "./pages/contactus";
 import AppointmentForm from "./pages/appointment/appointmentform";
 import AppointmentsPage from "./pages/appointment/AppointmentsPage";
 //import Guideform from "./pages/Guide/GuideSchedulingForm";
@@ -44,7 +44,7 @@ import ReviewList from "./pages/Review/ReviewList";
 import Chatbot from "./AI/chatbot";
 //import ManagePackages from "./pages/Services/ManagePackage";
 import PackageView from "./pages/Services/PackageView";
-import EditPackageForm from "./pages/Services/EditPackageForm";
+import EditPackageForm from "./pages/Services/EditpackageForm";
 import UpdateAppointmentPage from "./pages/appointment/UpdateAppointmentPage"
 
 import Header from "./components/Header";
@@ -121,7 +121,7 @@ const AuthenticatedRoutes = () => {
 
       <Route path="/apform" element={<AppointmentForm />} />
       <Route path="/appointments" element={<AppointmentsPage />} />
-      
+
       <Route path="/guideregister" element={<RegisterGuide />} />
       <Route path="/guidedashboard" element={<Guidedashboard />} />
 
@@ -129,11 +129,11 @@ const AuthenticatedRoutes = () => {
       <Route path="/appoiments" element={<AppointmentsPage />} />
       // In your App.js or routing file
       <Route path="/register-guide" element={<RegisterGuide />} />
-      
- main
+
+      main
 
       <Route path="/appointments/edit/:id" element={<UpdateAppointmentPage />} />
- main
+      main
       <Route path="/addpackage" element={<PackageForm />} />
       <Route path="/packages" element={<Packages />} />
       <Route path="/packages/:packageId" element={<PackageView />} />
@@ -142,7 +142,7 @@ const AuthenticatedRoutes = () => {
       <Route path="/reviewform/:packageId" element={<ReviewForm />} />
       <Route path="/reviewlist" element={<ReviewList />} />
 
-     
+
 
       {/* Auth Routes */}
       <Route
@@ -240,27 +240,27 @@ const AuthenticatedRoutes = () => {
         )}
       />
 
-{/* 🆕 ADD THIS NEW ROUTE */}
+      {/* 🆕 ADD THIS NEW ROUTE */}
 
-<Route
-  path="/dashboard/admin/guide-scheduling"
-  element={renderProtectedRoute(
-    <DashboardLayout>
-      <GuideRequestsTable />
-    </DashboardLayout>,
-    ["Admin"]
-  )}
-/>
+      <Route
+        path="/dashboard/admin/guide-scheduling"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <GuideRequestsTable />
+          </DashboardLayout>,
+          ["Admin"]
+        )}
+      />
 
-<Route
-  path="/dashboard/admin/assign-guide"
-  element={renderProtectedRoute(
-    <DashboardLayout>
-      <GuideAssignmentForm />
-    </DashboardLayout>,
-    ["Admin"]
-  )}
-/>
+      <Route
+        path="/dashboard/admin/assign-guide"
+        element={renderProtectedRoute(
+          <DashboardLayout>
+            <GuideAssignmentForm />
+          </DashboardLayout>,
+          ["Admin"]
+        )}
+      />
 
 
 

@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-//const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes.js');
 
 const guideAssignRoutes = require('./Routes/guideAssignRoutes.js');
 //newly addedd
@@ -31,23 +30,9 @@ const authRoutes = require('./Routes/auth');
 const adminRoutes = require('./Routes/admin');
 const appointmentRoutes = require('./Routes/Appoinment/appointmentRoutes');
 const guideRoutes = require('./Routes/Guide/guideRoute');
-
-
-
 const review = require('./Routes/Review/reviewRoutes.js');
-
 const packageRoutes = require('./Routes/service/packageRoutes.js');
-
-
-
-//const authRoutes = require("./Routes/auth");
-//const adminRoutes = require("./Routes/admin");
-//const appointmentRoutes = require("./Routes/Appoinment/appointmentRoutes");
-//const guideRoutes = require("./Routes/Guide/guideRoute");
-//const packageRoutes = require("./Routes/service/packageRoutes.js");
- //main
 const advertisementRoutes = require("./Routes/advertisementRoutes");
-//const review = require('./Routes/Review/reviewRoutes.js')
 
 
 // Initialize express app
@@ -107,11 +92,7 @@ mongoose
 
 // Routes
 
-
- 
 app.use('/api/guideassign', guideAssignRoutes);
-
-
 
 app.use('/api/auth', authRoutes);
 //app.use('/api/admin', adminRoute);
@@ -121,8 +102,8 @@ app.use('/api/guides', guideRoutes);
 app.use('/api/review', review);
 
 
-app.use('/api/guides', guideRoutes);    
-app.use('/api', packageRoutes);     
+app.use('/api/guides', guideRoutes);
+app.use('/api', packageRoutes);
 
 
 app.use("/api/auth", authRoutes);
@@ -131,7 +112,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/guides", guideRoutes);
 app.use("/api", packageRoutes);
 app.use("/api/advertisements", advertisementRoutes);
-app.use("/api/review",review)
+app.use("/api/review", review)
 
 // Root route
 app.get("/", (req, res) => {
@@ -155,6 +136,6 @@ app.listen(PORT, () => {
 
 const guideAssignRoute = require('./Routes/guideAssignRoutes.js');
 
-app.post('/api/guideassign',guideAssignRoutes);
+app.post('/api/guideassign', guideAssignRoutes);
 
 

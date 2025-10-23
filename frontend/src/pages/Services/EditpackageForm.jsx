@@ -38,7 +38,7 @@ const EditPackageForm = () => {
     "Sabaragamuwa Province",
   ];
 
-  // Fetch package data on mount
+  // Fetch existing package data
   useEffect(() => {
     const fetchPackage = async () => {
       try {
@@ -50,6 +50,7 @@ const EditPackageForm = () => {
         setProvince(pkg.province || "");
         setDescription(pkg.description || "");
         setImage(pkg.image || "");
+
         // Map packages array to form fields
         const priceObj = {};
         const daysObj = {};
@@ -59,20 +60,20 @@ const EditPackageForm = () => {
           daysObj[p.packageType] = p.tourDays;
           servicesObj[p.packageType] = p.services;
         });
-        setPrices({ 
-          Standard: priceObj.Standard || "", 
-          Premium: priceObj.Premium || "", 
-          VIP: priceObj.VIP || "" 
+        setPrices({
+          Standard: priceObj.Standard || "",
+          Premium: priceObj.Premium || "",
+          VIP: priceObj.VIP || ""
         });
-        setTourDays({ 
-          Standard: daysObj.Standard || "", 
-          Premium: daysObj.Premium || "", 
-          VIP: daysObj.VIP || "" 
+        setTourDays({
+          Standard: daysObj.Standard || "",
+          Premium: daysObj.Premium || "",
+          VIP: daysObj.VIP || ""
         });
-        setServices({ 
-          Standard: servicesObj.Standard || "", 
-          Premium: servicesObj.Premium || "", 
-          VIP: servicesObj.VIP || "" 
+        setServices({
+          Standard: servicesObj.Standard || "",
+          Premium: servicesObj.Premium || "",
+          VIP: servicesObj.VIP || ""
         });
       } catch (err) {
         console.error("Failed to load package:", err);
@@ -96,17 +97,23 @@ const EditPackageForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    //  VALIDATIONS: Check required fields
+
     if (!serviceName || !category || !province || !description) {
       alert("Please fill in all required fields.");
       return;
     }
 
+// VALIDATIONS: Check each package type
+    // Price and days must be numbers > 0.
     const packageTypes = ["Standard", "Premium", "VIP"];
     for (let type of packageTypes) {
       if (!prices[type] || !tourDays[type] || !services[type]) {
         alert(`Please fill all fields for ${type} package.`);
         return;
       }
+
+      // Check price and days are valid numbers > 0
       const priceNum = Number(prices[type]);
       const daysNum = Number(tourDays[type]);
       if (isNaN(priceNum) || isNaN(daysNum) || priceNum <= 0 || daysNum <= 0) {
@@ -115,7 +122,7 @@ const EditPackageForm = () => {
       }
     }
 
-    // ✅ CORRECT TIERED VALIDATION: Standard < Premium < VIP
+    //  CORRECT TIERED VALIDATION: Standard < Premium < VIP
     const stdPrice = Number(prices.Standard);
     const premPrice = Number(prices.Premium);
     const vipPrice = Number(prices.VIP);
@@ -346,11 +353,10 @@ const EditPackageForm = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-12 py-4 rounded-2xl font-bold text-white ${
-                    loading
+                  className={`px-12 py-4 rounded-2xl font-bold text-white ${loading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                    }`}
                 >
                   {loading ? "Updating Package..." : "Update Package"}
                 </button>
