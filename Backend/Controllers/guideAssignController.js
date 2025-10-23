@@ -6,7 +6,7 @@ exports.createGuideAssign = async (req, res) => {
   try {
     console.log("📩 Incoming:", req.body);
 // ✅ Validate required fields
-    const { guideId, touristId, startDate, endDate, totalDays  } = req.body;
+    const { guideId, touristId, startDate, endDate, totalDays, paymentPerDay, totalPayment } = req.body;
     
     if (!guideId || !touristId || !startDate || !endDate) {
       return res.status(400).json({ 
