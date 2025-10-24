@@ -132,9 +132,9 @@ export function UpcomingTours({ userId, guideId, onToursCountUpdate }) {
                 
                 // ✅ Extract Place: Location from assignment or appointment (using province field)
                 let place = 'N/A';
-                if (assignment.location) {
+                if (assignment.province) {
                   // If location is set directly on assignment
-                  place = assignment.location;
+                  place = assignment.province;
                 } else if (assignment.appointmentId?.packageId?.province) {
                   // Use province from package
                   place = assignment.appointmentId.packageId.province;

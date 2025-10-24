@@ -65,7 +65,7 @@ export default function GuideRequestsTable() {
                     Tourist Name
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
-                    Package
+                    Place
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
                     Members

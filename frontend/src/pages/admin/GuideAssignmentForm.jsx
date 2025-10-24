@@ -290,7 +290,7 @@ export default function GuideAssignmentForm() {
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl">
               <p className="text-sm text-gray-600 mb-1 flex items-center">
                 <Calendar className="h-4 w-4 mr-2" />
-                Package
+                Place
               </p>
               <p className="text-lg font-semibold text-gray-900">{formData.packageName}</p>
             </div>
