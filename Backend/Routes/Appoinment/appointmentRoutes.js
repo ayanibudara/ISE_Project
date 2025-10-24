@@ -4,9 +4,10 @@ const appointmentController = require('../../Controllers/Appoinment/appointmentC
 const { requireAuth, restrictTo, attachToken } = require('../../middleware/authMiddleware');
 
 // Create a new appointment (any authenticated user)
-router.post('/add', requireAuth, attachToken, appointmentController.createAppointment);
+router.post('/add', requireAuth, attachToken, appointmentController.createAppointment);//ensures only logged-in users can create an appointment.
 
 // 🆕 NEW: Get pending guide requests (MUST be before '/:id')
+//Validates session before allowing user or provider to access their appointments.
 router.get('/pending', appointmentController.getPendingAppointments);
 
 router.get('/provider', requireAuth, attachToken, appointmentController.getProviderAppointments);
@@ -32,6 +33,7 @@ router.put('/:id', requireAuth, attachToken, appointmentController.updateAppoint
 router.delete('/:id', requireAuth, attachToken, appointmentController.deleteAppointment);
 
 // Confirm or reject appointment (for provider/admin)
+//Prevents unauthorized users from confirming or rejecting appointments.
 router.patch('/:id/confirm', requireAuth, attachToken, appointmentController.confirmAppointment);
 router.patch('/:id/reject', requireAuth, attachToken, appointmentController.rejectAppointment);
 

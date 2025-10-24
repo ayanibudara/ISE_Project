@@ -17,7 +17,7 @@ exports.createAppointment = async (req, res) => {
       needsGuide // 🟢 new field added
     } = req.body;
 
-    // Check required fields
+    // Check required fields validation
     if (!userId || !userName || !membersCount || !packageId || !selectedTier || !startDate || !endDate) {
       return res.status(400).json({ message: 'All required fields must be filled!' });
     }
@@ -42,7 +42,7 @@ exports.createAppointment = async (req, res) => {
       note,
       startDate,
       endDate,
-      needsGuide: needsGuide || false, // 🟢 default false if not provided
+      needsGuide: needsGuide || false, // 🟢 default false if not provided (validation)
       status: 'booked',
     });
 
@@ -135,7 +135,7 @@ exports.updateAppointment = async (req, res) => {
       }
     });
 
-    // Validate endDate after startDate
+    // Again Validate endDate after startDate 
     if (appointment.startDate && appointment.endDate && new Date(appointment.endDate) <= new Date(appointment.startDate)) {
       return res.status(400).json({ message: 'End date must be after start date!' });
     }
@@ -152,7 +152,7 @@ exports.deleteAppointment = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
-
+// Ownership / authorization validation
     if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
     }
@@ -262,6 +262,7 @@ exports.confirmAppointment = async (req, res) => {
     }
 
     // Ensure the provider owns the package
+    //Provider ownership validation
     const pkg = await Package.findById(appointment.packageId);
     if (!pkg || pkg.providerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to confirm this appointment' });
