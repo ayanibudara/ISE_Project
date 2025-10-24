@@ -8,8 +8,8 @@ const VALID_BOOKING_STATUSES = ['booked', 'confirmed', 'completed'];
 exports.createPackage = async (req, res) => {
   try {
     console.log("📦 Received package data:", req.body);
-    const newPackage = new Package(req.body);
-    await newPackage.save();
+    const newPackage = new Package(req.body);//POST data from frontend
+    await newPackage.save();  //Save to MongoDB using model
     res.status(201).json(newPackage);
   } catch (err) {
     console.error(" Error creating package:", err.message);

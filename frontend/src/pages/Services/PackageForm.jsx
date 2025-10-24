@@ -129,8 +129,8 @@ const TourPackageForm = () => {
         : {};
 
       console.log("Submitting package data:", data);
+
       // send data to backend
-      
       const res = await axios.post("http://localhost:5000/api/packages", data, config);
 
       alert("Tour package created successfully!");

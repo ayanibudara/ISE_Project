@@ -152,7 +152,7 @@ exports.deleteAppointment = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
-
+//Ownership / authorization validation
     if (appointment.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
     }
@@ -262,6 +262,7 @@ exports.confirmAppointment = async (req, res) => {
     }
 
     // Ensure the provider owns the package
+    //Provider ownership validation
     const pkg = await Package.findById(appointment.packageId);
     if (!pkg || pkg.providerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to confirm this appointment' });
@@ -290,6 +291,7 @@ exports.rejectAppointment = async (req, res) => {
     }
 
     // Ensure the provider owns the package
+    
     const pkg = await Package.findById(appointment.packageId);
     if (!pkg || pkg.providerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to reject this appointment' });
