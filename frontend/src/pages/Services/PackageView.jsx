@@ -23,9 +23,10 @@ const PackageView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+//Fetching Package Details
   useEffect(() => {
     fetchPackageDetails();
-    // eslint-disable-next-line
+    
   }, [packageId]);
 
   const fetchPackageDetails = async () => {
@@ -250,7 +251,7 @@ const PackageView = () => {
               <div className="relative p-8 overflow-hidden bg-white border border-gray-100 shadow-xl rounded-3xl">
                 {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/50 to-purple-100/50 rounded-full blur-3xl -z-0"></div>
-                
+
                 <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-8">
                     <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
@@ -260,9 +261,9 @@ const PackageView = () => {
                       Booking Popularity By Tier
                     </h3>
                   </div>
-                  
+
                   <div className="h-px mb-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
-                  
+
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                     {['Standard', 'Premium', 'VIP'].map((tier) => {
                       const count = packageData.tierBookingCounts?.[tier] || 0;

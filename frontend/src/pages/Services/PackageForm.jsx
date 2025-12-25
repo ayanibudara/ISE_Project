@@ -25,7 +25,7 @@ const TourPackageForm = () => {
   const { authState } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if not logged in
+  // only logged-in users can add packages.
   useEffect(() => {
     if (!authState.isAuthenticated) {
       alert("You must be logged in to create a tour package.");
@@ -55,42 +55,66 @@ const TourPackageForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate user
-  const userId = authState.user?._id || authState.user?.id;
-  if (!userId) {
-    alert("No user or user ID available. Please log in again.");
-    return;
-  }
 
-    // Validate main fields
+    //validations - Check login
+    const userId = authState.user?._id || authState.user?.id;
+    if (!userId) {
+      alert("No user or user ID available. Please log in again.");
+      return;
+    }
+    //vallidations - Check required fields
     if (!serviceName || !category || !province || !description) {
       alert("Please fill in all required fields.");
       return;
     }
-
+    //vallidations - Check each package type
+    //Price and days must be numbers > 0.
     const packageTypes = ["Standard", "Premium", "VIP"];
     for (let type of packageTypes) {
+      //Check price order rule
+     
       if (!prices[type] || !tourDays[type] || !services[type]) {
         alert(`Please fill all fields for ${type} package.`);
         return;
       }
-      if (Number(prices[type]) <= 0 || Number(tourDays[type]) <= 0) {
-        alert(`${type} package must have positive price and tour days.`);
+      const priceNum = Number(prices[type]);
+      const daysNum = Number(tourDays[type]);
+      if (isNaN(priceNum) || isNaN(daysNum) || priceNum <= 0 || daysNum <= 0) {
+        alert(`${type} package must have valid positive price and tour days.`);
         return;
       }
+    }
+
+    //  CORRECT TIERED VALIDATION: Standard < Premium < VIP
+    const stdPrice = Number(prices.Standard);
+    const premPrice = Number(prices.Premium);
+    const vipPrice = Number(prices.VIP);
+
+    if (isNaN(stdPrice) || isNaN(premPrice) || isNaN(vipPrice)) {
+      alert("All package prices must be valid numbers.");
+      return;
+    }
+
+     // VIP package price should be highest more than premium and vip 
+
+    if (!(stdPrice < premPrice && premPrice < vipPrice)) {
+      alert(
+        "Package prices must follow this order: Standard < Premium < VIP.\n" +
+        `Current prices: Standard=${stdPrice}, Premium=${premPrice}, VIP=${vipPrice}`
+      );
+      return;
     }
 
     setLoading(true);
 
     try {
-      // ✅ Build payload EXACTLY as your example
       const data = {
-        providerId:  userId, // e.g., "68add2f502b9fd08c69c409d"
+        providerId: userId,
         packageName: serviceName,
-        category, // e.g., "Culture"
+        category,
         province,
         description,
-        image: image.trim(), // ✅ trim extra spaces (your example had trailing spaces!)
+        image: image.trim(),
         packages: packageTypes.map((type) => ({
           packageType: type,
           price: Number(prices[type]),
@@ -99,13 +123,14 @@ const TourPackageForm = () => {
         })),
       };
 
-      // Optional: include auth token if required by backend
       const token = localStorage.getItem("token");
       const config = token
         ? { headers: { Authorization: `Bearer ${token}` } }
         : {};
 
-        console.log("Submitting package data:", data);
+      console.log("Submitting package data:", data);
+
+      // send data to backend
       const res = await axios.post("http://localhost:5000/api/packages", data, config);
 
       alert("Tour package created successfully!");
@@ -152,7 +177,7 @@ const TourPackageForm = () => {
   ];
 
   if (!authState.isAuthenticated) {
-    return null; // or loading spinner
+    return null;
   }
 
   return (
@@ -187,7 +212,7 @@ const TourPackageForm = () => {
                     <option value="">Select Category</option>
                     <option value="Adventure">Adventure</option>
                     <option value="Beach">Beach</option>
-                    <option value="Culture">Culture</option> {/* ✅ Fixed to "Culture" */}
+                    <option value="Culture">Culture</option>
                   </select>
                 </div>
                 <div className="group">
@@ -285,11 +310,10 @@ const TourPackageForm = () => {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`px-12 py-4 rounded-2xl font-bold text-white ${
-                  loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                className={`px-12 py-4 rounded-2xl font-bold text-white ${loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
               >
                 {loading ? "Creating Package..." : "Create Package"}
               </button>

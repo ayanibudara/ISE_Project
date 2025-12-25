@@ -14,26 +14,26 @@ const PackageProviderDashboard = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isDashboardActive, setIsDashboardActive] = useState(true);
 
-// 👉 Paste the generateReport() function here
+  // Paste the generateReport() function here
 
-const generateReport = () => {
-  // ✅ Calculate most popular package based on total bookings (VIP + Premium + Standard)
-  if (!packages || packages.length === 0) {
-    alert("No package data available to generate report.");
-    return;
-  }
+  const generateReport = () => {
+    // Calculate most popular package based on total bookings (VIP + Premium + Standard)
+    if (!packages || packages.length === 0) {
+      alert("No package data available to generate report.");
+      return;
+    }
 
-  const getTotalBookings = (pkg) =>
-    (pkg.tierBookingCounts?.VIP || 0) +
-    (pkg.tierBookingCounts?.Premium || 0) +
-    (pkg.tierBookingCounts?.Standard || 0);
+    const getTotalBookings = (pkg) =>
+      (pkg.tierBookingCounts?.VIP || 0) +
+      (pkg.tierBookingCounts?.Premium || 0) +
+      (pkg.tierBookingCounts?.Standard || 0);
 
-  const mostPopularPackage = packages.reduce((prev, current) =>
-    getTotalBookings(current) > getTotalBookings(prev) ? current : prev
-  );
+    const mostPopularPackage = packages.reduce((prev, current) =>
+      getTotalBookings(current) > getTotalBookings(prev) ? current : prev
+    );
 
-  const reportWindow = window.open("", "_blank");
-  const reportContent = `
+    const reportWindow = window.open("", "_blank");
+    const reportContent = `
     <html>
       <head>
         <title>Package Provider Report</title>
@@ -116,13 +116,13 @@ const generateReport = () => {
           </thead>
           <tbody>
             ${packages
-              .map((pkg) => {
-                const vip = pkg.tierBookingCounts?.VIP || 0;
-                const premium = pkg.tierBookingCounts?.Premium || 0;
-                const standard = pkg.tierBookingCounts?.Standard || 0;
-                const total = vip + premium + standard;
+        .map((pkg) => {
+          const vip = pkg.tierBookingCounts?.VIP || 0;
+          const premium = pkg.tierBookingCounts?.Premium || 0;
+          const standard = pkg.tierBookingCounts?.Standard || 0;
+          const total = vip + premium + standard;
 
-                return `
+          return `
                   <tr>
                     <td>${pkg.packageName || "N/A"}</td>
                     <td>${pkg.category || "N/A"}</td>
@@ -133,16 +133,15 @@ const generateReport = () => {
                     <td><strong>${total}</strong></td>
                   </tr>
                 `;
-              })
-              .join("")}
+        })
+        .join("")}
           </tbody>
         </table>
 
         <div class="popular-section">
           <h2>🌟 Most Popular Package</h2>
-          ${
-            mostPopularPackage
-              ? `
+          ${mostPopularPackage
+        ? `
                 <p><strong>Name:</strong> ${mostPopularPackage.packageName}</p>
                 <p><strong>Category:</strong> ${mostPopularPackage.category}</p>
                 <p><strong>Province:</strong> ${mostPopularPackage.province}</p>
@@ -153,28 +152,28 @@ const generateReport = () => {
                 </div>
                 <p><strong>Total Bookings:</strong> ${getTotalBookings(mostPopularPackage)}</p>
               `
-              : "<p>No packages available.</p>"
-          }
+        : "<p>No packages available.</p>"
+      }
         </div>
       </body>
     </html>
   `;
 
-  reportWindow.document.write(reportContent);
-  reportWindow.document.close();
-  reportWindow.print();
-};
+    reportWindow.document.write(reportContent);
+    reportWindow.document.close();
+    reportWindow.print();
+  };
 
 
-//Then paste handleGenerateReport() function right below it
+  //Then paste handleGenerateReport() function right below it
 
-const handleGenerateReport = () => {
-  setIsGeneratingReport(true);
-  setTimeout(() => {
-    generateReport();
-    setIsGeneratingReport(false);
-  }, 800);
-};
+  const handleGenerateReport = () => {
+    setIsGeneratingReport(true);
+    setTimeout(() => {
+      generateReport();
+      setIsGeneratingReport(false);
+    }, 800);
+  };
 
 
 
@@ -283,19 +282,17 @@ const handleGenerateReport = () => {
         <div className="mb-12">
           <div className="inline-block mb-4">
             <div
-              className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-lg border transition-all duration-300 cursor-pointer ${
-                isDashboardActive
+              className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-lg border transition-all duration-300 cursor-pointer ${isDashboardActive
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border-blue-600 shadow-blue-500/50'
                   : 'bg-white/80 backdrop-blur-md border-white/20'
-              }`}
+                }`}
               onClick={() => setIsDashboardActive(!isDashboardActive)}
             >
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 ${
-                  isDashboardActive
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 ${isDashboardActive
                     ? 'bg-white/20 backdrop-blur-sm'
                     : 'bg-gradient-to-br from-blue-500 to-cyan-600'
-                }`}
+                  }`}
               >
                 <svg
                   className={`w-5 h-5 transition-colors ${isDashboardActive ? 'text-white' : 'text-white'}`}
@@ -313,18 +310,16 @@ const handleGenerateReport = () => {
               </div>
               <div>
                 <p
-                  className={`text-sm font-medium transition-colors ${
-                    isDashboardActive ? 'text-blue-100' : 'text-slate-500'
-                  }`}
+                  className={`text-sm font-medium transition-colors ${isDashboardActive ? 'text-blue-100' : 'text-slate-500'
+                    }`}
                 >
                   Dashboard
                 </p>
                 <p
-                  className={`text-lg font-bold transition-colors ${
-                    isDashboardActive
+                  className={`text-lg font-bold transition-colors ${isDashboardActive
                       ? 'text-white'
                       : 'bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent'
-                  }`}
+                    }`}
                 >
                   {user?.businessName || user?.firstName}
                 </p>

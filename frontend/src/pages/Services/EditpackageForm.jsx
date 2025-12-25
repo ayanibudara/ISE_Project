@@ -38,7 +38,7 @@ const EditPackageForm = () => {
     "Sabaragamuwa Province",
   ];
 
-  // Fetch package data on mount
+  // Fetch existing package data
   useEffect(() => {
     const fetchPackage = async () => {
       try {
@@ -50,6 +50,7 @@ const EditPackageForm = () => {
         setProvince(pkg.province || "");
         setDescription(pkg.description || "");
         setImage(pkg.image || "");
+
         // Map packages array to form fields
         const priceObj = {};
         const daysObj = {};
@@ -59,10 +60,23 @@ const EditPackageForm = () => {
           daysObj[p.packageType] = p.tourDays;
           servicesObj[p.packageType] = p.services;
         });
-        setPrices({ Standard: priceObj.Standard || "", Premium: priceObj.Premium || "", VIP: priceObj.VIP || "" });
-        setTourDays({ Standard: daysObj.Standard || "", Premium: daysObj.Premium || "", VIP: daysObj.VIP || "" });
-        setServices({ Standard: servicesObj.Standard || "", Premium: servicesObj.Premium || "", VIP: servicesObj.VIP || "" });
+        setPrices({
+          Standard: priceObj.Standard || "",
+          Premium: priceObj.Premium || "",
+          VIP: priceObj.VIP || ""
+        });
+        setTourDays({
+          Standard: daysObj.Standard || "",
+          Premium: daysObj.Premium || "",
+          VIP: daysObj.VIP || ""
+        });
+        setServices({
+          Standard: servicesObj.Standard || "",
+          Premium: servicesObj.Premium || "",
+          VIP: servicesObj.VIP || ""
+        });
       } catch (err) {
+        console.error("Failed to load package:", err);
         alert("Failed to load package data.");
         navigate("/dashboard/package-provider");
       } finally {
@@ -83,65 +97,97 @@ const EditPackageForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    //  VALIDATIONS: Check required fields
+
     if (!serviceName || !category || !province || !description) {
       alert("Please fill in all required fields.");
       return;
     }
 
+// VALIDATIONS: Check each package type
+    // Price and days must be numbers > 0.
     const packageTypes = ["Standard", "Premium", "VIP"];
     for (let type of packageTypes) {
       if (!prices[type] || !tourDays[type] || !services[type]) {
         alert(`Please fill all fields for ${type} package.`);
         return;
       }
-      if (Number(prices[type]) <= 0 || Number(tourDays[type]) <= 0) {
-        alert(`${type} package must have positive price and tour days.`);
+
+      // Check price and days are valid numbers > 0
+      const priceNum = Number(prices[type]);
+      const daysNum = Number(tourDays[type]);
+      if (isNaN(priceNum) || isNaN(daysNum) || priceNum <= 0 || daysNum <= 0) {
+        alert(`${type} package must have valid positive price and tour days.`);
         return;
       }
     }
 
-    setLoading(true);
-     try {
-    const data = {
-      providerId: authState.user._id,
-      packageName: serviceName,
-      category,
-      province,
-      description,
-      image: image.trim(),
-      packages: packageTypes.map((type) => ({
-        packageType: type,
-        price: Number(prices[type]),
-        tourDays: Number(tourDays[type]),
-        services: services[type],
-      })),
-    };
+    //  CORRECT TIERED VALIDATION: Standard < Premium < VIP
+    const stdPrice = Number(prices.Standard);
+    const premPrice = Number(prices.Premium);
+    const vipPrice = Number(prices.VIP);
 
-    const token = localStorage.getItem("token");
-    if (!token || token === "null") {
-      alert("You are not logged in. Please log in again.");
-      navigate("/login");
+    if (isNaN(stdPrice) || isNaN(premPrice) || isNaN(vipPrice)) {
+      alert("All package prices must be valid numbers.");
       return;
     }
 
-    const config = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
+    if (!(stdPrice < premPrice && premPrice < vipPrice)) {
+      alert(
+        "Package prices must follow this order: Standard < Premium < VIP.\n" +
+        `Current prices: Standard=${stdPrice}, Premium=${premPrice}, VIP=${vipPrice}`
+      );
+      return;
+    }
 
-    await axios.put(`http://localhost:5000/api/packages/${packageId}`, data, config);
+    setLoading(true);
+    try {
+      const userId = authState.user?._id || authState.user?.id;
+      if (!userId) {
+        alert("User ID not found. Please log in again.");
+        navigate("/login");
+        return;
+      }
 
-    alert("Tour package updated successfully!");
-    navigate("/dashboard/package-provider");
-  } catch (err) {
-    alert(
-      `Error: ${err.response?.data?.message || err.message || "Something went wrong"}`
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = {
+        providerId: userId,
+        packageName: serviceName,
+        category,
+        province,
+        description,
+        image: image.trim(),
+        packages: packageTypes.map((type) => ({
+          packageType: type,
+          price: Number(prices[type]),
+          tourDays: Number(tourDays[type]),
+          services: services[type],
+        })),
+      };
 
-    
+      const token = localStorage.getItem("token");
+      if (!token || token === "null" || token === "undefined") {
+        alert("You are not logged in. Please log in again.");
+        navigate("/login");
+        return;
+      }
+
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
+      await axios.put(`http://localhost:5000/api/packages/${packageId}`, data, config);
+
+      alert("Tour package updated successfully!");
+      navigate("/dashboard/package-provider");
+    } catch (err) {
+      console.error("Update error:", err);
+      alert(
+        `Error: ${err.response?.data?.message || err.message || "Something went wrong"}`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const packageTiers = [
     {
@@ -307,11 +353,10 @@ const EditPackageForm = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-12 py-4 rounded-2xl font-bold text-white ${
-                    loading
+                  className={`px-12 py-4 rounded-2xl font-bold text-white ${loading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                    }`}
                 >
                   {loading ? "Updating Package..." : "Update Package"}
                 </button>
